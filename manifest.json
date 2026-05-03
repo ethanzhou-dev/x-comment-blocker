@@ -7,7 +7,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://raw.githubusercontent.com/*"
+    "https://api.github.com/*"
   ],
   "action": {
     "default_popup": "popup.html",

@@ -1,5 +1,5 @@
 // --- Config ---
-const CLOUD_KEYWORDS_URL = 'https://raw.githubusercontent.com/ethanzhou-dev/x-comment-blocker/main/keywords.txt';
+const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment-blocker/contents/keywords.txt';
 const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 // --- State ---
@@ -171,12 +171,16 @@ newKeywordInput.addEventListener('keydown', (e) => {
     }
 });
 
-// --- Sync cloud keywords silently ---
+// --- Sync cloud keywords ---
 async function syncCloudKeywords(manual = false) {
     try {
-        const resp = await fetch(CLOUD_KEYWORDS_URL + '?t=' + Date.now());
+        const resp = await fetch(CLOUD_KEYWORDS_URL, {
+            headers: { 'Accept': 'application/vnd.github.v3+json' },
+            cache: 'no-store'
+        });
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
-        const text = await resp.text();
+        const json = await resp.json();
+        const text = atob(json.content);
 
         const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
         chrome.storage.local.set({
