@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "X-Clean-Replies",
+  "version": "1.0",
+  "description": "一键净化 X (Twitter) 评论区，自动屏蔽垃圾信息与引流机器人。",
+  "permissions": [
+    "storage"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "设置屏蔽词"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.twitter.com/*",
+        "*://*.x.com/*"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ]
+}

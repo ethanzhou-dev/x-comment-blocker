@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <style>
+        :root {
+            --bg: #09090b;
+            --card: #18181b;
+            --border: #27272a;
+            --text: #f4f4f5;
+            --text-muted: #a1a1aa;
+            --accent: #0ea5e9;
+            --accent-hover: #0284c7;
+        }
+
+        body {
+            width: 300px;
+            padding: 20px;
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+        }
+
+        .header {
+            margin-bottom: 20px;
+        }
+
+        .header h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .header p {
+            margin: 4px 0 0;
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        textarea {
+            width: 100%;
+            height: 120px;
+            box-sizing: border-box;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            padding: 12px;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: none;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        textarea:focus {
+            border-color: var(--accent);
+        }
+
+        .control-group {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 16px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .control-group label {
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .control-group input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--accent);
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        #status {
+            margin-top: 12px;
+            font-size: 12px;
+            color: var(--accent);
+            text-align: center;
+            font-weight: 500;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #status.visible {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <h3>X Content Filter</h3>
+        <p>Advanced reply management system</p>
+    </div>
+
+    <span class="section-label">Keyword Database</span>
+    <textarea id="keywords" placeholder="Enter keywords (one per line)..."></textarea>
+
+    <div class="control-group">
+        <label for="checkUsername">Username Filtering</label>
+        <input type="checkbox" id="checkUsername">
+    </div>
+
+    <button id="saveBtn">Save Configuration</button>
+    <div id="status">Settings synchronized successfully</div>
+
+    <script src="popup.js"></script>
+</body>
+
+</html>
