@@ -179,18 +179,11 @@ function filterTweets() {
     }
 }
 
-// --- Throttled filter ---
-let filterRequested = false;
+// --- Instant filter ---
+// We do not use requestAnimationFrame here anymore. Running synchronously inside the MutationObserver 
+// microtask ensures elements are hidden *before* the browser calculates layout or restores scroll position,
+// fixing the bug where the page jumps down when returning from a clicked comment.
 function scheduleFilter() {
     if (!contextValid) return;
-    
-    // Use requestAnimationFrame to process immediately before the next render.
-    // This avoids visual flashing of blocked comments.
-    if (!filterRequested) {
-        filterRequested = true;
-        requestAnimationFrame(() => {
-            filterTweets();
-            filterRequested = false;
-        });
-    }
+    filterTweets();
 }
