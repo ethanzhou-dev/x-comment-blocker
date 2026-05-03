@@ -4,22 +4,20 @@ const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
 // --- State ---
 let userKeywords = [];
-let cloudKeywords = [];
 let isLoading = true;
 
 // --- DOM refs ---
 const keywordList = document.getElementById('keywordList');
-const cloudKeywordList = document.getElementById('cloudKeywordList');
 const keywordCount = document.getElementById('keywordCount');
 const newKeywordInput = document.getElementById('newKeyword');
 const addBtn = document.getElementById('addBtn');
 const checkUsernameEl = document.getElementById('checkUsername');
 const enableToggleEl = document.getElementById('enableToggle');
+const cloudToggleEl = document.getElementById('cloudToggle');
+const cloudInfoEl = document.getElementById('cloudInfo');
 const statusEl = document.getElementById('status');
 const blockedCountEl = document.getElementById('blockedCount');
 const resetCountBtn = document.getElementById('resetCount');
-const syncBtn = document.getElementById('syncBtn');
-const syncTimeEl = document.getElementById('syncTime');
 
 // --- Show status toast ---
 function showStatus(text) {
@@ -37,7 +35,8 @@ function autoSave() {
     chrome.storage.local.set({
         keywords: userKeywords.join('\n'),
         checkUsername: checkUsernameEl.checked,
-        enabled: enableToggleEl.checked
+        enabled: enableToggleEl.checked,
+        cloudEnabled: cloudToggleEl.checked
     }, () => {
         showStatus('已自动保存');
     });
@@ -50,32 +49,6 @@ function updateEnabledState() {
     } else {
         document.body.classList.add('disabled');
     }
-}
-
-// --- Render cloud keyword tags (read-only) ---
-function renderCloudKeywords() {
-    cloudKeywordList.innerHTML = '';
-
-    if (cloudKeywords.length === 0) {
-        const hint = document.createElement('div');
-        hint.className = 'empty-hint';
-        hint.textContent = '暂无云端词库，点击"同步更新"获取';
-        cloudKeywordList.appendChild(hint);
-        return;
-    }
-
-    cloudKeywords.forEach(kw => {
-        const tag = document.createElement('span');
-        tag.className = 'keyword-tag cloud';
-
-        const textSpan = document.createElement('span');
-        textSpan.className = 'tag-text';
-        textSpan.textContent = kw;
-        textSpan.title = kw;
-
-        tag.appendChild(textSpan);
-        cloudKeywordList.appendChild(tag);
-    });
 }
 
 // --- Render user keyword tags ---
@@ -197,45 +170,23 @@ newKeywordInput.addEventListener('keydown', (e) => {
     }
 });
 
-// --- Sync cloud keywords from GitHub ---
-async function syncCloudKeywords(manual = false) {
-    syncBtn.textContent = '同步中…';
-    syncBtn.classList.add('syncing');
-
+// --- Sync cloud keywords silently ---
+async function syncCloudKeywords() {
     try {
         const resp = await fetch(CLOUD_KEYWORDS_URL + '?t=' + Date.now());
-        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        if (!resp.ok) return;
         const text = await resp.text();
 
-        cloudKeywords = text.split('\n').map(k => k.trim()).filter(k => k);
-        const now = Date.now();
-
+        const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
         chrome.storage.local.set({
-            cloudKeywords: cloudKeywords.join('\n'),
-            lastSyncTime: now
+            cloudKeywords: cloudList.join('\n'),
+            lastSyncTime: Date.now()
         });
 
-        renderCloudKeywords();
-        updateSyncTime(now);
-
-        if (manual) showStatus('云端词库已更新');
+        cloudInfoEl.textContent = `${cloudList.length} 个词`;
     } catch (e) {
-        if (manual) showStatus('同步失败，请检查网络');
-    } finally {
-        syncBtn.textContent = '同步更新';
-        syncBtn.classList.remove('syncing');
+        // Silently fail
     }
-}
-
-// --- Display last sync time ---
-function updateSyncTime(ts) {
-    if (!ts) {
-        syncTimeEl.textContent = '';
-        return;
-    }
-    const d = new Date(ts);
-    const pad = n => String(n).padStart(2, '0');
-    syncTimeEl.textContent = `上次同步: ${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 // --- Toggle & checkbox ---
@@ -244,11 +195,8 @@ enableToggleEl.addEventListener('change', () => {
     autoSave();
 });
 
-checkUsernameEl.addEventListener('change', () => {
-    autoSave();
-});
-
-syncBtn.addEventListener('click', () => syncCloudKeywords(true));
+checkUsernameEl.addEventListener('change', () => autoSave());
+cloudToggleEl.addEventListener('change', () => autoSave());
 
 // --- Load on init ---
 document.addEventListener('DOMContentLoaded', () => {
@@ -256,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
         keywords: '',
         checkUsername: true,
         enabled: true,
+        cloudEnabled: true,
         blockedCount: 0,
         cloudKeywords: '',
         lastSyncTime: 0
@@ -263,22 +212,21 @@ document.addEventListener('DOMContentLoaded', () => {
         userKeywords = items.keywords.split('\n').map(k => k.trim()).filter(k => k);
         checkUsernameEl.checked = items.checkUsername;
         enableToggleEl.checked = items.enabled;
+        cloudToggleEl.checked = items.cloudEnabled;
         blockedCountEl.textContent = items.blockedCount || 0;
 
-        // Cloud keywords
-        cloudKeywords = items.cloudKeywords
+        const cloudList = items.cloudKeywords
             ? items.cloudKeywords.split('\n').map(k => k.trim()).filter(k => k)
             : [];
+        cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
 
         updateEnabledState();
         renderUserKeywords();
-        renderCloudKeywords();
-        updateSyncTime(items.lastSyncTime);
         isLoading = false;
 
-        // Auto-sync if never synced or interval expired
+        // Auto-sync if interval expired
         if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
-            syncCloudKeywords(false);
+            syncCloudKeywords();
         }
     });
 });
@@ -290,7 +238,7 @@ resetCountBtn.addEventListener('click', () => {
     });
 });
 
-// --- Live update blocked count while popup is open ---
+// --- Live update blocked count ---
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.blockedCount) {
         blockedCountEl.textContent = changes.blockedCount.newValue || 0;

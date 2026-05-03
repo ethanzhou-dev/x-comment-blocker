@@ -17,8 +17,6 @@
             --success: #22c55e;
             --tag-bg: #1e293b;
             --tag-border: #334155;
-            --cloud-tag-bg: #1a2332;
-            --cloud-tag-border: #1e3a5f;
         }
 
         * {
@@ -55,42 +53,14 @@
             color: var(--text-muted);
         }
 
-        .section-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-
         .section-label {
             font-size: 11px;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
+            margin-bottom: 8px;
             display: block;
-        }
-
-        .section-action {
-            background: none;
-            border: none;
-            color: var(--accent);
-            font-size: 11px;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 4px;
-            transition: background 0.15s;
-            width: auto;
-            height: auto;
-        }
-
-        .section-action:hover {
-            background: rgba(14, 165, 233, 0.12);
-        }
-
-        .section-action.syncing {
-            color: var(--text-muted);
-            pointer-events: none;
         }
 
         /* --- Keyword Input Area --- */
@@ -191,12 +161,6 @@
             color: var(--text);
             transition: border-color 0.2s, background 0.2s;
             animation: tagIn 0.2s ease;
-        }
-
-        .keyword-tag.cloud {
-            background: var(--cloud-tag-bg);
-            border-color: var(--cloud-tag-border);
-            padding: 4px 10px;
         }
 
         @keyframes tagIn {
@@ -362,9 +326,8 @@
             opacity: 1;
         }
 
-        body.disabled .section-cloud,
-        body.disabled .section-user,
-        body.disabled .control-group {
+        body.disabled .control-group,
+        body.disabled .section-user {
             opacity: 0.35;
             pointer-events: none;
         }
@@ -416,17 +379,11 @@
             background: rgba(239, 68, 68, 0.1);
         }
 
-        .sync-time {
-            font-size: 10px;
+        .cloud-info {
+            font-size: 11px;
             color: var(--text-muted);
-            margin-top: 4px;
-            text-align: right;
-        }
-
-        .section-divider {
-            height: 1px;
-            background: var(--border);
-            margin: 16px 0;
+            margin-left: auto;
+            margin-right: 8px;
         }
     </style>
 </head>
@@ -448,25 +405,14 @@
         <button class="stats-reset" id="resetCount" title="清零">重置</button>
     </div>
 
-    <!-- Cloud Keywords -->
-    <div class="section-cloud">
-        <div class="section-header">
-            <span class="section-label">☁ 云端词库</span>
-            <button class="section-action" id="syncBtn">同步更新</button>
-        </div>
-        <div class="keyword-list" id="cloudKeywordList">
-            <div class="empty-hint">加载中…</div>
-        </div>
-        <div class="sync-time" id="syncTime"></div>
+    <div class="control-group">
+        <label for="cloudToggle">☁ 云端词库</label>
+        <span class="cloud-info" id="cloudInfo"></span>
+        <input type="checkbox" id="cloudToggle">
     </div>
 
-    <div class="section-divider"></div>
-
-    <!-- User Keywords -->
     <div class="section-user">
-        <div class="section-header">
-            <span class="section-label">✎ 自定义词库</span>
-        </div>
+        <span class="section-label">✎ 自定义词库</span>
 
         <div class="keyword-input-row">
             <input type="text" id="newKeyword" placeholder="输入新的屏蔽词…">

@@ -14,6 +14,7 @@ chrome.storage.local.get({
     keywords: '',
     checkUsername: true,
     enabled: true,
+    cloudEnabled: true,
     blockedCount: 0,
     cloudKeywords: '',
     lastSyncTime: 0
@@ -23,18 +24,19 @@ chrome.storage.local.get({
         .map(k => k.trim().toLowerCase())
         .filter(k => k);
 
-    const cloudKeywords = items.cloudKeywords
-        ? items.cloudKeywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k)
-        : [];
+    let cloudKws = [];
+    if (items.cloudEnabled && items.cloudKeywords) {
+        cloudKws = items.cloudKeywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
+    }
 
     // Merge and deduplicate
-    blockKeywords = [...new Set([...cloudKeywords, ...userKeywords])];
+    blockKeywords = [...new Set([...cloudKws, ...userKeywords])];
     checkUsername = items.checkUsername;
     filterEnabled = items.enabled;
     blockedCount = items.blockedCount || 0;
 
     // Auto-sync cloud keywords if interval expired
-    if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
+    if (items.cloudEnabled && (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS))) {
         fetchCloudKeywords();
     }
 
