@@ -54,20 +54,45 @@ chrome.storage.local.get({
     });
 });
 
+// --- Decode base64 with UTF-8 support ---
+function decodeBase64UTF8(base64) {
+    const raw = atob(base64.replace(/\n/g, ''));
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) {
+        bytes[i] = raw.charCodeAt(i);
+    }
+    return new TextDecoder('utf-8').decode(bytes);
+}
+
 // --- Fetch cloud keywords and refresh filter ---
 async function fetchCloudKeywords() {
     try {
-        const resp = await fetch(CLOUD_KEYWORDS_URL, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' },
-            cache: 'no-store'
-        });
+        const headers = { 'Accept': 'application/vnd.github.v3+json' };
+        const stored = await chrome.storage.local.get({ cloudETag: '' });
+        if (stored.cloudETag) {
+            headers['If-None-Match'] = stored.cloudETag;
+        }
+
+        const resp = await fetch(CLOUD_KEYWORDS_URL, { headers, cache: 'no-store' });
+
+        // 304 Not Modified or rate limited — skip
+        if (resp.status === 304 || resp.status === 403 || resp.status === 429) {
+            if (resp.status === 304) {
+                chrome.storage.local.set({ lastSyncTime: Date.now() });
+            }
+            return;
+        }
+
         if (!resp.ok) return;
+
         const json = await resp.json();
-        const text = atob(json.content);
+        const text = decodeBase64UTF8(json.content);
+        const newETag = resp.headers.get('ETag') || '';
 
         const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
         chrome.storage.local.set({
             cloudKeywords: cloudList.join('\n'),
+            cloudETag: newETag,
             lastSyncTime: Date.now()
         });
 

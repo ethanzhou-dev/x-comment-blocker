@@ -171,20 +171,50 @@ newKeywordInput.addEventListener('keydown', (e) => {
     }
 });
 
+// --- Decode base64 with UTF-8 support ---
+function decodeBase64UTF8(base64) {
+    const raw = atob(base64.replace(/\n/g, ''));
+    const bytes = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) {
+        bytes[i] = raw.charCodeAt(i);
+    }
+    return new TextDecoder('utf-8').decode(bytes);
+}
+
 // --- Sync cloud keywords ---
 async function syncCloudKeywords(manual = false) {
     try {
-        const resp = await fetch(CLOUD_KEYWORDS_URL, {
-            headers: { 'Accept': 'application/vnd.github.v3+json' },
-            cache: 'no-store'
-        });
+        // Build headers with ETag for conditional request
+        const headers = { 'Accept': 'application/vnd.github.v3+json' };
+        const storedETag = (await chrome.storage.local.get({ cloudETag: '' })).cloudETag;
+        if (storedETag) {
+            headers['If-None-Match'] = storedETag;
+        }
+
+        const resp = await fetch(CLOUD_KEYWORDS_URL, { headers, cache: 'no-store' });
+
+        // 304 Not Modified — no changes
+        if (resp.status === 304) {
+            chrome.storage.local.set({ lastSyncTime: Date.now() });
+            if (manual) showStatus('云端词库已是最新');
+            return;
+        }
+
+        if (resp.status === 403 || resp.status === 429) {
+            if (manual) showStatus('API 请求过于频繁，请稍后再试');
+            return;
+        }
+
         if (!resp.ok) throw new Error('HTTP ' + resp.status);
+
         const json = await resp.json();
-        const text = atob(json.content);
+        const text = decodeBase64UTF8(json.content);
+        const newETag = resp.headers.get('ETag') || '';
 
         const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
         chrome.storage.local.set({
             cloudKeywords: cloudList.join('\n'),
+            cloudETag: newETag,
             lastSyncTime: Date.now()
         });
 
