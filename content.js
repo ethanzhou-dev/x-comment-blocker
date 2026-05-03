@@ -2,11 +2,13 @@
 let blockKeywords = [];
 let blockRegex = null;
 let checkUsername = true;
+let onlyComments = true;
 let filterEnabled = true;
 let cloudEnabled = true;
 let filterTimer = null;
 let blockedCount = 0;
 let contextValid = true;
+let filterVersion = 0;
 const blockedHashes = new Set();
 const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
@@ -74,12 +76,14 @@ function mergeKeywords(callback) {
 // --- Load settings ---
 safeStorageGet({
     checkUsername: true,
+    onlyComments: true,
     enabled: true,
     blockedCount: 0,
     lastSyncTime: 0,
     cloudEnabled: true
 }, (items) => {
     checkUsername = items.checkUsername;
+    onlyComments = items.onlyComments;
     filterEnabled = items.enabled;
     cloudEnabled = items.cloudEnabled;
     blockedCount = items.blockedCount || 0;
@@ -106,16 +110,33 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (!isContextValid()) return;
     if (area !== 'local') return;
 
+    let needsFilter = false;
+
     if (changes.enabled) {
         filterEnabled = changes.enabled.newValue;
+        needsFilter = true;
     }
     if (changes.checkUsername) {
         checkUsername = changes.checkUsername.newValue;
+        needsFilter = true;
+    }
+    if (changes.onlyComments) {
+        onlyComments = changes.onlyComments.newValue;
+        needsFilter = true;
+    }
+
+    if (needsFilter) {
+        filterVersion++;
     }
 
     // Re-merge keywords when cloud toggle, cloud data, or user keywords change
     if (changes.cloudEnabled || changes.cloudKeywords || changes.keywords) {
-        mergeKeywords();
+        mergeKeywords(() => {
+            filterVersion++;
+            scheduleFilter();
+        });
+    } else if (needsFilter) {
+        scheduleFilter();
     }
 });
 
@@ -131,41 +152,70 @@ if (document.head) {
 }
 
 // --- Core filter logic ---
+function getTwemojiText(node) {
+    if (!node) return "";
+    let text = "";
+    for (let child of node.childNodes) {
+        if (child.nodeType === Node.TEXT_NODE) {
+            text += child.textContent;
+        } else if (child.nodeType === Node.ELEMENT_NODE) {
+            if (child.tagName === 'IMG' && child.alt) {
+                text += child.alt;
+            } else {
+                text += getTwemojiText(child);
+            }
+        }
+    }
+    return text;
+}
+
 function filterTweets() {
-    if (!contextValid || !filterEnabled || !blockRegex) return;
+    if (!contextValid) return;
 
     // We check all cells because virtual lists (like Twitter's) recycle DOM nodes.
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]');
     let newBlocks = 0;
+    
+    const isStatusPage = /\/[^/]+\/status\/\d+/i.test(window.location.pathname);
 
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
 
-        let tweetBody = textNode ? textNode.textContent : "";
-        let userName = userNode ? userNode.textContent : "";
+        let tweetBody = textNode ? getTwemojiText(textNode) : "";
+        let userName = userNode ? getTwemojiText(userNode) : "";
         
-        // Cache key based on text and username to quickly skip unchanged recycled elements
-        const cacheKey = tweetBody + "|" + userName;
+        // Cache key based on text, username, filterVersion, and page type
+        const cacheKey = tweetBody + "|" + userName + "|" + filterVersion + "|" + isStatusPage;
         if (tweet.__cbxHash === cacheKey) {
             return; // Content hasn't changed, skip re-evaluating
         }
         tweet.__cbxHash = cacheKey;
 
-        if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
-        let isSpam = blockRegex.test(tweetBody);
+        let isSpam = false;
+        let shouldCheck = filterEnabled && (blockRegex !== null);
+        
+        if (onlyComments && !isStatusPage) {
+            shouldCheck = false;
+        }
 
-        if (!isSpam && checkUsername && userName) {
-            userName = userName.replace(invisibleCharsRegex, '');
-            isSpam = blockRegex.test(userName);
+        if (shouldCheck) {
+            if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
+            isSpam = blockRegex.test(tweetBody);
+
+            if (!isSpam && checkUsername && userName) {
+                userName = userName.replace(invisibleCharsRegex, '');
+                isSpam = blockRegex.test(userName);
+            }
         }
 
         if (isSpam) {
             if (!tweet.classList.contains('x-comment-blocker-hidden')) {
                 tweet.classList.add('x-comment-blocker-hidden');
             }
-            if (!blockedHashes.has(cacheKey)) {
-                blockedHashes.add(cacheKey);
+            const stableHash = tweetBody + "|" + userName;
+            if (!blockedHashes.has(stableHash)) {
+                blockedHashes.add(stableHash);
                 newBlocks++;
             }
         } else {
