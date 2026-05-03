@@ -7,6 +7,7 @@ let cloudEnabled = true;
 let filterTimer = null;
 let blockedCount = 0;
 let contextValid = true;
+const blockedHashes = new Set();
 
 // --- Check if extension context is still valid ---
 function isContextValid() {
@@ -120,37 +121,60 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
+// --- Inject CSS for hidden comments ---
+const style = document.createElement('style');
+style.textContent = `
+    .x-comment-blocker-hidden {
+        display: none !important;
+    }
+`;
+if (document.head) {
+    document.head.appendChild(style);
+}
+
 // --- Core filter logic ---
 function filterTweets() {
     if (!contextValid || !filterEnabled || !blockRegex) return;
 
-    const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]:not(.checked-by-script)');
+    // We check all cells because virtual lists (like Twitter's) recycle DOM nodes.
+    const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]');
     let newBlocks = 0;
     
     // Regex to match zero-width and invisible formatting characters
     const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
     tweets.forEach(tweet => {
-        tweet.classList.add('checked-by-script');
-
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
 
-        // textContent is much faster than innerText as it doesn't trigger layout recalculations
         let tweetBody = textNode ? textNode.textContent : "";
-        tweetBody = tweetBody.replace(invisibleCharsRegex, '');
+        let userName = userNode ? userNode.textContent : "";
+        
+        // Cache key based on text and username to quickly skip unchanged recycled elements
+        const cacheKey = tweetBody + "|" + userName;
+        if (tweet.dataset.cbxHash === cacheKey) {
+            return; // Content hasn't changed, skip re-evaluating
+        }
+        tweet.dataset.cbxHash = cacheKey;
 
+        tweetBody = tweetBody.replace(invisibleCharsRegex, '');
         let isSpam = blockRegex.test(tweetBody);
 
         if (!isSpam && checkUsername) {
-            let userName = userNode ? userNode.textContent : "";
             userName = userName.replace(invisibleCharsRegex, '');
             isSpam = blockRegex.test(userName);
         }
 
         if (isSpam) {
-            tweet.style.display = 'none';
-            newBlocks++;
+            if (!tweet.classList.contains('x-comment-blocker-hidden')) {
+                tweet.classList.add('x-comment-blocker-hidden');
+            }
+            if (!blockedHashes.has(cacheKey)) {
+                blockedHashes.add(cacheKey);
+                newBlocks++;
+            }
+        } else {
+            tweet.classList.remove('x-comment-blocker-hidden');
         }
     });
 
@@ -161,11 +185,17 @@ function filterTweets() {
 }
 
 // --- Throttled filter ---
+let filterRequested = false;
 function scheduleFilter() {
     if (!contextValid) return;
-    if (filterTimer) clearTimeout(filterTimer);
-    // Use setTimeout for debouncing instead of rAF to prevent excessive matching
-    filterTimer = setTimeout(() => {
-        filterTweets();
-    }, 150); 
+    
+    // Use requestAnimationFrame to process immediately before the next render.
+    // This avoids visual flashing of blocked comments.
+    if (!filterRequested) {
+        filterRequested = true;
+        requestAnimationFrame(() => {
+            filterTweets();
+            filterRequested = false;
+        });
+    }
 }
