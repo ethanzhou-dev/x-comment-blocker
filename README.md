@@ -7,6 +7,11 @@
 **一键净化 X (Twitter) 评论区，自动屏蔽垃圾信息与引流机器人。**  
 *Block Specific Comments and Usernames on X.*
 
+<p align="center">
+  <img src="https://img.shields.io/badge/license-MIT-green.svg" alt="License">
+  <img src="https://img.shields.io/badge/platform-Chrome%20|%20Edge-lightgrey.svg" alt="Platform">
+</p>
+
 ---
 
 ## 🌟 功能特性 (Features)
