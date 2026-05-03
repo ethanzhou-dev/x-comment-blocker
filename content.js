@@ -1,13 +1,10 @@
-// --- Config ---
-const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment-blocker/contents/keywords.txt';
-const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
-
 // --- State ---
 let blockKeywords = [];
+let blockRegex = null;
 let checkUsername = true;
 let filterEnabled = true;
 let cloudEnabled = true;
-let filterPending = false;
+let filterTimer = null;
 let blockedCount = 0;
 let contextValid = true;
 
@@ -55,6 +52,15 @@ function mergeKeywords(callback) {
 
         cloudEnabled = items.cloudEnabled;
         blockKeywords = [...new Set([...cloudKws, ...userKws])];
+        
+        if (blockKeywords.length > 0) {
+            // Escape special regex characters and join with OR
+            const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            blockRegex = new RegExp(escaped.join('|'), 'i');
+        } else {
+            blockRegex = null;
+        }
+
         if (callback) callback();
     });
 }
@@ -73,15 +79,10 @@ safeStorageGet({
     blockedCount = items.blockedCount || 0;
 
     mergeKeywords(() => {
-        // Auto-sync cloud keywords if enabled and interval expired
-        if (cloudEnabled && (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS))) {
-            fetchCloudKeywords();
-        }
-
         // Initial scan
         filterTweets();
 
-        // Observe DOM mutations with rAF throttle
+        // Observe DOM mutations with a setTimeout debounce
         const observer = new MutationObserver(() => {
             if (!contextValid) { observer.disconnect(); return; }
             scheduleFilter();
@@ -112,58 +113,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-// --- Decode base64 with UTF-8 support ---
-function decodeBase64UTF8(base64) {
-    const raw = atob(base64.replace(/\n/g, ''));
-    const bytes = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) {
-        bytes[i] = raw.charCodeAt(i);
-    }
-    return new TextDecoder('utf-8').decode(bytes);
-}
-
-// --- Fetch cloud keywords and refresh filter ---
-async function fetchCloudKeywords() {
-    if (!isContextValid()) return;
-
-    try {
-        const headers = { 'Accept': 'application/vnd.github.v3+json' };
-        const stored = await chrome.storage.local.get({ cloudETag: '' });
-        if (stored.cloudETag) {
-            headers['If-None-Match'] = stored.cloudETag;
-        }
-
-        const resp = await fetch(CLOUD_KEYWORDS_URL, { headers, cache: 'no-store' });
-
-        if (resp.status === 304 || resp.status === 403 || resp.status === 429) {
-            if (resp.status === 304) {
-                safeStorageSet({ lastSyncTime: Date.now() });
-            }
-            return;
-        }
-
-        if (!resp.ok) return;
-
-        const json = await resp.json();
-        const text = decodeBase64UTF8(json.content);
-        const newETag = resp.headers.get('ETag') || '';
-
-        const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
-        safeStorageSet({
-            cloudKeywords: cloudList.join('\n'),
-            cloudETag: newETag,
-            lastSyncTime: Date.now()
-        });
-
-        // mergeKeywords will be triggered automatically by storage.onChanged
-    } catch (e) {
-        // Silently fail, use cached keywords
-    }
-}
-
 // --- Core filter logic ---
 function filterTweets() {
-    if (!contextValid || !filterEnabled || blockKeywords.length === 0) return;
+    if (!contextValid || !filterEnabled || !blockRegex) return;
 
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]:not(.checked-by-script)');
     let newBlocks = 0;
@@ -174,13 +126,14 @@ function filterTweets() {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
 
-        const tweetBody = textNode ? textNode.innerText.toLowerCase() : "";
+        // textContent is much faster than innerText as it doesn't trigger layout recalculations
+        const tweetBody = textNode ? textNode.textContent : "";
 
-        let isSpam = blockKeywords.some(keyword => tweetBody.includes(keyword));
+        let isSpam = blockRegex.test(tweetBody);
 
         if (!isSpam && checkUsername) {
-            const userName = userNode ? userNode.innerText.toLowerCase() : "";
-            isSpam = blockKeywords.some(keyword => userName.includes(keyword));
+            const userName = userNode ? userNode.textContent : "";
+            isSpam = blockRegex.test(userName);
         }
 
         if (isSpam) {
@@ -197,10 +150,10 @@ function filterTweets() {
 
 // --- Throttled filter ---
 function scheduleFilter() {
-    if (filterPending || !contextValid) return;
-    filterPending = true;
-    requestAnimationFrame(() => {
+    if (!contextValid) return;
+    if (filterTimer) clearTimeout(filterTimer);
+    // Use setTimeout for debouncing instead of rAF to prevent excessive matching
+    filterTimer = setTimeout(() => {
         filterTweets();
-        filterPending = false;
-    });
+    }, 150); 
 }

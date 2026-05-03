@@ -9,11 +9,16 @@
     "128": "icon128.png"
   },
   "permissions": [
-    "storage"
+    "storage",
+    "alarms",
+    "contextMenus"
   ],
   "host_permissions": [
     "https://api.github.com/*"
   ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "设置屏蔽词",
