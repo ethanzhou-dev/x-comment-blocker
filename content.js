@@ -8,6 +8,7 @@ let filterTimer = null;
 let blockedCount = 0;
 let contextValid = true;
 const blockedHashes = new Set();
+const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
 // --- Check if extension context is still valid ---
 function isContextValid() {
@@ -44,9 +45,6 @@ function mergeKeywords(callback) {
         cloudEnabled: true,
         cloudKeywords: ''
     }, (items) => {
-        // Regex to match zero-width and invisible formatting characters
-        const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
-
         const userKws = items.keywords.split('\n')
             .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
             .filter(k => k);
@@ -139,9 +137,6 @@ function filterTweets() {
     // We check all cells because virtual lists (like Twitter's) recycle DOM nodes.
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]');
     let newBlocks = 0;
-    
-    // Regex to match zero-width and invisible formatting characters
-    const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
@@ -152,15 +147,15 @@ function filterTweets() {
         
         // Cache key based on text and username to quickly skip unchanged recycled elements
         const cacheKey = tweetBody + "|" + userName;
-        if (tweet.dataset.cbxHash === cacheKey) {
+        if (tweet.__cbxHash === cacheKey) {
             return; // Content hasn't changed, skip re-evaluating
         }
-        tweet.dataset.cbxHash = cacheKey;
+        tweet.__cbxHash = cacheKey;
 
-        tweetBody = tweetBody.replace(invisibleCharsRegex, '');
+        if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
         let isSpam = blockRegex.test(tweetBody);
 
-        if (!isSpam && checkUsername) {
+        if (!isSpam && checkUsername && userName) {
             userName = userName.replace(invisibleCharsRegex, '');
             isSpam = blockRegex.test(userName);
         }
