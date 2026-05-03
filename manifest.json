@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "X-Clean-Replies",
+  "name": "x-comment-blocker",
   "version": "1.0",
   "description": "一键净化 X (Twitter) 评论区，自动屏蔽垃圾信息与引流机器人。",
   "permissions": [
