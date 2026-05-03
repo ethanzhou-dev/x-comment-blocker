@@ -44,7 +44,7 @@ function mergeKeywords(callback) {
         cloudKeywords: ''
     }, (items) => {
         // Regex to match zero-width and invisible formatting characters
-        const invisibleCharsRegex = /[\u200B-\u200F\uFEFF\u202A-\u202E]/g;
+        const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
         const userKws = items.keywords.split('\n')
             .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
@@ -128,7 +128,7 @@ function filterTweets() {
     let newBlocks = 0;
     
     // Regex to match zero-width and invisible formatting characters
-    const invisibleCharsRegex = /[\u200B-\u200F\uFEFF\u202A-\u202E]/g;
+    const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
     tweets.forEach(tweet => {
         tweet.classList.add('checked-by-script');
