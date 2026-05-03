@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 
 <head>
     <meta charset="UTF-8">
@@ -12,14 +12,23 @@
             --text-muted: #a1a1aa;
             --accent: #0ea5e9;
             --accent-hover: #0284c7;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --success: #22c55e;
+            --tag-bg: #1e293b;
+            --tag-border: #334155;
+        }
+
+        * {
+            box-sizing: border-box;
         }
 
         body {
-            width: 300px;
+            width: 320px;
             padding: 20px;
             background-color: var(--bg);
             color: var(--text);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
             margin: 0;
         }
 
@@ -50,32 +59,190 @@
             display: block;
         }
 
-        textarea {
-            width: 100%;
-            height: 120px;
-            box-sizing: border-box;
+        /* --- Keyword Input Area --- */
+        .keyword-input-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .keyword-input-row input {
+            flex: 1;
+            height: 40px;
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 8px;
             color: var(--text);
-            padding: 12px;
+            padding: 0 12px;
             font-family: inherit;
             font-size: 13px;
-            line-height: 1.5;
-            resize: none;
             outline: none;
             transition: border-color 0.2s;
         }
 
-        textarea:focus {
+        .keyword-input-row input:focus {
             border-color: var(--accent);
         }
 
+        .keyword-input-row input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-add {
+            background: var(--accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s;
+            flex-shrink: 0;
+            line-height: 1;
+        }
+
+        .btn-add:hover {
+            background: var(--accent-hover);
+        }
+
+        /* --- Keyword Tags Container --- */
+        .keyword-list {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 10px;
+            min-height: 60px;
+            max-height: 200px;
+            overflow-y: auto;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-content: flex-start;
+        }
+
+        .keyword-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .keyword-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .keyword-list::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 2px;
+        }
+
+        .keyword-list .empty-hint {
+            width: 100%;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 12px;
+            padding: 10px 0;
+            user-select: none;
+        }
+
+        /* --- Individual Keyword Tag --- */
+        .keyword-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: var(--tag-bg);
+            border: 1px solid var(--tag-border);
+            border-radius: 6px;
+            padding: 4px 6px 4px 10px;
+            font-size: 13px;
+            color: var(--text);
+            transition: border-color 0.2s, background 0.2s;
+            animation: tagIn 0.2s ease;
+        }
+
+        @keyframes tagIn {
+            from {
+                opacity: 0;
+                transform: scale(0.85);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        .keyword-tag:hover {
+            border-color: var(--accent);
+        }
+
+        .keyword-tag .tag-text {
+            max-width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            cursor: default;
+        }
+
+        .keyword-tag .tag-edit-input {
+            background: var(--bg);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            color: var(--text);
+            font-size: 12px;
+            padding: 1px 4px;
+            width: 80px;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .keyword-tag .tag-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 2px;
+            line-height: 1;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s;
+            width: 20px;
+            height: 20px;
+            font-size: 11px;
+        }
+
+        .keyword-tag .tag-btn-edit {
+            color: var(--text-muted);
+        }
+
+        .keyword-tag .tag-btn-edit:hover {
+            color: var(--accent);
+            background: rgba(14, 165, 233, 0.12);
+        }
+
+        .keyword-tag .tag-btn-del {
+            color: var(--text-muted);
+        }
+
+        .keyword-tag .tag-btn-del:hover {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.12);
+        }
+
+        .keyword-tag .tag-btn-save {
+            color: var(--success);
+        }
+
+        .keyword-tag .tag-btn-save:hover {
+            background: rgba(34, 197, 94, 0.12);
+        }
+
+        /* --- Controls --- */
         .control-group {
             background: var(--card);
             border: 1px solid var(--border);
             border-radius: 8px;
-            padding: 12px;
+            height: 40px;
+            padding: 0 12px;
             margin: 16px 0;
             display: flex;
             align-items: center;
@@ -95,9 +262,10 @@
             cursor: pointer;
         }
 
-        button {
+        button#saveBtn {
             width: 100%;
-            padding: 10px;
+            height: 40px;
+            padding: 0;
             background-color: var(--accent);
             color: white;
             border: none;
@@ -108,12 +276,19 @@
             transition: background 0.2s;
         }
 
-        button:hover {
+        button#saveBtn:hover {
             background-color: var(--accent-hover);
         }
 
+        body {
+            position: relative;
+        }
+
         #status {
-            margin-top: 12px;
+            position: absolute;
+            left: 20px;
+            right: 20px;
+            bottom: 4px;
             font-size: 12px;
             color: var(--accent);
             text-align: center;
@@ -125,25 +300,41 @@
         #status.visible {
             opacity: 1;
         }
+
+        .keyword-count {
+            font-size: 11px;
+            color: var(--text-muted);
+            margin-top: 6px;
+            text-align: right;
+        }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h3>X Content Filter</h3>
-        <p>Advanced reply management system</p>
+        <h3>X 内容过滤器</h3>
+        <p>智能评论区屏蔽管理系统</p>
     </div>
 
-    <span class="section-label">Keyword Database</span>
-    <textarea id="keywords" placeholder="Enter keywords (one per line)..."></textarea>
+    <span class="section-label">屏蔽词库</span>
+
+    <div class="keyword-input-row">
+        <input type="text" id="newKeyword" placeholder="输入新的屏蔽词…">
+        <button class="btn-add" id="addBtn" title="添加">+</button>
+    </div>
+
+    <div class="keyword-list" id="keywordList">
+        <div class="empty-hint">暂无屏蔽词，请在上方添加</div>
+    </div>
+    <div class="keyword-count" id="keywordCount"></div>
 
     <div class="control-group">
-        <label for="checkUsername">Username Filtering</label>
+        <label for="checkUsername">同时过滤用户名</label>
         <input type="checkbox" id="checkUsername">
     </div>
 
-    <button id="saveBtn">Save Configuration</button>
-    <div id="status">Settings synchronized successfully</div>
+    <button id="saveBtn">保存配置</button>
+    <div id="status">设置已同步保存</div>
 
     <script src="popup.js"></script>
 </body>
