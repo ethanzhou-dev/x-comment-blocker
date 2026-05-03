@@ -34,6 +34,9 @@
 
         .header {
             margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
         .header h3 {
@@ -262,22 +265,47 @@
             cursor: pointer;
         }
 
-        button#saveBtn {
-            width: 100%;
-            height: 40px;
-            padding: 0;
-            background-color: var(--accent);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: background 0.2s;
+        /* --- Toggle Switch --- */
+        .toggle-switch {
+            position: relative;
+            width: 44px;
+            height: 24px;
+            flex-shrink: 0;
         }
 
-        button#saveBtn:hover {
-            background-color: var(--accent-hover);
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: var(--border);
+            border-radius: 24px;
+            transition: background 0.25s;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--text);
+            border-radius: 50%;
+            transition: transform 0.25s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background: var(--accent);
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(20px);
         }
 
         body {
@@ -301,19 +329,78 @@
             opacity: 1;
         }
 
+        body.disabled .keyword-input-row,
+        body.disabled .keyword-list,
+        body.disabled .keyword-count,
+        body.disabled .control-group {
+            opacity: 0.35;
+            pointer-events: none;
+        }
+
         .keyword-count {
             font-size: 11px;
             color: var(--text-muted);
             margin-top: 6px;
             text-align: right;
         }
+
+        .stats-bar {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            height: 40px;
+            padding: 0 12px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .stats-bar .stats-text {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .stats-bar .stats-number {
+            color: var(--accent);
+            font-weight: 700;
+        }
+
+        .stats-bar .stats-reset {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: color 0.15s, background 0.15s;
+            width: auto;
+            height: auto;
+        }
+
+        .stats-bar .stats-reset:hover {
+            color: var(--danger);
+            background: rgba(239, 68, 68, 0.1);
+        }
     </style>
 </head>
 
 <body>
     <div class="header">
-        <h3>X 内容过滤器</h3>
-        <p>智能评论区屏蔽管理系统</p>
+        <div>
+            <h3>X 内容过滤器</h3>
+            <p>智能评论区屏蔽管理系统</p>
+        </div>
+        <label class="toggle-switch" title="总开关">
+            <input type="checkbox" id="enableToggle" checked>
+            <span class="toggle-slider"></span>
+        </label>
+    </div>
+
+    <div class="stats-bar">
+        <span class="stats-text">已屏蔽 <span class="stats-number" id="blockedCount">0</span> 条评论</span>
+        <button class="stats-reset" id="resetCount" title="清零">重置</button>
     </div>
 
     <span class="section-label">屏蔽词库</span>
@@ -333,8 +420,7 @@
         <input type="checkbox" id="checkUsername">
     </div>
 
-    <button id="saveBtn">保存配置</button>
-    <div id="status">设置已同步保存</div>
+    <div id="status">已自动保存</div>
 
     <script src="popup.js"></script>
 </body>

@@ -1,5 +1,6 @@
 // --- State ---
 let keywords = [];
+let isLoading = true; // prevent auto-save during initial load
 
 // --- DOM refs ---
 const keywordList = document.getElementById('keywordList');
@@ -7,8 +8,35 @@ const keywordCount = document.getElementById('keywordCount');
 const newKeywordInput = document.getElementById('newKeyword');
 const addBtn = document.getElementById('addBtn');
 const checkUsernameEl = document.getElementById('checkUsername');
-const saveBtn = document.getElementById('saveBtn');
+const enableToggleEl = document.getElementById('enableToggle');
 const statusEl = document.getElementById('status');
+const blockedCountEl = document.getElementById('blockedCount');
+const resetCountBtn = document.getElementById('resetCount');
+
+// --- Auto-save to storage ---
+function autoSave() {
+    if (isLoading) return;
+
+    chrome.storage.local.set({
+        keywords: keywords.join('\n'),
+        checkUsername: checkUsernameEl.checked,
+        enabled: enableToggleEl.checked
+    }, () => {
+        statusEl.classList.add('visible');
+        setTimeout(() => {
+            statusEl.classList.remove('visible');
+        }, 1500);
+    });
+}
+
+// --- Update disabled state ---
+function updateEnabledState() {
+    if (enableToggleEl.checked) {
+        document.body.classList.remove('disabled');
+    } else {
+        document.body.classList.add('disabled');
+    }
+}
 
 // --- Render keyword tags ---
 function renderKeywords() {
@@ -47,6 +75,7 @@ function renderKeywords() {
         delBtn.addEventListener('click', () => {
             keywords.splice(index, 1);
             renderKeywords();
+            autoSave();
         });
 
         tag.appendChild(textSpan);
@@ -73,11 +102,11 @@ function startEdit(tagEl, index) {
         }
     });
 
-    const saveBtn = document.createElement('button');
-    saveBtn.className = 'tag-btn tag-btn-save';
-    saveBtn.textContent = '✓';
-    saveBtn.title = '确认';
-    saveBtn.addEventListener('click', () => confirmEdit(input, index));
+    const confirmBtn = document.createElement('button');
+    confirmBtn.className = 'tag-btn tag-btn-save';
+    confirmBtn.textContent = '✓';
+    confirmBtn.title = '确认';
+    confirmBtn.addEventListener('click', () => confirmEdit(input, index));
 
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'tag-btn tag-btn-del';
@@ -86,7 +115,7 @@ function startEdit(tagEl, index) {
     cancelBtn.addEventListener('click', () => renderKeywords());
 
     tagEl.appendChild(input);
-    tagEl.appendChild(saveBtn);
+    tagEl.appendChild(confirmBtn);
     tagEl.appendChild(cancelBtn);
 
     input.focus();
@@ -99,6 +128,7 @@ function confirmEdit(inputEl, index) {
         keywords[index] = val;
     }
     renderKeywords();
+    autoSave();
 }
 
 // --- Add keyword ---
@@ -117,6 +147,7 @@ function addKeyword() {
     newKeywordInput.value = '';
     newKeywordInput.focus();
     renderKeywords();
+    autoSave();
 
     // Scroll to bottom of list
     keywordList.scrollTop = keywordList.scrollHeight;
@@ -130,30 +161,44 @@ newKeywordInput.addEventListener('keydown', (e) => {
     }
 });
 
-// --- Save ---
-saveBtn.addEventListener('click', () => {
-    const keywordsStr = keywords.join('\n');
-    const checkUsername = checkUsernameEl.checked;
+// --- Toggle & checkbox auto-save ---
+enableToggleEl.addEventListener('change', () => {
+    updateEnabledState();
+    autoSave();
+});
 
-    chrome.storage.local.set({
-        keywords: keywordsStr,
-        checkUsername: checkUsername
-    }, () => {
-        statusEl.classList.add('visible');
-        setTimeout(() => {
-            statusEl.classList.remove('visible');
-        }, 2000);
-    });
+checkUsernameEl.addEventListener('change', () => {
+    autoSave();
 });
 
 // --- Load on init ---
 document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.get({
         keywords: "关注我\n主页有惊喜\n空投\nBTC\ntg群",
-        checkUsername: true
+        checkUsername: true,
+        enabled: true,
+        blockedCount: 0
     }, (items) => {
         keywords = items.keywords.split('\n').map(k => k.trim()).filter(k => k);
         checkUsernameEl.checked = items.checkUsername;
+        enableToggleEl.checked = items.enabled;
+        blockedCountEl.textContent = items.blockedCount || 0;
+        updateEnabledState();
         renderKeywords();
+        isLoading = false; // allow auto-save from now on
     });
+});
+
+// --- Reset blocked count ---
+resetCountBtn.addEventListener('click', () => {
+    chrome.storage.local.set({ blockedCount: 0 }, () => {
+        blockedCountEl.textContent = '0';
+    });
+});
+
+// --- Live update blocked count while popup is open ---
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area === 'local' && changes.blockedCount) {
+        blockedCountEl.textContent = changes.blockedCount.newValue || 0;
+    }
 });
