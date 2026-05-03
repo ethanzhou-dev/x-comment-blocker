@@ -9,10 +9,39 @@ let filterEnabled = true;
 let cloudEnabled = true;
 let filterPending = false;
 let blockedCount = 0;
+let contextValid = true;
+
+// --- Check if extension context is still valid ---
+function isContextValid() {
+    try {
+        return !!(chrome.runtime && chrome.runtime.id);
+    } catch (e) {
+        return false;
+    }
+}
+
+// --- Safe wrapper for chrome.storage calls ---
+function safeStorageGet(defaults, callback) {
+    if (!isContextValid()) { contextValid = false; return; }
+    try {
+        chrome.storage.local.get(defaults, callback);
+    } catch (e) {
+        contextValid = false;
+    }
+}
+
+function safeStorageSet(data) {
+    if (!isContextValid()) { contextValid = false; return; }
+    try {
+        chrome.storage.local.set(data);
+    } catch (e) {
+        contextValid = false;
+    }
+}
 
 // --- Rebuild keyword list from storage ---
 function mergeKeywords(callback) {
-    chrome.storage.local.get({
+    safeStorageGet({
         keywords: '',
         cloudEnabled: true,
         cloudKeywords: ''
@@ -31,7 +60,7 @@ function mergeKeywords(callback) {
 }
 
 // --- Load settings ---
-chrome.storage.local.get({
+safeStorageGet({
     checkUsername: true,
     enabled: true,
     blockedCount: 0,
@@ -54,6 +83,7 @@ chrome.storage.local.get({
 
         // Observe DOM mutations with rAF throttle
         const observer = new MutationObserver(() => {
+            if (!contextValid) { observer.disconnect(); return; }
             scheduleFilter();
         });
 
@@ -66,6 +96,7 @@ chrome.storage.local.get({
 
 // --- React to settings changes from popup ---
 chrome.storage.onChanged.addListener((changes, area) => {
+    if (!isContextValid()) return;
     if (area !== 'local') return;
 
     if (changes.enabled) {
@@ -93,6 +124,8 @@ function decodeBase64UTF8(base64) {
 
 // --- Fetch cloud keywords and refresh filter ---
 async function fetchCloudKeywords() {
+    if (!isContextValid()) return;
+
     try {
         const headers = { 'Accept': 'application/vnd.github.v3+json' };
         const stored = await chrome.storage.local.get({ cloudETag: '' });
@@ -104,7 +137,7 @@ async function fetchCloudKeywords() {
 
         if (resp.status === 304 || resp.status === 403 || resp.status === 429) {
             if (resp.status === 304) {
-                chrome.storage.local.set({ lastSyncTime: Date.now() });
+                safeStorageSet({ lastSyncTime: Date.now() });
             }
             return;
         }
@@ -116,7 +149,7 @@ async function fetchCloudKeywords() {
         const newETag = resp.headers.get('ETag') || '';
 
         const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
-        chrome.storage.local.set({
+        safeStorageSet({
             cloudKeywords: cloudList.join('\n'),
             cloudETag: newETag,
             lastSyncTime: Date.now()
@@ -130,7 +163,7 @@ async function fetchCloudKeywords() {
 
 // --- Core filter logic ---
 function filterTweets() {
-    if (!filterEnabled || blockKeywords.length === 0) return;
+    if (!contextValid || !filterEnabled || blockKeywords.length === 0) return;
 
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]:not(.checked-by-script)');
     let newBlocks = 0;
@@ -158,13 +191,13 @@ function filterTweets() {
 
     if (newBlocks > 0) {
         blockedCount += newBlocks;
-        chrome.storage.local.set({ blockedCount: blockedCount });
+        safeStorageSet({ blockedCount: blockedCount });
     }
 }
 
 // --- Throttled filter ---
 function scheduleFilter() {
-    if (filterPending) return;
+    if (filterPending || !contextValid) return;
     filterPending = true;
     requestAnimationFrame(() => {
         filterTweets();
