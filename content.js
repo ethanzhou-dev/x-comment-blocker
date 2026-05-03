@@ -43,11 +43,18 @@ function mergeKeywords(callback) {
         cloudEnabled: true,
         cloudKeywords: ''
     }, (items) => {
-        const userKws = items.keywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
+        // Regex to match zero-width and invisible formatting characters
+        const invisibleCharsRegex = /[\u200B-\u200F\uFEFF\u202A-\u202E]/g;
+
+        const userKws = items.keywords.split('\n')
+            .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
+            .filter(k => k);
 
         let cloudKws = [];
         if (items.cloudEnabled && items.cloudKeywords) {
-            cloudKws = items.cloudKeywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
+            cloudKws = items.cloudKeywords.split('\n')
+                .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
+                .filter(k => k);
         }
 
         cloudEnabled = items.cloudEnabled;
@@ -119,6 +126,9 @@ function filterTweets() {
 
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]:not(.checked-by-script)');
     let newBlocks = 0;
+    
+    // Regex to match zero-width and invisible formatting characters
+    const invisibleCharsRegex = /[\u200B-\u200F\uFEFF\u202A-\u202E]/g;
 
     tweets.forEach(tweet => {
         tweet.classList.add('checked-by-script');
@@ -127,12 +137,14 @@ function filterTweets() {
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
 
         // textContent is much faster than innerText as it doesn't trigger layout recalculations
-        const tweetBody = textNode ? textNode.textContent : "";
+        let tweetBody = textNode ? textNode.textContent : "";
+        tweetBody = tweetBody.replace(invisibleCharsRegex, '');
 
         let isSpam = blockRegex.test(tweetBody);
 
         if (!isSpam && checkUsername) {
-            const userName = userNode ? userNode.textContent : "";
+            let userName = userNode ? userNode.textContent : "";
+            userName = userName.replace(invisibleCharsRegex, '');
             isSpam = blockRegex.test(userName);
         }
 
