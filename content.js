@@ -6,52 +6,79 @@ const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 let blockKeywords = [];
 let checkUsername = true;
 let filterEnabled = true;
+let cloudEnabled = true;
 let filterPending = false;
 let blockedCount = 0;
 
-// --- Load settings and merge keyword lists ---
+// --- Rebuild keyword list from storage ---
+function mergeKeywords(callback) {
+    chrome.storage.local.get({
+        keywords: '',
+        cloudEnabled: true,
+        cloudKeywords: ''
+    }, (items) => {
+        const userKws = items.keywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
+
+        let cloudKws = [];
+        if (items.cloudEnabled && items.cloudKeywords) {
+            cloudKws = items.cloudKeywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
+        }
+
+        cloudEnabled = items.cloudEnabled;
+        blockKeywords = [...new Set([...cloudKws, ...userKws])];
+        if (callback) callback();
+    });
+}
+
+// --- Load settings ---
 chrome.storage.local.get({
-    keywords: '',
     checkUsername: true,
     enabled: true,
-    cloudEnabled: true,
     blockedCount: 0,
-    cloudKeywords: '',
-    lastSyncTime: 0
+    lastSyncTime: 0,
+    cloudEnabled: true
 }, (items) => {
-    const userKeywords = items.keywords
-        .split('\n')
-        .map(k => k.trim().toLowerCase())
-        .filter(k => k);
-
-    let cloudKws = [];
-    if (items.cloudEnabled && items.cloudKeywords) {
-        cloudKws = items.cloudKeywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
-    }
-
-    // Merge and deduplicate
-    blockKeywords = [...new Set([...cloudKws, ...userKeywords])];
     checkUsername = items.checkUsername;
     filterEnabled = items.enabled;
+    cloudEnabled = items.cloudEnabled;
     blockedCount = items.blockedCount || 0;
 
-    // Auto-sync cloud keywords if interval expired
-    if (items.cloudEnabled && (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS))) {
-        fetchCloudKeywords();
+    mergeKeywords(() => {
+        // Auto-sync cloud keywords if enabled and interval expired
+        if (cloudEnabled && (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS))) {
+            fetchCloudKeywords();
+        }
+
+        // Initial scan
+        filterTweets();
+
+        // Observe DOM mutations with rAF throttle
+        const observer = new MutationObserver(() => {
+            scheduleFilter();
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    });
+});
+
+// --- React to settings changes from popup ---
+chrome.storage.onChanged.addListener((changes, area) => {
+    if (area !== 'local') return;
+
+    if (changes.enabled) {
+        filterEnabled = changes.enabled.newValue;
+    }
+    if (changes.checkUsername) {
+        checkUsername = changes.checkUsername.newValue;
     }
 
-    // Initial scan
-    filterTweets();
-
-    // Observe DOM mutations with rAF throttle
-    const observer = new MutationObserver(() => {
-        scheduleFilter();
-    });
-
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
+    // Re-merge keywords when cloud toggle, cloud data, or user keywords change
+    if (changes.cloudEnabled || changes.cloudKeywords || changes.keywords) {
+        mergeKeywords();
+    }
 });
 
 // --- Decode base64 with UTF-8 support ---
@@ -75,7 +102,6 @@ async function fetchCloudKeywords() {
 
         const resp = await fetch(CLOUD_KEYWORDS_URL, { headers, cache: 'no-store' });
 
-        // 304 Not Modified or rate limited — skip
         if (resp.status === 304 || resp.status === 403 || resp.status === 429) {
             if (resp.status === 304) {
                 chrome.storage.local.set({ lastSyncTime: Date.now() });
@@ -96,12 +122,7 @@ async function fetchCloudKeywords() {
             lastSyncTime: Date.now()
         });
 
-        // Re-merge with user keywords
-        chrome.storage.local.get({ keywords: '' }, (items) => {
-            const userKws = items.keywords.split('\n').map(k => k.trim().toLowerCase()).filter(k => k);
-            const cloudKws = cloudList.map(k => k.toLowerCase());
-            blockKeywords = [...new Set([...cloudKws, ...userKws])];
-        });
+        // mergeKeywords will be triggered automatically by storage.onChanged
     } catch (e) {
         // Silently fail, use cached keywords
     }
