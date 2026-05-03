@@ -15,6 +15,7 @@ const checkUsernameEl = document.getElementById('checkUsername');
 const enableToggleEl = document.getElementById('enableToggle');
 const cloudToggleEl = document.getElementById('cloudToggle');
 const cloudInfoEl = document.getElementById('cloudInfo');
+const syncBtn = document.getElementById('syncBtn');
 const statusEl = document.getElementById('status');
 const blockedCountEl = document.getElementById('blockedCount');
 const resetCountBtn = document.getElementById('resetCount');
@@ -171,10 +172,10 @@ newKeywordInput.addEventListener('keydown', (e) => {
 });
 
 // --- Sync cloud keywords silently ---
-async function syncCloudKeywords() {
+async function syncCloudKeywords(manual = false) {
     try {
         const resp = await fetch(CLOUD_KEYWORDS_URL + '?t=' + Date.now());
-        if (!resp.ok) return;
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
         const text = await resp.text();
 
         const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
@@ -184,8 +185,12 @@ async function syncCloudKeywords() {
         });
 
         cloudInfoEl.textContent = `${cloudList.length} 个词`;
+        if (manual) showStatus('云端词库已同步');
     } catch (e) {
-        // Silently fail
+        if (manual) showStatus('同步失败，请检查网络');
+    } finally {
+        syncBtn.textContent = '同步';
+        syncBtn.classList.remove('syncing');
     }
 }
 
@@ -197,6 +202,12 @@ enableToggleEl.addEventListener('change', () => {
 
 checkUsernameEl.addEventListener('change', () => autoSave());
 cloudToggleEl.addEventListener('change', () => autoSave());
+
+syncBtn.addEventListener('click', () => {
+    syncBtn.textContent = '同步中…';
+    syncBtn.classList.add('syncing');
+    syncCloudKeywords(true);
+});
 
 // --- Load on init ---
 document.addEventListener('DOMContentLoaded', () => {

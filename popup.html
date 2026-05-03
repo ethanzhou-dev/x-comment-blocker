@@ -385,6 +385,30 @@
             margin-left: auto;
             margin-right: 8px;
         }
+
+        .btn-sync {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 3px 8px;
+            border-radius: 4px;
+            transition: color 0.15s, border-color 0.15s;
+            width: auto;
+            height: auto;
+            margin-right: 8px;
+        }
+
+        .btn-sync:hover {
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        .btn-sync.syncing {
+            color: var(--text-muted);
+            pointer-events: none;
+        }
     </style>
 </head>
 
@@ -408,6 +432,7 @@
     <div class="control-group">
         <label for="cloudToggle">☁ 云端词库</label>
         <span class="cloud-info" id="cloudInfo"></span>
+        <button class="btn-sync" id="syncBtn" title="同步云端词库">同步</button>
         <input type="checkbox" id="cloudToggle">
     </div>
 
