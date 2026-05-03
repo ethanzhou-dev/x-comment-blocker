@@ -17,6 +17,8 @@
             --success: #22c55e;
             --tag-bg: #1e293b;
             --tag-border: #334155;
+            --cloud-tag-bg: #1a2332;
+            --cloud-tag-border: #1e3a5f;
         }
 
         * {
@@ -24,12 +26,13 @@
         }
 
         body {
-            width: 320px;
+            width: 340px;
             padding: 20px;
             background-color: var(--bg);
             color: var(--text);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Microsoft YaHei", sans-serif;
             margin: 0;
+            position: relative;
         }
 
         .header {
@@ -52,14 +55,42 @@
             color: var(--text-muted);
         }
 
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
         .section-label {
             font-size: 11px;
             font-weight: 700;
             color: var(--text-muted);
             text-transform: uppercase;
             letter-spacing: 0.05em;
-            margin-bottom: 8px;
             display: block;
+        }
+
+        .section-action {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-size: 11px;
+            cursor: pointer;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background 0.15s;
+            width: auto;
+            height: auto;
+        }
+
+        .section-action:hover {
+            background: rgba(14, 165, 233, 0.12);
+        }
+
+        .section-action.syncing {
+            color: var(--text-muted);
+            pointer-events: none;
         }
 
         /* --- Keyword Input Area --- */
@@ -116,8 +147,8 @@
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 10px;
-            min-height: 60px;
-            max-height: 200px;
+            min-height: 40px;
+            max-height: 160px;
             overflow-y: auto;
             display: flex;
             flex-wrap: wrap;
@@ -143,7 +174,7 @@
             text-align: center;
             color: var(--text-muted);
             font-size: 12px;
-            padding: 10px 0;
+            padding: 6px 0;
             user-select: none;
         }
 
@@ -160,6 +191,12 @@
             color: var(--text);
             transition: border-color 0.2s, background 0.2s;
             animation: tagIn 0.2s ease;
+        }
+
+        .keyword-tag.cloud {
+            background: var(--cloud-tag-bg);
+            border-color: var(--cloud-tag-border);
+            padding: 4px 10px;
         }
 
         @keyframes tagIn {
@@ -308,10 +345,6 @@
             transform: translateX(20px);
         }
 
-        body {
-            position: relative;
-        }
-
         #status {
             position: absolute;
             left: 20px;
@@ -329,9 +362,8 @@
             opacity: 1;
         }
 
-        body.disabled .keyword-input-row,
-        body.disabled .keyword-list,
-        body.disabled .keyword-count,
+        body.disabled .section-cloud,
+        body.disabled .section-user,
         body.disabled .control-group {
             opacity: 0.35;
             pointer-events: none;
@@ -383,6 +415,19 @@
             color: var(--danger);
             background: rgba(239, 68, 68, 0.1);
         }
+
+        .sync-time {
+            font-size: 10px;
+            color: var(--text-muted);
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .section-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 16px 0;
+        }
     </style>
 </head>
 
@@ -403,17 +448,36 @@
         <button class="stats-reset" id="resetCount" title="清零">重置</button>
     </div>
 
-    <span class="section-label">屏蔽词库</span>
-
-    <div class="keyword-input-row">
-        <input type="text" id="newKeyword" placeholder="输入新的屏蔽词…">
-        <button class="btn-add" id="addBtn" title="添加">+</button>
+    <!-- Cloud Keywords -->
+    <div class="section-cloud">
+        <div class="section-header">
+            <span class="section-label">☁ 云端词库</span>
+            <button class="section-action" id="syncBtn">同步更新</button>
+        </div>
+        <div class="keyword-list" id="cloudKeywordList">
+            <div class="empty-hint">加载中…</div>
+        </div>
+        <div class="sync-time" id="syncTime"></div>
     </div>
 
-    <div class="keyword-list" id="keywordList">
-        <div class="empty-hint">暂无屏蔽词，请在上方添加</div>
+    <div class="section-divider"></div>
+
+    <!-- User Keywords -->
+    <div class="section-user">
+        <div class="section-header">
+            <span class="section-label">✎ 自定义词库</span>
+        </div>
+
+        <div class="keyword-input-row">
+            <input type="text" id="newKeyword" placeholder="输入新的屏蔽词…">
+            <button class="btn-add" id="addBtn" title="添加">+</button>
+        </div>
+
+        <div class="keyword-list" id="keywordList">
+            <div class="empty-hint">暂无自定义屏蔽词</div>
+        </div>
+        <div class="keyword-count" id="keywordCount"></div>
     </div>
-    <div class="keyword-count" id="keywordCount"></div>
 
     <div class="control-group">
         <label for="checkUsername">同时过滤用户名</label>
