@@ -10,7 +10,7 @@
 
 "X Comment Blocker" (the "Extension") does NOT collect, transmit, distribute, or sell any of your personal information, browsing history, or user data. 
 
-本扩展程序（“X 内容过滤器”）不收集、不传输、不分发、也不出售您的任何个人信息、浏览历史或用户数据。
+本扩展程序（“X 内容过滤器”）不收集、不传输、不分发、也不出售您的任何个人信息、浏览历史或用户数据
 
 
 
