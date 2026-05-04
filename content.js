@@ -207,6 +207,13 @@ function filterTweets() {
         
         const cacheKey = tweetBody + "|" + userName + "|" + filterVersion + "|" + isStatusPage + "|" + tweetHasEmoji;
         if (tweet.__cbxHash === cacheKey) {
+            if (tweet.__cbxIsSpam) {
+                if (!tweet.classList.contains('x-comment-blocker-hidden')) {
+                    tweet.classList.add('x-comment-blocker-hidden');
+                }
+            } else {
+                tweet.classList.remove('x-comment-blocker-hidden');
+            }
             return;
         }
         tweet.__cbxHash = cacheKey;
@@ -252,11 +259,13 @@ function filterTweets() {
                 isSpam = blockRegex ? blockRegex.test(tweetBody) : false;
 
                 if (!isSpam && checkUsername && userName) {
-                    userName = userName.replace(invisibleCharsRegex, '');
-                    isSpam = blockRegex ? blockRegex.test(userName) : false;
+                    let cleanUserName = userName.replace(/[\s_.-]+/g, '').replace(invisibleCharsRegex, '');
+                    isSpam = blockRegex ? blockRegex.test(cleanUserName) : false;
                 }
             }
         }
+
+        tweet.__cbxIsSpam = isSpam;
 
         if (isSpam) {
             if (!tweet.classList.contains('x-comment-blocker-hidden')) {
