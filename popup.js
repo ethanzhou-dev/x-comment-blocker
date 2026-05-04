@@ -1,11 +1,8 @@
-// --- Config ---
-const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
+const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
 
-// --- State ---
 let userKeywords = [];
 let isLoading = true;
 
-// --- DOM refs ---
 const keywordList = document.getElementById('keywordList');
 const keywordCount = document.getElementById('keywordCount');
 const newKeywordInput = document.getElementById('newKeyword');
@@ -21,7 +18,6 @@ const statusEl = document.getElementById('status');
 const blockedCountEl = document.getElementById('blockedCount');
 const resetCountBtn = document.getElementById('resetCount');
 
-// --- Show status toast ---
 function showStatus(text) {
     statusEl.textContent = text;
     statusEl.classList.add('visible');
@@ -30,7 +26,6 @@ function showStatus(text) {
     }, 1500);
 }
 
-// --- Auto-save to storage ---
 function autoSave() {
     if (isLoading) return;
 
@@ -46,7 +41,6 @@ function autoSave() {
     });
 }
 
-// --- Update disabled state ---
 function updateEnabledState() {
     if (enableToggleEl.checked) {
         document.body.classList.remove('disabled');
@@ -55,7 +49,6 @@ function updateEnabledState() {
     }
 }
 
-// --- Render user keyword tags ---
 function renderUserKeywords() {
     keywordList.innerHTML = '';
 
@@ -102,7 +95,6 @@ function renderUserKeywords() {
     keywordCount.textContent = `共 ${userKeywords.length} 个自定义词`;
 }
 
-// --- Inline edit mode ---
 function startEdit(tagEl, index) {
     tagEl.innerHTML = '';
 
@@ -146,7 +138,6 @@ function confirmEdit(inputEl, index) {
     autoSave();
 }
 
-// --- Add keyword ---
 function addKeyword() {
     const val = newKeywordInput.value.trim();
     if (!val) return;
@@ -174,7 +165,6 @@ newKeywordInput.addEventListener('keydown', (e) => {
     }
 });
 
-// --- Sync cloud keywords ---
 function syncCloudKeywords(manual = false) {
     chrome.runtime.sendMessage({ action: 'manualSync' }, (response) => {
         if (chrome.runtime.lastError || !response || !response.ok) {
@@ -193,7 +183,6 @@ function syncCloudKeywords(manual = false) {
     });
 }
 
-// --- Toggle & checkbox ---
 enableToggleEl.addEventListener('change', () => {
     updateEnabledState();
     autoSave();
@@ -210,7 +199,6 @@ syncBtn.addEventListener('click', () => {
     syncCloudKeywords(true);
 });
 
-// --- Load on init ---
 document.addEventListener('DOMContentLoaded', () => {
     chrome.storage.local.get({
         keywords: '',
@@ -240,21 +228,18 @@ document.addEventListener('DOMContentLoaded', () => {
         renderUserKeywords();
         isLoading = false;
 
-        // Auto-sync if interval expired
         if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
             syncCloudKeywords();
         }
     });
 });
 
-// --- Reset blocked count ---
 resetCountBtn.addEventListener('click', () => {
     chrome.storage.local.set({ blockedCount: 0 }, () => {
         blockedCountEl.textContent = '0';
     });
 });
 
-// --- Live update blocked count ---
 chrome.storage.onChanged.addListener((changes, area) => {
     if (area === 'local' && changes.blockedCount) {
         blockedCountEl.textContent = changes.blockedCount.newValue || 0;

@@ -1,9 +1,7 @@
-// --- Config ---
 const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment-blocker/contents/keywords.txt';
 const ALARM_NAME = 'cloudKeywordSync';
-const SYNC_INTERVAL_MINUTES = 360; // 6 hours
+const SYNC_INTERVAL_MINUTES = 360;
 
-// --- Decode base64 with UTF-8 support ---
 function decodeBase64UTF8(base64) {
     const raw = atob(base64.replace(/\n/g, ''));
     const bytes = new Uint8Array(raw.length);
@@ -13,15 +11,12 @@ function decodeBase64UTF8(base64) {
     return new TextDecoder('utf-8').decode(bytes);
 }
 
-// --- Setup on install ---
 chrome.runtime.onInstalled.addListener(() => {
-    // Periodic cloud sync alarm
     chrome.alarms.create(ALARM_NAME, {
         delayInMinutes: 1,
         periodInMinutes: SYNC_INTERVAL_MINUTES
     });
 
-    // Right-click context menu for quick keyword addition
     chrome.contextMenus.create({
         id: 'addToBlocklist',
         title: '添加「%s」到屏蔽词',
@@ -30,14 +25,12 @@ chrome.runtime.onInstalled.addListener(() => {
     });
 });
 
-// --- Handle alarm ---
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === ALARM_NAME) {
         syncCloudKeywords();
     }
 });
 
-// --- Handle context menu click ---
 chrome.contextMenus.onClicked.addListener((info) => {
     if (info.menuItemId === 'addToBlocklist' && info.selectionText) {
         const keyword = info.selectionText.trim();
@@ -53,7 +46,6 @@ chrome.contextMenus.onClicked.addListener((info) => {
     }
 });
 
-// --- Cloud keyword sync ---
 async function syncCloudKeywords() {
     const { cloudEnabled } = await chrome.storage.local.get({ cloudEnabled: true });
     if (!cloudEnabled) return false;
@@ -85,17 +77,15 @@ async function syncCloudKeywords() {
         });
         return true;
     } catch (e) {
-        // Silently fail, use cached keywords
         return false;
     }
 }
 
-// --- Listen for manual sync requests from popup ---
 chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
     if (msg.action === 'manualSync') {
         syncCloudKeywords()
             .then((success) => sendResponse({ ok: success }))
             .catch(() => sendResponse({ ok: false }));
-        return true; // async response
+        return true;
     }
 });

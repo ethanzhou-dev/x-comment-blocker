@@ -1,4 +1,3 @@
-// --- State ---
 let blockKeywords = [];
 let blockRegex = null;
 let checkUsername = true;
@@ -20,7 +19,6 @@ try {
     emojiRegex = /[\uD800-\uDBFF][\uDC00-\uDFFF]/;
 }
 
-// --- Check if extension context is still valid ---
 function isContextValid() {
     try {
         return !!(chrome.runtime && chrome.runtime.id);
@@ -29,7 +27,6 @@ function isContextValid() {
     }
 }
 
-// --- Safe wrapper for chrome.storage calls ---
 function safeStorageGet(defaults, callback) {
     if (!isContextValid()) { contextValid = false; return; }
     try {
@@ -48,7 +45,6 @@ function safeStorageSet(data) {
     }
 }
 
-// --- Rebuild keyword list from storage ---
 function mergeKeywords(callback) {
     safeStorageGet({
         keywords: '',
@@ -70,7 +66,6 @@ function mergeKeywords(callback) {
         blockKeywords = [...new Set([...cloudKws, ...userKws])];
         
         if (blockKeywords.length > 0) {
-            // Escape special regex characters and join with OR
             const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
             blockRegex = new RegExp(escaped.join('|'), 'i');
         } else {
@@ -81,7 +76,6 @@ function mergeKeywords(callback) {
     });
 }
 
-// --- Load settings ---
 safeStorageGet({
     checkUsername: true,
     onlyComments: true,
@@ -99,10 +93,8 @@ safeStorageGet({
     blockedCount = items.blockedCount || 0;
 
     mergeKeywords(() => {
-        // Initial scan
         filterTweets();
 
-        // Observe DOM mutations with a setTimeout debounce
         const observer = new MutationObserver(() => {
             if (!contextValid) { observer.disconnect(); return; }
             scheduleFilter();
@@ -115,7 +107,6 @@ safeStorageGet({
     });
 });
 
-// --- React to settings changes from popup ---
 chrome.storage.onChanged.addListener((changes, area) => {
     if (!isContextValid()) return;
     if (area !== 'local') return;
@@ -143,7 +134,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
         filterVersion++;
     }
 
-    // Re-merge keywords when cloud toggle, cloud data, or user keywords change
     if (changes.cloudEnabled || changes.cloudKeywords || changes.keywords) {
         mergeKeywords(() => {
             filterVersion++;
@@ -154,7 +144,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-// --- Inject CSS for hidden comments ---
 const style = document.createElement('style');
 style.textContent = `
     .x-comment-blocker-hidden {
@@ -165,7 +154,6 @@ if (document.head) {
     document.head.appendChild(style);
 }
 
-// --- Core filter logic ---
 function getTweetTextForKeywords(node) {
     if (!node) return "";
     let result = "";
@@ -186,10 +174,8 @@ function getTweetTextForKeywords(node) {
 function hasEmoji(node) {
     if (!node) return false;
     
-    // Check raw text content for native emojis
     if (emojiRegex.test(node.textContent || '')) return true;
     
-    // Check all images within the node for twemojis
     const imgs = node.querySelectorAll('img');
     for (let img of imgs) {
         const src = img.src || '';
@@ -202,11 +188,10 @@ function hasEmoji(node) {
 function filterTweets() {
     if (!contextValid) return;
 
-    // We check all cells because virtual lists (like Twitter's) recycle DOM nodes.
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]');
     let newBlocks = 0;
     
-    const isStatusPage = /\/[^/]+\/status\/\d+/i.test(window.location.pathname);
+    const isStatusPage = /\/[^\/]+\/status\/\d+/i.test(window.location.pathname);
 
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
@@ -220,10 +205,9 @@ function filterTweets() {
             tweetHasEmoji = hasEmoji(textNode);
         }
         
-        // Cache key based on text, username, filterVersion, and page type
         const cacheKey = tweetBody + "|" + userName + "|" + filterVersion + "|" + isStatusPage + "|" + tweetHasEmoji;
         if (tweet.__cbxHash === cacheKey) {
-            return; // Content hasn't changed, skip re-evaluating
+            return;
         }
         tweet.__cbxHash = cacheKey;
 
@@ -238,9 +222,7 @@ function filterTweets() {
             if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
             
             let isEmojiSpam = false;
-            // 屏蔽Emoji功能：强制只在评论区(isStatusPage)生效，且仅检测推文正文
             if (blockEmoji && isStatusPage) {
-                // 判断是否是当前详情页的主推文，避免误伤
                 let isMainTweet = false;
                 const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
                 const pageStatusId = urlMatch ? urlMatch[1] : null;
@@ -251,7 +233,6 @@ function filterTweets() {
                         const link = timeEl.closest('a');
                         if (link) {
                             const hrefMatch = link.getAttribute('href').match(/\/status\/(\d+)/i);
-                            // 只要该推文区域里有任何时间链接指向当前页面的 ID，就当做是主推文放行
                             if (hrefMatch && hrefMatch[1] === pageStatusId) {
                                 isMainTweet = true;
                                 break;
@@ -297,10 +278,6 @@ function filterTweets() {
     }
 }
 
-// --- Instant filter ---
-// We do not use requestAnimationFrame here anymore. Running synchronously inside the MutationObserver 
-// microtask ensures elements are hidden *before* the browser calculates layout or restores scroll position,
-// fixing the bug where the page jumps down when returning from a clicked comment.
 function scheduleFilter() {
     if (!contextValid) return;
     filterTweets();
