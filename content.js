@@ -3,6 +3,7 @@ let blockKeywords = [];
 let blockRegex = null;
 let checkUsername = true;
 let onlyComments = true;
+let blockEmoji = false;
 let filterEnabled = true;
 let cloudEnabled = true;
 let filterTimer = null;
@@ -11,6 +12,13 @@ let contextValid = true;
 let filterVersion = 0;
 const blockedHashes = new Set();
 const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
+
+let emojiRegex;
+try {
+    emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
+} catch (e) {
+    emojiRegex = /[\uD800-\uDBFF][\uDC00-\uDFFF]/;
+}
 
 // --- Check if extension context is still valid ---
 function isContextValid() {
@@ -77,6 +85,7 @@ function mergeKeywords(callback) {
 safeStorageGet({
     checkUsername: true,
     onlyComments: true,
+    blockEmoji: false,
     enabled: true,
     blockedCount: 0,
     lastSyncTime: 0,
@@ -84,6 +93,7 @@ safeStorageGet({
 }, (items) => {
     checkUsername = items.checkUsername;
     onlyComments = items.onlyComments;
+    blockEmoji = items.blockEmoji;
     filterEnabled = items.enabled;
     cloudEnabled = items.cloudEnabled;
     blockedCount = items.blockedCount || 0;
@@ -124,6 +134,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
         onlyComments = changes.onlyComments.newValue;
         needsFilter = true;
     }
+    if (changes.blockEmoji) {
+        blockEmoji = changes.blockEmoji.newValue;
+        needsFilter = true;
+    }
 
     if (needsFilter) {
         filterVersion++;
@@ -152,21 +166,37 @@ if (document.head) {
 }
 
 // --- Core filter logic ---
-function getTwemojiText(node) {
+function getTweetTextForKeywords(node) {
     if (!node) return "";
-    let text = "";
-    for (let child of node.childNodes) {
+    let result = "";
+    for (const child of node.childNodes) {
         if (child.nodeType === Node.TEXT_NODE) {
-            text += child.textContent;
+            result += child.nodeValue;
         } else if (child.nodeType === Node.ELEMENT_NODE) {
-            if (child.tagName === 'IMG' && child.alt) {
-                text += child.alt;
+            if (child.tagName.toLowerCase() === 'img' && child.alt) {
+                result += child.alt;
             } else {
-                text += getTwemojiText(child);
+                result += getTweetTextForKeywords(child);
             }
         }
     }
-    return text;
+    return result;
+}
+
+function hasEmoji(node) {
+    if (!node) return false;
+    
+    // Check raw text content for native emojis
+    if (emojiRegex.test(node.textContent || '')) return true;
+    
+    // Check all images within the node for twemojis
+    const imgs = node.querySelectorAll('img');
+    for (let img of imgs) {
+        const src = img.src || '';
+        if (src.includes('emoji') || src.includes('twemoji')) return true;
+        if (img.alt && emojiRegex.test(img.alt)) return true;
+    }
+    return false;
 }
 
 function filterTweets() {
@@ -182,18 +212,23 @@ function filterTweets() {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
 
-        let tweetBody = textNode ? getTwemojiText(textNode) : "";
-        let userName = userNode ? getTwemojiText(userNode) : "";
+        let tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
+        let userName = userNode ? getTweetTextForKeywords(userNode) : "";
+        
+        let tweetHasEmoji = false;
+        if (blockEmoji && isStatusPage && textNode) {
+            tweetHasEmoji = hasEmoji(textNode);
+        }
         
         // Cache key based on text, username, filterVersion, and page type
-        const cacheKey = tweetBody + "|" + userName + "|" + filterVersion + "|" + isStatusPage;
+        const cacheKey = tweetBody + "|" + userName + "|" + filterVersion + "|" + isStatusPage + "|" + tweetHasEmoji;
         if (tweet.__cbxHash === cacheKey) {
             return; // Content hasn't changed, skip re-evaluating
         }
         tweet.__cbxHash = cacheKey;
 
         let isSpam = false;
-        let shouldCheck = filterEnabled && (blockRegex !== null);
+        let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji);
         
         if (onlyComments && !isStatusPage) {
             shouldCheck = false;
@@ -201,11 +236,44 @@ function filterTweets() {
 
         if (shouldCheck) {
             if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
-            isSpam = blockRegex.test(tweetBody);
+            
+            let isEmojiSpam = false;
+            // 屏蔽Emoji功能：强制只在评论区(isStatusPage)生效，且仅检测推文正文
+            if (blockEmoji && isStatusPage) {
+                // 判断是否是当前详情页的主推文，避免误伤
+                let isMainTweet = false;
+                const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
+                const pageStatusId = urlMatch ? urlMatch[1] : null;
+                
+                if (pageStatusId) {
+                    const timeNodes = tweet.querySelectorAll('time');
+                    for (let timeEl of timeNodes) {
+                        const link = timeEl.closest('a');
+                        if (link) {
+                            const hrefMatch = link.getAttribute('href').match(/\/status\/(\d+)/i);
+                            // 只要该推文区域里有任何时间链接指向当前页面的 ID，就当做是主推文放行
+                            if (hrefMatch && hrefMatch[1] === pageStatusId) {
+                                isMainTweet = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+                
+                if (!isMainTweet && tweetHasEmoji) {
+                    isEmojiSpam = true;
+                }
+            }
+            
+            if (isEmojiSpam) {
+                isSpam = true;
+            } else {
+                isSpam = blockRegex ? blockRegex.test(tweetBody) : false;
 
-            if (!isSpam && checkUsername && userName) {
-                userName = userName.replace(invisibleCharsRegex, '');
-                isSpam = blockRegex.test(userName);
+                if (!isSpam && checkUsername && userName) {
+                    userName = userName.replace(invisibleCharsRegex, '');
+                    isSpam = blockRegex ? blockRegex.test(userName) : false;
+                }
             }
         }
 

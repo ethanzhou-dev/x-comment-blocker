@@ -12,6 +12,7 @@ const newKeywordInput = document.getElementById('newKeyword');
 const addBtn = document.getElementById('addBtn');
 const checkUsernameEl = document.getElementById('checkUsername');
 const onlyCommentsEl = document.getElementById('onlyComments');
+const blockEmojiEl = document.getElementById('blockEmoji');
 const enableToggleEl = document.getElementById('enableToggle');
 const cloudToggleEl = document.getElementById('cloudToggle');
 const cloudInfoEl = document.getElementById('cloudInfo');
@@ -37,6 +38,7 @@ function autoSave() {
         keywords: userKeywords.join('\n'),
         checkUsername: checkUsernameEl.checked,
         onlyComments: onlyCommentsEl.checked,
+        blockEmoji: blockEmojiEl.checked,
         enabled: enableToggleEl.checked,
         cloudEnabled: cloudToggleEl.checked
     }, () => {
@@ -199,6 +201,7 @@ enableToggleEl.addEventListener('change', () => {
 
 checkUsernameEl.addEventListener('change', () => autoSave());
 onlyCommentsEl.addEventListener('change', () => autoSave());
+blockEmojiEl.addEventListener('change', () => autoSave());
 cloudToggleEl.addEventListener('change', () => autoSave());
 
 syncBtn.addEventListener('click', () => {
@@ -213,6 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
         keywords: '',
         checkUsername: true,
         onlyComments: true,
+        blockEmoji: false,
         enabled: true,
         cloudEnabled: true,
         blockedCount: 0,
@@ -222,6 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
         userKeywords = items.keywords.split('\n').map(k => k.trim()).filter(k => k);
         checkUsernameEl.checked = items.checkUsername;
         onlyCommentsEl.checked = items.onlyComments;
+        blockEmojiEl.checked = items.blockEmoji;
         enableToggleEl.checked = items.enabled;
         cloudToggleEl.checked = items.cloudEnabled;
         blockedCountEl.textContent = items.blockedCount || 0;
