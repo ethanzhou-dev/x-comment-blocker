@@ -7,137 +7,99 @@ let filterEnabled = true;
 let cloudEnabled = true;
 let filterTimer = null;
 let blockedCount = 0;
-let contextValid = true;
 let filterVersion = 0;
 const blockedHashes = new Set();
-const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
-
-let emojiRegex;
-try {
-    emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
-} catch (e) {
-    emojiRegex = /[\uD800-\uDBFF][\uDC00-\uDFFF]/;
-}
-
-function isContextValid() {
-    try {
-        return !!(chrome.runtime && chrome.runtime.id);
-    } catch (e) {
-        return false;
-    }
-}
-
-async function safeStorageGet(defaults) {
-    if (!isContextValid()) { contextValid = false; return defaults; }
-    try {
-        return await chrome.storage.local.get(defaults);
-    } catch (e) {
-        contextValid = false;
-        return defaults;
-    }
-}
-
-function safeStorageSet(data) {
-    if (!isContextValid()) { contextValid = false; return; }
-    try {
-        chrome.storage.local.set(data);
-    } catch (e) {
-        contextValid = false;
-    }
-}
-
-function parseKeywords(text) {
-    if (!text) return [];
-    return text.split('\n')
-        .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
-        .filter(Boolean);
-}
+const emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
 
 async function mergeKeywords() {
-    const items = await safeStorageGet({
-        keywords: '',
-        cloudEnabled: true,
-        cloudKeywords: ''
-    });
+    try {
+        const items = await chrome.storage.local.get({
+            keywords: '',
+            cloudEnabled: true,
+            cloudKeywords: ''
+        });
 
-    const userKws = parseKeywords(items.keywords);
-    const cloudKws = items.cloudEnabled ? parseKeywords(items.cloudKeywords) : [];
+        const userKws = parseKeywords(items.keywords);
+        const cloudKws = items.cloudEnabled ? parseKeywords(items.cloudKeywords) : [];
 
-    cloudEnabled = items.cloudEnabled;
-    blockKeywords = [...new Set([...cloudKws, ...userKws])];
-    
-    if (blockKeywords.length > 0) {
-        const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        blockRegex = new RegExp(escaped.join('|'), 'i');
-    } else {
-        blockRegex = null;
+        cloudEnabled = items.cloudEnabled;
+        blockKeywords = [...new Set([...cloudKws, ...userKws])];
+        
+        if (blockKeywords.length > 0) {
+            const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+            blockRegex = new RegExp(escaped.join('|'), 'i');
+        } else {
+            blockRegex = null;
+        }
+    } catch(e) {
+        // Extension context invalidated
     }
 }
 
 (async function init() {
-    const items = await safeStorageGet({
-        checkUsername: true,
-        onlyComments: true,
-        blockEmoji: false,
-        enabled: true,
-        blockedCount: 0,
-        lastSyncTime: 0,
-        cloudEnabled: true
-    });
+    try {
+        const items = await chrome.storage.local.get({
+            checkUsername: true,
+            onlyComments: true,
+            blockEmoji: false,
+            enabled: true,
+            blockedCount: 0,
+            lastSyncTime: 0,
+            cloudEnabled: true
+        });
 
-    checkUsername = items.checkUsername;
-    onlyComments = items.onlyComments;
-    blockEmoji = items.blockEmoji;
-    filterEnabled = items.enabled;
-    cloudEnabled = items.cloudEnabled;
-    blockedCount = items.blockedCount || 0;
+        checkUsername = items.checkUsername;
+        onlyComments = items.onlyComments;
+        blockEmoji = items.blockEmoji;
+        filterEnabled = items.enabled;
+        cloudEnabled = items.cloudEnabled;
+        blockedCount = items.blockedCount || 0;
 
-    await mergeKeywords();
-    filterTweets();
+        await mergeKeywords();
+        filterTweets();
 
-    const observer = new MutationObserver((mutations) => {
-        if (!contextValid) { observer.disconnect(); return; }
-        
-        const affectedTweets = new Set();
+        const observer = new MutationObserver((mutations) => {
+            if (!chrome.runtime?.id) { observer.disconnect(); return; }
+            
+            const affectedTweets = new Set();
 
-        for (const mutation of mutations) {
-            for (const node of mutation.addedNodes) {
-                if (node.nodeType === Node.ELEMENT_NODE) {
-                    if (node.getAttribute('data-testid') === 'cellInnerDiv') {
-                        affectedTweets.add(node);
-                    } else if (node.querySelector) {
-                        const innerTweets = node.querySelectorAll('[data-testid="cellInnerDiv"]');
-                        innerTweets.forEach(t => affectedTweets.add(t));
+            for (const mutation of mutations) {
+                for (const node of mutation.addedNodes) {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        if (node.getAttribute('data-testid') === 'cellInnerDiv') {
+                            affectedTweets.add(node);
+                        } else if (node.querySelector) {
+                            const innerTweets = node.querySelectorAll('[data-testid="cellInnerDiv"]');
+                            innerTweets.forEach(t => affectedTweets.add(t));
+                        }
+                    }
+                }
+                
+                if (mutation.target) {
+                    const el = mutation.target.nodeType === Node.ELEMENT_NODE ? mutation.target : mutation.target.parentElement;
+                    if (el && el.closest) {
+                        const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
+                        if (closestTweet) {
+                            affectedTweets.add(closestTweet);
+                        }
                     }
                 }
             }
             
-            if (mutation.target) {
-                const el = mutation.target.nodeType === Node.ELEMENT_NODE ? mutation.target : mutation.target.parentElement;
-                if (el && el.closest) {
-                    const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
-                    if (closestTweet) {
-                        affectedTweets.add(closestTweet);
-                    }
-                }
+            if (affectedTweets.size > 0) {
+                filterTweets(Array.from(affectedTweets));
             }
-        }
-        
-        if (affectedTweets.size > 0) {
-            filterTweets(Array.from(affectedTweets));
-        }
-    });
+        });
 
-    observer.observe(document.body, {
-        childList: true,
-        subtree: true,
-        characterData: true
-    });
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    } catch(e) {}
 })();
 
 chrome.storage.onChanged.addListener((changes, area) => {
-    if (!isContextValid()) return;
-    if (area !== 'local') return;
+    if (area !== 'local' || !chrome.runtime?.id) return;
 
     let needsFilter = false;
 
@@ -184,19 +146,12 @@ if (document.head) {
 
 function getTweetTextForKeywords(node) {
     if (!node) return "";
-    let result = "";
-    for (const child of node.childNodes) {
-        if (child.nodeType === Node.TEXT_NODE) {
-            result += child.nodeValue;
-        } else if (child.nodeType === Node.ELEMENT_NODE) {
-            if (child.tagName.toLowerCase() === 'img' && child.alt) {
-                result += child.alt;
-            } else {
-                result += getTweetTextForKeywords(child);
-            }
-        }
+    let text = node.textContent || "";
+    const imgs = node.querySelectorAll('img[alt]');
+    for (const img of imgs) {
+        text += img.alt;
     }
-    return result;
+    return text;
 }
 
 function hasEmoji(node) {
@@ -214,10 +169,10 @@ function hasEmoji(node) {
 }
 
 function filterTweets(specificTweets = null) {
-    if (!contextValid) return;
+    if (!chrome.runtime?.id) return;
 
     const tweets = specificTweets || document.querySelectorAll('[data-testid="cellInnerDiv"]');
-    if (tweets.length === 0 && !specificTweets) return; // avoid unnecessary work if no tweets
+    if (tweets.length === 0 && !specificTweets) return; 
 
     let newBlocks = 0;
     
@@ -313,11 +268,11 @@ function filterTweets(specificTweets = null) {
 
     if (newBlocks > 0) {
         blockedCount += newBlocks;
-        safeStorageSet({ blockedCount: blockedCount });
+        chrome.storage.local.set({ blockedCount: blockedCount }).catch(()=>{});
     }
 }
 
 function scheduleFilter() {
-    if (!contextValid) return;
+    if (!chrome.runtime?.id) return;
     filterTweets();
 }

@@ -1,9 +1,5 @@
-const SYNC_INTERVAL_MS = 6 * 60 * 60 * 1000;
-
 let userKeywords = [];
 let isLoading = true;
-
-const parseList = (str) => (str || '').split('\n').map(k => k.trim()).filter(Boolean);
 
 const keywordList = document.getElementById('keywordList');
 const keywordCount = document.getElementById('keywordCount');
@@ -110,17 +106,18 @@ function startEdit(tagEl, index) {
 }
 
 function confirmEdit(inputEl, index) {
-    const val = inputEl.value.trim();
-    if (val) {
-        userKeywords[index] = val;
+    const inputKws = parseKeywords(inputEl.value);
+    if (inputKws.length > 0) {
+        userKeywords[index] = inputKws[0];
     }
     renderUserKeywords();
     autoSave();
 }
 
 function addKeyword() {
-    const val = newKeywordInput.value.trim();
-    if (!val) return;
+    const inputKws = parseKeywords(newKeywordInput.value);
+    if (inputKws.length === 0) return;
+    const val = inputKws[0];
 
     if (userKeywords.includes(val)) {
         newKeywordInput.value = '';
@@ -145,19 +142,18 @@ newKeywordInput.addEventListener('keydown', (e) => {
     }
 });
 
-function syncCloudKeywords(manual = false) {
-    chrome.runtime.sendMessage({ action: 'manualSync' }, async (response) => {
-        if (chrome.runtime.lastError || !response || !response.ok) {
-            if (manual) showStatus('同步失败，请检查网络');
-        } else {
-            const items = await chrome.storage.local.get({ cloudKeywords: '' });
-            const cloudList = parseList(items.cloudKeywords);
-            cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
-            if (manual) showStatus('云端词库已同步');
-        }
-        syncBtn.textContent = '同步';
-        syncBtn.classList.remove('syncing');
-    });
+async function triggerCloudSync(manual = false) {
+    const success = await syncCloudKeywords();
+    if (!success) {
+        if (manual) showStatus('同步失败，请检查网络');
+    } else {
+        const items = await chrome.storage.local.get({ cloudKeywords: '' });
+        const cloudList = parseKeywords(items.cloudKeywords);
+        cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
+        if (manual) showStatus('云端词库已同步');
+    }
+    syncBtn.textContent = '同步';
+    syncBtn.classList.remove('syncing');
 }
 
 enableToggleEl.addEventListener('change', () => {
@@ -173,7 +169,7 @@ cloudToggleEl.addEventListener('change', () => autoSave());
 syncBtn.addEventListener('click', () => {
     syncBtn.textContent = '同步中…';
     syncBtn.classList.add('syncing');
-    syncCloudKeywords(true);
+    triggerCloudSync(true);
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
@@ -189,7 +185,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         lastSyncTime: 0
     });
 
-    userKeywords = parseList(items.keywords);
+    userKeywords = parseKeywords(items.keywords);
     checkUsernameEl.checked = items.checkUsername;
     onlyCommentsEl.checked = items.onlyComments;
     blockEmojiEl.checked = items.blockEmoji;
@@ -197,7 +193,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     cloudToggleEl.checked = items.cloudEnabled;
     blockedCountEl.textContent = items.blockedCount || 0;
 
-    const cloudList = parseList(items.cloudKeywords);
+    const cloudList = parseKeywords(items.cloudKeywords);
     cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
 
     updateEnabledState();
@@ -205,7 +201,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     isLoading = false;
 
     if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
-        syncCloudKeywords();
+        triggerCloudSync();
     }
 });
 

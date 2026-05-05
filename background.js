@@ -1,8 +1,6 @@
-const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment-blocker/contents/keywords.txt';
-const ALARM_NAME = 'cloudKeywordSync';
-const SYNC_INTERVAL_MINUTES = 360;
+importScripts('utils.js');
 
-const parseList = (str) => (str || '').split('\n').map(k => k.trim()).filter(Boolean);
+const ALARM_NAME = 'cloudKeywordSync';
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, {
@@ -26,58 +24,17 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.contextMenus.onClicked.addListener((info) => {
     if (info.menuItemId === 'addToBlocklist' && info.selectionText) {
-        const keyword = info.selectionText.trim();
-        if (!keyword) return;
+        const inputKws = parseKeywords(info.selectionText);
+        if (inputKws.length === 0) return;
+        
+        const keyword = inputKws[0];
 
         chrome.storage.local.get({ keywords: '' }, (items) => {
-            const existing = parseList(items.keywords);
+            const existing = parseKeywords(items.keywords);
             if (!existing.includes(keyword)) {
                 existing.push(keyword);
                 chrome.storage.local.set({ keywords: existing.join('\n') });
             }
         });
-    }
-});
-
-async function syncCloudKeywords() {
-    const { cloudEnabled } = await chrome.storage.local.get({ cloudEnabled: true });
-    if (!cloudEnabled) return false;
-
-    try {
-        const headers = { 'Accept': 'application/vnd.github.v3.raw' };
-        const { cloudETag } = await chrome.storage.local.get({ cloudETag: '' });
-        if (cloudETag) {
-            headers['If-None-Match'] = cloudETag;
-        }
-
-        const resp = await fetch(CLOUD_KEYWORDS_URL, { headers, cache: 'no-store' });
-
-        if (resp.status === 304) {
-            await chrome.storage.local.set({ lastSyncTime: Date.now() });
-            return true;
-        }
-        if (resp.status === 403 || resp.status === 429 || !resp.ok) return false;
-
-        const text = await resp.text();
-        const newETag = resp.headers.get('ETag') || '';
-
-        const cloudList = parseList(text);
-        await chrome.storage.local.set({
-            cloudKeywords: cloudList.join('\n'),
-            cloudETag: newETag,
-            lastSyncTime: Date.now()
-        });
-        return true;
-    } catch (e) {
-        return false;
-    }
-}
-
-chrome.runtime.onMessage.addListener((msg, _sender, sendResponse) => {
-    if (msg.action === 'manualSync') {
-        syncCloudKeywords()
-            .then((success) => sendResponse({ ok: success }))
-            .catch(() => sendResponse({ ok: false }));
-        return true;
     }
 });
