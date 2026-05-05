@@ -2,6 +2,8 @@ const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment
 const ALARM_NAME = 'cloudKeywordSync';
 const SYNC_INTERVAL_MINUTES = 360;
 
+const parseList = (str) => (str || '').split('\n').map(k => k.trim()).filter(Boolean);
+
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, {
         delayInMinutes: 1,
@@ -28,7 +30,7 @@ chrome.contextMenus.onClicked.addListener((info) => {
         if (!keyword) return;
 
         chrome.storage.local.get({ keywords: '' }, (items) => {
-            const existing = items.keywords.split('\n').map(k => k.trim()).filter(k => k);
+            const existing = parseList(items.keywords);
             if (!existing.includes(keyword)) {
                 existing.push(keyword);
                 chrome.storage.local.set({ keywords: existing.join('\n') });
@@ -59,7 +61,7 @@ async function syncCloudKeywords() {
         const text = await resp.text();
         const newETag = resp.headers.get('ETag') || '';
 
-        const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
+        const cloudList = parseList(text);
         await chrome.storage.local.set({
             cloudKeywords: cloudList.join('\n'),
             cloudETag: newETag,
