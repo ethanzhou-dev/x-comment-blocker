@@ -27,12 +27,13 @@ function isContextValid() {
     }
 }
 
-function safeStorageGet(defaults, callback) {
-    if (!isContextValid()) { contextValid = false; return; }
+async function safeStorageGet(defaults) {
+    if (!isContextValid()) { contextValid = false; return defaults; }
     try {
-        chrome.storage.local.get(defaults, callback);
+        return await chrome.storage.local.get(defaults);
     } catch (e) {
         contextValid = false;
+        return defaults;
     }
 }
 
@@ -45,46 +46,45 @@ function safeStorageSet(data) {
     }
 }
 
-function mergeKeywords(callback) {
-    safeStorageGet({
+function parseKeywords(text) {
+    if (!text) return [];
+    return text.split('\n')
+        .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
+        .filter(Boolean);
+}
+
+async function mergeKeywords() {
+    const items = await safeStorageGet({
         keywords: '',
         cloudEnabled: true,
         cloudKeywords: ''
-    }, (items) => {
-        const userKws = items.keywords.split('\n')
-            .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
-            .filter(k => k);
-
-        let cloudKws = [];
-        if (items.cloudEnabled && items.cloudKeywords) {
-            cloudKws = items.cloudKeywords.split('\n')
-                .map(k => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
-                .filter(k => k);
-        }
-
-        cloudEnabled = items.cloudEnabled;
-        blockKeywords = [...new Set([...cloudKws, ...userKws])];
-        
-        if (blockKeywords.length > 0) {
-            const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-            blockRegex = new RegExp(escaped.join('|'), 'i');
-        } else {
-            blockRegex = null;
-        }
-
-        if (callback) callback();
     });
+
+    const userKws = parseKeywords(items.keywords);
+    const cloudKws = items.cloudEnabled ? parseKeywords(items.cloudKeywords) : [];
+
+    cloudEnabled = items.cloudEnabled;
+    blockKeywords = [...new Set([...cloudKws, ...userKws])];
+    
+    if (blockKeywords.length > 0) {
+        const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        blockRegex = new RegExp(escaped.join('|'), 'i');
+    } else {
+        blockRegex = null;
+    }
 }
 
-safeStorageGet({
-    checkUsername: true,
-    onlyComments: true,
-    blockEmoji: false,
-    enabled: true,
-    blockedCount: 0,
-    lastSyncTime: 0,
-    cloudEnabled: true
-}, (items) => {
+(async function init() {
+    const items = await safeStorageGet({
+        checkUsername: true,
+        onlyComments: true,
+        blockEmoji: false,
+        enabled: true,
+        blockedCount: 0,
+        lastSyncTime: 0,
+        cloudEnabled: true
+    });
+
     checkUsername = items.checkUsername;
     onlyComments = items.onlyComments;
     blockEmoji = items.blockEmoji;
@@ -92,20 +92,19 @@ safeStorageGet({
     cloudEnabled = items.cloudEnabled;
     blockedCount = items.blockedCount || 0;
 
-    mergeKeywords(() => {
-        filterTweets();
+    await mergeKeywords();
+    filterTweets();
 
-        const observer = new MutationObserver(() => {
-            if (!contextValid) { observer.disconnect(); return; }
-            scheduleFilter();
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
+    const observer = new MutationObserver(() => {
+        if (!contextValid) { observer.disconnect(); return; }
+        scheduleFilter();
     });
-});
+
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+})();
 
 chrome.storage.onChanged.addListener((changes, area) => {
     if (!isContextValid()) return;
@@ -135,7 +134,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 
     if (changes.cloudEnabled || changes.cloudKeywords || changes.keywords) {
-        mergeKeywords(() => {
+        mergeKeywords().then(() => {
             filterVersion++;
             scheduleFilter();
         });
@@ -191,7 +190,9 @@ function filterTweets() {
     const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]');
     let newBlocks = 0;
     
-    const isStatusPage = /\/[^\/]+\/status\/\d+/i.test(window.location.pathname);
+    const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
+    const pageStatusId = urlMatch ? urlMatch[1] : null;
+    const isStatusPage = !!pageStatusId;
 
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
@@ -231,8 +232,6 @@ function filterTweets() {
             let isEmojiSpam = false;
             if (blockEmoji && isStatusPage) {
                 let isMainTweet = false;
-                const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
-                const pageStatusId = urlMatch ? urlMatch[1] : null;
                 
                 if (pageStatusId) {
                     const timeNodes = tweet.querySelectorAll('time');

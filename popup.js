@@ -26,19 +26,18 @@ function showStatus(text) {
     }, 1500);
 }
 
-function autoSave() {
+async function autoSave() {
     if (isLoading) return;
 
-    chrome.storage.local.set({
+    await chrome.storage.local.set({
         keywords: userKeywords.join('\n'),
         checkUsername: checkUsernameEl.checked,
         onlyComments: onlyCommentsEl.checked,
         blockEmoji: blockEmojiEl.checked,
         enabled: enableToggleEl.checked,
         cloudEnabled: cloudToggleEl.checked
-    }, () => {
-        showStatus('已自动保存');
     });
+    showStatus('已自动保存');
 }
 
 function updateEnabledState() {
@@ -49,46 +48,36 @@ function updateEnabledState() {
     }
 }
 
+function el(tag, props, children) {
+    const element = document.createElement(tag);
+    Object.assign(element, props);
+    if (children) children.forEach(c => element.appendChild(typeof c === 'string' ? document.createTextNode(c) : c));
+    return element;
+}
+
 function renderUserKeywords() {
     keywordList.innerHTML = '';
 
     if (userKeywords.length === 0) {
-        const hint = document.createElement('div');
-        hint.className = 'empty-hint';
-        hint.textContent = '暂无自定义屏蔽词';
-        keywordList.appendChild(hint);
+        keywordList.appendChild(el('div', { className: 'empty-hint', textContent: '暂无自定义屏蔽词' }));
         keywordCount.textContent = '';
         return;
     }
 
     userKeywords.forEach((kw, index) => {
-        const tag = document.createElement('span');
-        tag.className = 'keyword-tag';
-
-        const textSpan = document.createElement('span');
-        textSpan.className = 'tag-text';
-        textSpan.textContent = kw;
-        textSpan.title = kw;
-
-        const editBtn = document.createElement('button');
-        editBtn.className = 'tag-btn tag-btn-edit';
-        editBtn.textContent = '✎';
-        editBtn.title = '编辑';
-        editBtn.addEventListener('click', () => startEdit(tag, index));
-
-        const delBtn = document.createElement('button');
-        delBtn.className = 'tag-btn tag-btn-del';
-        delBtn.textContent = '✕';
-        delBtn.title = '删除';
-        delBtn.addEventListener('click', () => {
+        const editBtn = el('button', { className: 'tag-btn tag-btn-edit', textContent: '✎', title: '编辑', onclick: () => startEdit(tag, index) });
+        const delBtn = el('button', { className: 'tag-btn tag-btn-del', textContent: '✕', title: '删除', onclick: () => {
             userKeywords.splice(index, 1);
             renderUserKeywords();
             autoSave();
-        });
+        }});
 
-        tag.appendChild(textSpan);
-        tag.appendChild(editBtn);
-        tag.appendChild(delBtn);
+        const tag = el('span', { className: 'keyword-tag' }, [
+            el('span', { className: 'tag-text', textContent: kw, title: kw }),
+            editBtn,
+            delBtn
+        ]);
+
         keywordList.appendChild(tag);
     });
 
@@ -98,9 +87,7 @@ function renderUserKeywords() {
 function startEdit(tagEl, index) {
     tagEl.innerHTML = '';
 
-    const input = document.createElement('input');
-    input.className = 'tag-edit-input';
-    input.value = userKeywords[index];
+    const input = el('input', { className: 'tag-edit-input', value: userKeywords[index] });
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             confirmEdit(input, index);
@@ -109,17 +96,8 @@ function startEdit(tagEl, index) {
         }
     });
 
-    const confirmBtn = document.createElement('button');
-    confirmBtn.className = 'tag-btn tag-btn-save';
-    confirmBtn.textContent = '✓';
-    confirmBtn.title = '确认';
-    confirmBtn.addEventListener('click', () => confirmEdit(input, index));
-
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'tag-btn tag-btn-del';
-    cancelBtn.textContent = '✕';
-    cancelBtn.title = '取消';
-    cancelBtn.addEventListener('click', () => renderUserKeywords());
+    const confirmBtn = el('button', { className: 'tag-btn tag-btn-save', textContent: '✓', title: '确认', onclick: () => confirmEdit(input, index) });
+    const cancelBtn = el('button', { className: 'tag-btn tag-btn-del', textContent: '✕', title: '取消', onclick: () => renderUserKeywords() });
 
     tagEl.appendChild(input);
     tagEl.appendChild(confirmBtn);
@@ -166,17 +144,16 @@ newKeywordInput.addEventListener('keydown', (e) => {
 });
 
 function syncCloudKeywords(manual = false) {
-    chrome.runtime.sendMessage({ action: 'manualSync' }, (response) => {
+    chrome.runtime.sendMessage({ action: 'manualSync' }, async (response) => {
         if (chrome.runtime.lastError || !response || !response.ok) {
             if (manual) showStatus('同步失败，请检查网络');
         } else {
-            chrome.storage.local.get({ cloudKeywords: '' }, (items) => {
-                const cloudList = items.cloudKeywords
-                    ? items.cloudKeywords.split('\n').map(k => k.trim()).filter(k => k)
-                    : [];
-                cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
-                if (manual) showStatus('云端词库已同步');
-            });
+            const items = await chrome.storage.local.get({ cloudKeywords: '' });
+            const cloudList = items.cloudKeywords
+                ? items.cloudKeywords.split('\n').map(k => k.trim()).filter(k => k)
+                : [];
+            cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
+            if (manual) showStatus('云端词库已同步');
         }
         syncBtn.textContent = '同步';
         syncBtn.classList.remove('syncing');
@@ -199,8 +176,8 @@ syncBtn.addEventListener('click', () => {
     syncCloudKeywords(true);
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-    chrome.storage.local.get({
+document.addEventListener('DOMContentLoaded', async () => {
+    const items = await chrome.storage.local.get({
         keywords: '',
         checkUsername: true,
         onlyComments: true,
@@ -210,34 +187,33 @@ document.addEventListener('DOMContentLoaded', () => {
         blockedCount: 0,
         cloudKeywords: '',
         lastSyncTime: 0
-    }, (items) => {
-        userKeywords = items.keywords.split('\n').map(k => k.trim()).filter(k => k);
-        checkUsernameEl.checked = items.checkUsername;
-        onlyCommentsEl.checked = items.onlyComments;
-        blockEmojiEl.checked = items.blockEmoji;
-        enableToggleEl.checked = items.enabled;
-        cloudToggleEl.checked = items.cloudEnabled;
-        blockedCountEl.textContent = items.blockedCount || 0;
-
-        const cloudList = items.cloudKeywords
-            ? items.cloudKeywords.split('\n').map(k => k.trim()).filter(k => k)
-            : [];
-        cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
-
-        updateEnabledState();
-        renderUserKeywords();
-        isLoading = false;
-
-        if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
-            syncCloudKeywords();
-        }
     });
+
+    userKeywords = items.keywords.split('\n').map(k => k.trim()).filter(k => k);
+    checkUsernameEl.checked = items.checkUsername;
+    onlyCommentsEl.checked = items.onlyComments;
+    blockEmojiEl.checked = items.blockEmoji;
+    enableToggleEl.checked = items.enabled;
+    cloudToggleEl.checked = items.cloudEnabled;
+    blockedCountEl.textContent = items.blockedCount || 0;
+
+    const cloudList = items.cloudKeywords
+        ? items.cloudKeywords.split('\n').map(k => k.trim()).filter(k => k)
+        : [];
+    cloudInfoEl.textContent = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
+
+    updateEnabledState();
+    renderUserKeywords();
+    isLoading = false;
+
+    if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
+        syncCloudKeywords();
+    }
 });
 
-resetCountBtn.addEventListener('click', () => {
-    chrome.storage.local.set({ blockedCount: 0 }, () => {
-        blockedCountEl.textContent = '0';
-    });
+resetCountBtn.addEventListener('click', async () => {
+    await chrome.storage.local.set({ blockedCount: 0 });
+    blockedCountEl.textContent = '0';
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
