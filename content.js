@@ -198,16 +198,8 @@ function filterTweets() {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
 
-        let tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
-        let userName = userNode ? getTweetTextForKeywords(userNode) : "";
-        
-        let tweetHasEmoji = false;
-        if (blockEmoji && isStatusPage && textNode) {
-            tweetHasEmoji = hasEmoji(textNode);
-        }
-        
-        const cacheKey = tweetBody + "|" + userName + "|" + filterVersion + "|" + isStatusPage + "|" + tweetHasEmoji;
-        if (tweet.__cbxHash === cacheKey) {
+        const quickHash = (textNode ? textNode.textContent : "") + "|" + (userNode ? userNode.textContent : "") + "|" + filterVersion + "|" + isStatusPage;
+        if (tweet.__cbxQuickHash === quickHash) {
             if (tweet.__cbxIsSpam) {
                 if (!tweet.classList.contains('x-comment-blocker-hidden')) {
                     tweet.classList.add('x-comment-blocker-hidden');
@@ -217,7 +209,15 @@ function filterTweets() {
             }
             return;
         }
-        tweet.__cbxHash = cacheKey;
+        tweet.__cbxQuickHash = quickHash;
+
+        let tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
+        let userName = userNode ? getTweetTextForKeywords(userNode) : "";
+        
+        let tweetHasEmoji = false;
+        if (blockEmoji && isStatusPage && textNode) {
+            tweetHasEmoji = hasEmoji(textNode);
+        }
 
         let isSpam = false;
         let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji);

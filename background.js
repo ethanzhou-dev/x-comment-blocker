@@ -2,15 +2,6 @@ const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment
 const ALARM_NAME = 'cloudKeywordSync';
 const SYNC_INTERVAL_MINUTES = 360;
 
-function decodeBase64UTF8(base64) {
-    const raw = atob(base64.replace(/\n/g, ''));
-    const bytes = new Uint8Array(raw.length);
-    for (let i = 0; i < raw.length; i++) {
-        bytes[i] = raw.charCodeAt(i);
-    }
-    return new TextDecoder('utf-8').decode(bytes);
-}
-
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, {
         delayInMinutes: 1,
@@ -51,7 +42,7 @@ async function syncCloudKeywords() {
     if (!cloudEnabled) return false;
 
     try {
-        const headers = { 'Accept': 'application/vnd.github.v3+json' };
+        const headers = { 'Accept': 'application/vnd.github.v3.raw' };
         const { cloudETag } = await chrome.storage.local.get({ cloudETag: '' });
         if (cloudETag) {
             headers['If-None-Match'] = cloudETag;
@@ -65,8 +56,7 @@ async function syncCloudKeywords() {
         }
         if (resp.status === 403 || resp.status === 429 || !resp.ok) return false;
 
-        const json = await resp.json();
-        const text = decodeBase64UTF8(json.content);
+        const text = await resp.text();
         const newETag = resp.headers.get('ETag') || '';
 
         const cloudList = text.split('\n').map(k => k.trim()).filter(k => k);
