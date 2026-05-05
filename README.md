@@ -18,13 +18,13 @@
 ## 🌟 功能特性 (Features)
 
 - ☁️ **云端词库 (Cloud Sync)**: 自动订阅并每6小时更新一次维护的云端垃圾屏蔽词库，支持一键同步。
-- ✎ **自定义词库 (Custom Keywords)**: 支持添加你个人的屏蔽词（正则表达式自动转义）。
+- ✎ **自定义词库 (Custom Keywords)**: 支持添加你个人的屏蔽词。
 - ⚙️ **高级设置 (Advanced Settings)**: 包含多项净化选项：
-  - **用户名过滤 (Username Filtering)**: 开启后同时验证“用户名”是否包含屏蔽词，打击广告引流账号。
-  - **仅评论区过滤 (Comments Only)**: 保护主时间线，只对推文下方的评论区应用屏蔽规则。
+  - **用户名过滤 (Username Filtering)**: 开启后同时验证“用户名”是否包含屏蔽词。
+  - **仅评论区过滤 (Comments Only)**: 只对推文下方的评论区应用屏蔽规则。
   - **特殊字符屏蔽 (Block Special Chars)**: 拦截包含特殊符号特征的垃圾评论。
-  - **Emoji 屏蔽 (Block Emojis)**: 可选屏蔽所有带有 Emoji 表情的回复。
-- 🖱️ **右键快捷添加 (Quick Context Menu)**: 在推特页面划词选中任意文本，右键可将其加入到自定义屏蔽词库中。
+  - **Emoji 屏蔽 (Block Emojis)**: 屏蔽所有带有 Emoji 表情的回复。
+- 🖱️ **右键快捷添加 (Quick Context Menu)**: 在推特页面划词选中任意文本，右键将其加入到自定义屏蔽词库中。
 - 📊 **屏蔽统计 (Blocking Stats)**: 记录已为你屏蔽了多少条垃圾评论。
 
 ## 📥 安装方式 (Installation)
