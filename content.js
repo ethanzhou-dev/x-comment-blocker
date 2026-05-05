@@ -119,6 +119,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
         blockEmoji = changes.blockEmoji.newValue;
         needsFilter = true;
     }
+    
+    if (changes.blockedCount) {
+        blockedCount = changes.blockedCount.newValue || 0;
+    }
 
     if (needsFilter) {
         filterVersion++;
