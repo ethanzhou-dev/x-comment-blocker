@@ -95,14 +95,43 @@ async function mergeKeywords() {
     await mergeKeywords();
     filterTweets();
 
-    const observer = new MutationObserver(() => {
+    const observer = new MutationObserver((mutations) => {
         if (!contextValid) { observer.disconnect(); return; }
-        scheduleFilter();
+        
+        const affectedTweets = new Set();
+
+        for (const mutation of mutations) {
+            for (const node of mutation.addedNodes) {
+                if (node.nodeType === Node.ELEMENT_NODE) {
+                    if (node.getAttribute('data-testid') === 'cellInnerDiv') {
+                        affectedTweets.add(node);
+                    } else if (node.querySelector) {
+                        const innerTweets = node.querySelectorAll('[data-testid="cellInnerDiv"]');
+                        innerTweets.forEach(t => affectedTweets.add(t));
+                    }
+                }
+            }
+            
+            if (mutation.target) {
+                const el = mutation.target.nodeType === Node.ELEMENT_NODE ? mutation.target : mutation.target.parentElement;
+                if (el && el.closest) {
+                    const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
+                    if (closestTweet) {
+                        affectedTweets.add(closestTweet);
+                    }
+                }
+            }
+        }
+        
+        if (affectedTweets.size > 0) {
+            filterTweets(Array.from(affectedTweets));
+        }
     });
 
     observer.observe(document.body, {
         childList: true,
-        subtree: true
+        subtree: true,
+        characterData: true
     });
 })();
 
@@ -184,10 +213,12 @@ function hasEmoji(node) {
     return false;
 }
 
-function filterTweets() {
+function filterTweets(specificTweets = null) {
     if (!contextValid) return;
 
-    const tweets = document.querySelectorAll('[data-testid="cellInnerDiv"]');
+    const tweets = specificTweets || document.querySelectorAll('[data-testid="cellInnerDiv"]');
+    if (tweets.length === 0 && !specificTweets) return; // avoid unnecessary work if no tweets
+
     let newBlocks = 0;
     
     const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
