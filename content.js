@@ -2,6 +2,7 @@ let blockKeywords = [];
 let blockRegex = null;
 let checkUsername = true;
 let onlyComments = true;
+let blockSpecialChars = true;
 let blockEmoji = false;
 let filterEnabled = true;
 let cloudEnabled = true;
@@ -10,6 +11,7 @@ let blockedCount = 0;
 let filterVersion = 0;
 const blockedHashes = new Set();
 const emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
+const spamCharsRegex = /[\u02B0-\u02FF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2980-\u2AFF\u{13000}-\u{1342F}]{3,}/u;
 
 async function mergeKeywords() {
     try {
@@ -41,6 +43,7 @@ async function mergeKeywords() {
         const items = await chrome.storage.local.get({
             checkUsername: true,
             onlyComments: true,
+            blockSpecialChars: true,
             blockEmoji: false,
             enabled: true,
             blockedCount: 0,
@@ -50,6 +53,7 @@ async function mergeKeywords() {
 
         checkUsername = items.checkUsername;
         onlyComments = items.onlyComments;
+        blockSpecialChars = items.blockSpecialChars;
         blockEmoji = items.blockEmoji;
         filterEnabled = items.enabled;
         cloudEnabled = items.cloudEnabled;
@@ -117,6 +121,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
     if (changes.blockEmoji) {
         blockEmoji = changes.blockEmoji.newValue;
+        needsFilter = true;
+    }
+    if (changes.blockSpecialChars) {
+        blockSpecialChars = changes.blockSpecialChars.newValue;
         needsFilter = true;
     }
     
@@ -220,7 +228,7 @@ function filterTweets(specificTweets = null) {
         }
 
         let isSpam = false;
-        let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji);
+        let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji || blockSpecialChars);
         
         if (onlyComments && !isStatusPage) {
             shouldCheck = false;
@@ -230,7 +238,8 @@ function filterTweets(specificTweets = null) {
             if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
             
             let isEmojiSpam = false;
-            if (blockEmoji && isStatusPage) {
+            let isSpecialCharSpam = false;
+            if ((blockEmoji || blockSpecialChars) && isStatusPage) {
                 let isMainTweet = false;
                 
                 if (pageStatusId) {
@@ -247,12 +256,17 @@ function filterTweets(specificTweets = null) {
                     }
                 }
                 
-                if (!isMainTweet && tweetHasEmoji) {
-                    isEmojiSpam = true;
+                if (!isMainTweet) {
+                    if (blockEmoji && tweetHasEmoji) {
+                        isEmojiSpam = true;
+                    }
+                    if (blockSpecialChars && textNode && spamCharsRegex.test(textNode.textContent)) {
+                        isSpecialCharSpam = true;
+                    }
                 }
             }
             
-            if (isEmojiSpam) {
+            if (isEmojiSpam || isSpecialCharSpam) {
                 isSpam = true;
             } else {
                 isSpam = blockRegex ? blockRegex.test(tweetBody) : false;

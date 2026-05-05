@@ -7,6 +7,7 @@ const newKeywordInput = document.getElementById('newKeyword');
 const addBtn = document.getElementById('addBtn');
 const checkUsernameEl = document.getElementById('checkUsername');
 const onlyCommentsEl = document.getElementById('onlyComments');
+const blockSpecialCharsEl = document.getElementById('blockSpecialChars');
 const blockEmojiEl = document.getElementById('blockEmoji');
 const enableToggleEl = document.getElementById('enableToggle');
 const cloudToggleEl = document.getElementById('cloudToggle');
@@ -31,6 +32,7 @@ async function autoSave() {
         keywords: userKeywords.join('\n'),
         checkUsername: checkUsernameEl.checked,
         onlyComments: onlyCommentsEl.checked,
+        blockSpecialChars: blockSpecialCharsEl.checked,
         blockEmoji: blockEmojiEl.checked,
         enabled: enableToggleEl.checked,
         cloudEnabled: cloudToggleEl.checked
@@ -163,6 +165,7 @@ enableToggleEl.addEventListener('change', () => {
 
 checkUsernameEl.addEventListener('change', () => autoSave());
 onlyCommentsEl.addEventListener('change', () => autoSave());
+blockSpecialCharsEl.addEventListener('change', () => autoSave());
 blockEmojiEl.addEventListener('change', () => autoSave());
 cloudToggleEl.addEventListener('change', () => autoSave());
 
@@ -177,6 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         keywords: '',
         checkUsername: true,
         onlyComments: true,
+        blockSpecialChars: true,
         blockEmoji: false,
         enabled: true,
         cloudEnabled: true,
@@ -188,6 +192,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     userKeywords = parseKeywords(items.keywords);
     checkUsernameEl.checked = items.checkUsername;
     onlyCommentsEl.checked = items.onlyComments;
+    blockSpecialCharsEl.checked = items.blockSpecialChars;
     blockEmojiEl.checked = items.blockEmoji;
     enableToggleEl.checked = items.enabled;
     cloudToggleEl.checked = items.cloudEnabled;
