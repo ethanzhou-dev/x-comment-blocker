@@ -146,11 +146,21 @@ if (document.head) {
 
 function getTweetTextForKeywords(node) {
     if (!node) return "";
-    let text = node.textContent || "";
-    const imgs = node.querySelectorAll('img[alt]');
-    for (const img of imgs) {
-        text += img.alt;
+    let text = "";
+    function traverse(n) {
+        if (n.nodeType === Node.TEXT_NODE) {
+            text += n.textContent;
+        } else if (n.nodeType === Node.ELEMENT_NODE) {
+            if (n.tagName.toLowerCase() === 'img' && n.alt) {
+                text += n.alt;
+            } else {
+                for (let child of n.childNodes) {
+                    traverse(child);
+                }
+            }
+        }
     }
+    traverse(node);
     return text;
 }
 
