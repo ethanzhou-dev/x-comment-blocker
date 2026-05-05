@@ -44,24 +44,37 @@
         <div class="keyword-count" id="keywordCount"></div>
     </div>
 
-    <div class="control-group">
-        <label for="checkUsername">同时过滤用户名</label>
-        <input type="checkbox" id="checkUsername">
-    </div>
+    <div class="settings-panel">
+        <div class="settings-header" id="settingsHeader">
+            <span class="settings-title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-gear"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                高级设置
+            </span>
+            <span class="settings-arrow" id="settingsArrow">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="icon-chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </span>
+        </div>
+        <div class="settings-content" id="settingsContent">
+            <div class="control-group">
+                <label for="checkUsername">同时过滤用户名</label>
+                <input type="checkbox" id="checkUsername">
+            </div>
 
-    <div class="control-group">
-        <label for="onlyComments">仅对评论区应用过滤</label>
-        <input type="checkbox" id="onlyComments" checked>
-    </div>
+            <div class="control-group">
+                <label for="onlyComments">仅对评论区应用过滤</label>
+                <input type="checkbox" id="onlyComments" checked>
+            </div>
 
-    <div class="control-group">
-        <label for="blockSpecialChars">屏蔽特殊字符</label>
-        <input type="checkbox" id="blockSpecialChars" checked>
-    </div>
+            <div class="control-group">
+                <label for="blockSpecialChars">屏蔽特殊字符</label>
+                <input type="checkbox" id="blockSpecialChars" checked>
+            </div>
 
-    <div class="control-group">
-        <label for="blockEmoji">屏蔽所有带Emoji的评论</label>
-        <input type="checkbox" id="blockEmoji">
+            <div class="control-group">
+                <label for="blockEmoji">屏蔽所有带Emoji的评论</label>
+                <input type="checkbox" id="blockEmoji">
+            </div>
+        </div>
     </div>
 
     <div id="status">已自动保存</div>

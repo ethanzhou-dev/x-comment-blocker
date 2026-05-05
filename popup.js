@@ -176,6 +176,17 @@ syncBtn.addEventListener('click', () => {
 });
 
 document.addEventListener('DOMContentLoaded', async () => {
+    const settingsHeader = document.getElementById('settingsHeader');
+    const settingsContent = document.getElementById('settingsContent');
+    const settingsArrow = document.getElementById('settingsArrow');
+
+    if (settingsHeader) {
+        settingsHeader.addEventListener('click', () => {
+            settingsContent.classList.toggle('open');
+            settingsArrow.classList.toggle('open');
+        });
+    }
+
     const items = await chrome.storage.local.get({
         keywords: '',
         checkUsername: true,

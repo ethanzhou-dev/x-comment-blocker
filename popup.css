@@ -321,7 +321,8 @@ body {
 }
 
 body.disabled .control-group,
-body.disabled .section-user {
+body.disabled .section-user,
+body.disabled .settings-panel {
     opacity: 0.35;
     pointer-events: none;
 }
@@ -331,6 +332,73 @@ body.disabled .section-user {
     color: var(--text-muted);
     margin-top: 6px;
     text-align: right;
+}
+
+/* --- Settings Panel --- */
+.settings-panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    margin: 16px 0;
+    overflow: hidden;
+}
+
+.settings-header {
+    padding: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.settings-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.settings-title {
+    font-size: 13px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.settings-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: transform 0.3s;
+}
+
+.settings-arrow.open {
+    transform: rotate(-180deg);
+}
+
+.settings-content {
+    padding: 0 12px;
+    border-top: 1px solid var(--border);
+    display: none;
+}
+
+.settings-content.open {
+    display: block;
+}
+
+.settings-content .control-group {
+    border: none;
+    border-bottom: 1px solid var(--border);
+    background: transparent;
+    margin: 0;
+    padding: 10px 0;
+    height: auto;
+    border-radius: 0;
+}
+
+.settings-content .control-group:last-child {
+    border-bottom: none;
 }
 
 .stats-bar {
