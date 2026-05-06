@@ -11,7 +11,7 @@ let blockedCount = 0;
 let filterVersion = 0;
 const blockedHashes = new Set();
 const emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
-const spamCharsRegex = /[\u02B0-\u02FF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2980-\u2AFF\u{13000}-\u{1342F}]{3,}/u;
+const spamCharsRegex = /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
 
 async function mergeKeywords() {
     try {
@@ -146,33 +146,24 @@ chrome.storage.onChanged.addListener((changes, area) => {
     }
 });
 
-const style = document.createElement('style');
-style.textContent = `
-    .x-comment-blocker-hidden {
-        display: none !important;
-    }
-`;
-if (document.head) {
-    document.head.appendChild(style);
-}
-
 function getTweetTextForKeywords(node) {
     if (!node) return "";
     let text = "";
-    function traverse(n) {
-        if (n.nodeType === Node.TEXT_NODE) {
-            text += n.textContent;
-        } else if (n.nodeType === Node.ELEMENT_NODE) {
-            if (n.tagName.toLowerCase() === 'img' && n.alt) {
-                text += n.alt;
-            } else {
-                for (let child of n.childNodes) {
-                    traverse(child);
-                }
-            }
+    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
+        acceptNode: function(n) {
+            if (n.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
+            if (n.tagName && n.tagName.toLowerCase() === 'img' && n.alt) return NodeFilter.FILTER_ACCEPT;
+            return NodeFilter.FILTER_SKIP;
+        }
+    });
+    let currentNode;
+    while (currentNode = walker.nextNode()) {
+        if (currentNode.nodeType === Node.TEXT_NODE) {
+            text += currentNode.textContent;
+        } else {
+            text += currentNode.alt;
         }
     }
-    traverse(node);
     return text;
 }
 

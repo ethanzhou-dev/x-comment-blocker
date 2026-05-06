@@ -33,6 +33,9 @@
         "*://*.twitter.com/*",
         "*://*.x.com/*"
       ],
+      "css": [
+        "content.css"
+      ],
       "js": [
         "utils.js",
         "content.js"
