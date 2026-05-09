@@ -1,9 +1,3 @@
 .x-comment-blocker-hidden {
-    visibility: hidden !important;
-    pointer-events: none !important;
-    position: relative !important;
-}
-
-.x-comment-blocker-hidden * {
-    visibility: hidden !important;
+    display: none !important;
 }
