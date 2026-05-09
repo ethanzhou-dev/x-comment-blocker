@@ -1,5 +1,6 @@
 let blockKeywords = [];
 let blockRegex = null;
+let lastKeywordsKey = '';
 let checkUsername = true;
 let onlyComments = true;
 let blockSpecialChars = true;
@@ -29,6 +30,10 @@ async function mergeKeywords() {
         cloudEnabled = items.cloudEnabled;
         blockKeywords = [...new Set([...cloudKws, ...userKws])];
         
+        const newKey = blockKeywords.join('\n');
+        if (newKey === lastKeywordsKey) return;
+        lastKeywordsKey = newKey;
+
         if (blockKeywords.length > 0) {
             const escaped = blockKeywords.map(kw => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
             blockRegex = new RegExp(escaped.join('|'), 'i');
@@ -164,21 +169,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 function getTweetTextForKeywords(node) {
     if (!node) return "";
-    let text = "";
-    const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
-        acceptNode: function(n) {
-            if (n.nodeType === Node.TEXT_NODE) return NodeFilter.FILTER_ACCEPT;
-            if (n.tagName && n.tagName.toLowerCase() === 'img' && n.alt) return NodeFilter.FILTER_ACCEPT;
-            return NodeFilter.FILTER_SKIP;
-        }
-    });
-    let currentNode;
-    while (currentNode = walker.nextNode()) {
-        if (currentNode.nodeType === Node.TEXT_NODE) {
-            text += currentNode.textContent;
-        } else {
-            text += currentNode.alt;
-        }
+    let text = node.textContent || "";
+    const imgs = node.querySelectorAll('img[alt]');
+    for (let i = 0; i < imgs.length; i++) {
+        text += imgs[i].alt;
     }
     return text;
 }
