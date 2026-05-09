@@ -9,7 +9,9 @@ let cloudEnabled = true;
 let filterTimer = null;
 let blockedCount = 0;
 let filterVersion = 0;
+let lastUrl = location.href;
 const blockedHashes = new Set();
+const MAX_HASHES = 5000;
 const emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
 const spamCharsRegex = /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
 
@@ -34,7 +36,7 @@ async function mergeKeywords() {
             blockRegex = null;
         }
     } catch(e) {
-        // Extension context invalidated
+        console.debug('[X-Blocker] mergeKeywords error:', e.message);
     }
 }
 
@@ -62,19 +64,26 @@ async function mergeKeywords() {
         await mergeKeywords();
         filterTweets();
 
+        let pendingTweets = new Set();
+        let rafScheduled = false;
+
         const observer = new MutationObserver((mutations) => {
             if (!chrome.runtime?.id) { observer.disconnect(); return; }
-            
-            const affectedTweets = new Set();
+
+            // Detect URL change in SPA and reset state
+            if (location.href !== lastUrl) {
+                lastUrl = location.href;
+                blockedHashes.clear();
+            }
 
             for (const mutation of mutations) {
                 for (const node of mutation.addedNodes) {
                     if (node.nodeType === Node.ELEMENT_NODE) {
                         if (node.getAttribute('data-testid') === 'cellInnerDiv') {
-                            affectedTweets.add(node);
+                            pendingTweets.add(node);
                         } else if (node.querySelector) {
                             const innerTweets = node.querySelectorAll('[data-testid="cellInnerDiv"]');
-                            innerTweets.forEach(t => affectedTweets.add(t));
+                            innerTweets.forEach(t => pendingTweets.add(t));
                         }
                     }
                 }
@@ -84,14 +93,19 @@ async function mergeKeywords() {
                     if (el && el.closest) {
                         const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
                         if (closestTweet) {
-                            affectedTweets.add(closestTweet);
+                            pendingTweets.add(closestTweet);
                         }
                     }
                 }
             }
             
-            if (affectedTweets.size > 0) {
-                filterTweets(Array.from(affectedTweets));
+            if (pendingTweets.size > 0 && !rafScheduled) {
+                rafScheduled = true;
+                requestAnimationFrame(() => {
+                    filterTweets(Array.from(pendingTweets));
+                    pendingTweets.clear();
+                    rafScheduled = false;
+                });
             }
         });
 
@@ -99,7 +113,9 @@ async function mergeKeywords() {
             childList: true,
             subtree: true
         });
-    } catch(e) {}
+    } catch(e) {
+        console.debug('[X-Blocker] init error:', e.message);
+    }
 })();
 
 chrome.storage.onChanged.addListener((changes, area) => {
@@ -238,7 +254,9 @@ function filterTweets(specificTweets = null) {
                     for (let timeEl of timeNodes) {
                         const link = timeEl.closest('a');
                         if (link) {
-                            const hrefMatch = link.getAttribute('href').match(/\/status\/(\d+)/i);
+                            const href = link.getAttribute('href');
+                            if (!href) continue;
+                            const hrefMatch = href.match(/\/status\/(\d+)/i);
                             if (hrefMatch && hrefMatch[1] === pageStatusId) {
                                 isMainTweet = true;
                                 break;
@@ -277,6 +295,7 @@ function filterTweets(specificTweets = null) {
             }
             const stableHash = tweetBody + "|" + userName;
             if (!blockedHashes.has(stableHash)) {
+                if (blockedHashes.size >= MAX_HASHES) blockedHashes.clear();
                 blockedHashes.add(stableHash);
                 newBlocks++;
             }
@@ -293,5 +312,6 @@ function filterTweets(specificTweets = null) {
 
 function scheduleFilter() {
     if (!chrome.runtime?.id) return;
-    filterTweets();
+    if (filterTimer) cancelAnimationFrame(filterTimer);
+    filterTimer = requestAnimationFrame(() => filterTweets());
 }
