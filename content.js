@@ -75,7 +75,6 @@ async function mergeKeywords() {
         const observer = new MutationObserver((mutations) => {
             if (!chrome.runtime?.id) { observer.disconnect(); return; }
 
-            // Detect URL change in SPA and reset state
             if (location.href !== lastUrl) {
                 lastUrl = location.href;
                 blockedHashes.clear();
@@ -223,6 +222,14 @@ function filterTweets(specificTweets = null) {
         let tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
         let userName = userNode ? getTweetTextForKeywords(userNode) : "";
         
+        let stableHandle = "";
+        if (userNode) {
+            const handleLink = userNode.querySelector('a[href^="/"]');
+            if (handleLink) {
+                stableHandle = (handleLink.getAttribute('href') || "").toLowerCase();
+            }
+        }
+        
         let tweetHasEmoji = false;
         if (blockEmoji && isStatusPage && textNode) {
             tweetHasEmoji = hasEmoji(textNode);
@@ -287,7 +294,8 @@ function filterTweets(specificTweets = null) {
             if (!tweet.classList.contains('x-comment-blocker-hidden')) {
                 tweet.classList.add('x-comment-blocker-hidden');
             }
-            const stableHash = tweetBody + "|" + userName;
+            const normalizedBody = (textNode ? textNode.textContent : "").replace(invisibleCharsRegex, '').replace(/\s+/g, ' ').trim();
+            const stableHash = normalizedBody + "|" + stableHandle;
             if (!blockedHashes.has(stableHash)) {
                 if (blockedHashes.size >= MAX_HASHES) blockedHashes.clear();
                 blockedHashes.add(stableHash);
