@@ -1,9 +1,9 @@
 .x-comment-blocker-hidden {
-    height: 0 !important;
-    overflow: hidden !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    opacity: 0 !important;
+    visibility: hidden !important;
     pointer-events: none !important;
+    position: relative !important;
+}
+
+.x-comment-blocker-hidden * {
+    visibility: hidden !important;
 }
