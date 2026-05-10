@@ -168,11 +168,21 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
 function getTweetTextForKeywords(node) {
     if (!node) return "";
-    let text = node.textContent || "";
-    const imgs = node.querySelectorAll('img[alt]');
-    for (let i = 0; i < imgs.length; i++) {
-        text += imgs[i].alt;
+    let text = "";
+    function traverse(n) {
+        if (n.nodeType === Node.TEXT_NODE) {
+            text += n.textContent;
+        } else if (n.nodeType === Node.ELEMENT_NODE) {
+            if (n.tagName.toLowerCase() === 'img' && n.alt) {
+                text += n.alt;
+            } else {
+                for (let child of n.childNodes) {
+                    traverse(child);
+                }
+            }
+        }
     }
+    traverse(node);
     return text;
 }
 
