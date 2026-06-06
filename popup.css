@@ -54,13 +54,24 @@ body {
     color: var(--text-muted);
 }
 
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.section-actions {
+    display: flex;
+    gap: 4px;
+}
+
 .section-label {
     font-size: 11px;
     font-weight: 700;
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 8px;
     display: block;
 }
 

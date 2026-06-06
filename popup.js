@@ -5,6 +5,9 @@ const keywordList = document.getElementById('keywordList');
 const keywordCount = document.getElementById('keywordCount');
 const newKeywordInput = document.getElementById('newKeyword');
 const addBtn = document.getElementById('addBtn');
+const importBtn = document.getElementById('importBtn');
+const exportBtn = document.getElementById('exportBtn');
+const importFile = document.getElementById('importFile');
 const checkUsernameEl = document.getElementById('checkUsername');
 const onlyCommentsEl = document.getElementById('onlyComments');
 const blockSpecialCharsEl = document.getElementById('blockSpecialChars');
@@ -147,6 +150,66 @@ newKeywordInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
         addKeyword();
     }
+});
+
+exportBtn.addEventListener('click', () => {
+    if (userKeywords.length === 0) {
+        showStatus('词库为空');
+        return;
+    }
+    const content = userKeywords.join('\n');
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `x-comment-blocker-keywords-${new Date().toISOString().slice(0, 10)}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+});
+
+importBtn.addEventListener('click', () => {
+    importFile.click();
+});
+
+importFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+        const content = ev.target.result;
+        let newKeywords = [];
+        
+        try {
+            const parsed = JSON.parse(content);
+            if (Array.isArray(parsed)) {
+                newKeywords = parsed.map(k => String(k));
+            }
+        } catch(err) {
+            newKeywords = parseKeywords(content);
+        }
+
+        if (newKeywords.length > 0) {
+            let addedCount = 0;
+            newKeywords.forEach(kw => {
+                if (!userKeywords.includes(kw)) {
+                    userKeywords.push(kw);
+                    addedCount++;
+                }
+            });
+            if (addedCount > 0) {
+                renderUserKeywords();
+                autoSave();
+                showStatus(`成功导入 ${addedCount} 个新词`);
+            } else {
+                showStatus('未发现新词，词库已包含这些内容');
+            }
+        } else {
+            showStatus('文件内容无效');
+        }
+    };
+    reader.readAsText(file);
+    importFile.value = '';
 });
 
 async function triggerCloudSync(manual = false) {

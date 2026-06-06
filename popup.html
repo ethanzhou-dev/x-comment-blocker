@@ -38,7 +38,14 @@
     </div>
 
     <div class="section-user">
-        <span class="section-label">✎ 自定义词库</span>
+        <div class="section-header">
+            <span class="section-label">✎ 自定义词库</span>
+            <div class="section-actions">
+                <button class="btn-outline" id="importBtn" title="从文件导入">导入</button>
+                <button class="btn-outline" id="exportBtn" title="导出为文本">导出</button>
+            </div>
+        </div>
+        <input type="file" id="importFile" accept=".txt,.json" style="display: none;">
 
         <div class="keyword-input-row">
             <input type="text" id="newKeyword" placeholder="输入新的屏蔽词…">
