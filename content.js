@@ -8,7 +8,6 @@ let blockEmoji = false;
 let filterEnabled = true;
 let cloudEnabled = true;
 let filterTimer = null;
-let blockedCount = 0;
 let filterVersion = 0;
 let lastUrl = location.href;
 const blockedHashes = new Set();
@@ -64,7 +63,6 @@ async function mergeKeywords() {
         blockEmoji = items.blockEmoji;
         filterEnabled = items.enabled;
         cloudEnabled = items.cloudEnabled;
-        blockedCount = items.blockedCount || 0;
 
         await mergeKeywords();
         filterTweets();
@@ -146,10 +144,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
     if (changes.blockSpecialChars) {
         blockSpecialChars = changes.blockSpecialChars.newValue;
         needsFilter = true;
-    }
-    
-    if (changes.blockedCount) {
-        blockedCount = changes.blockedCount.newValue || 0;
     }
 
     if (needsFilter) {
@@ -323,13 +317,12 @@ function filterTweets(specificTweets = null) {
     });
 
     if (newBlocks > 0) {
-        blockedCount += newBlocks;
-        chrome.storage.local.get({ blockedHistory: [] }).then(items => {
+        chrome.storage.local.get({ blockedCount: 0, blockedHistory: [] }).then(items => {
             let history = items.blockedHistory;
             history.unshift(...newBlockedItems);
             if (history.length > 100) history.length = 100;
             chrome.storage.local.set({ 
-                blockedCount: blockedCount,
+                blockedCount: items.blockedCount + newBlocks,
                 blockedHistory: history
             }).catch(()=>{});
         });
