@@ -1,4 +1,5 @@
 :root {
+    color-scheme: dark;
     --bg: #09090b;
     --card: #18181b;
     --border: #27272a;
@@ -120,17 +121,22 @@ body {
     align-content: flex-start;
 }
 
-.keyword-list::-webkit-scrollbar {
+::-webkit-scrollbar {
     width: 4px;
+    height: 4px;
 }
 
-.keyword-list::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background: transparent;
 }
 
-.keyword-list::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: var(--border);
     border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--tag-border);
 }
 
 .keyword-list .empty-hint {
