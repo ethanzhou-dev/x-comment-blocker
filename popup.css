@@ -272,16 +272,19 @@ body {
     background: rgba(34, 197, 94, 0.12);
 }
 
-.control-group {
+.control-group, .stats-bar {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
     height: 40px;
     padding: 0 12px;
-    margin: 16px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
+}
+
+.control-group {
+    margin: 16px 0;
 }
 
 .control-group label {
@@ -437,15 +440,7 @@ body.disabled .settings-panel {
 }
 
 .stats-bar {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    height: 40px;
-    padding: 0 12px;
     margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .stats-bar .stats-text {
