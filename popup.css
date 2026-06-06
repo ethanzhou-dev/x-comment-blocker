@@ -64,7 +64,6 @@ body {
     display: block;
 }
 
-/* --- Keyword Input Area --- */
 .keyword-input-row {
     display: flex;
     gap: 8px;
@@ -112,7 +111,6 @@ body {
     background: var(--accent-hover);
 }
 
-/* --- Keyword Tags Container --- */
 .keyword-list {
     background: var(--card);
     border: 1px solid var(--border);
@@ -154,7 +152,6 @@ body {
     user-select: none;
 }
 
-/* --- Individual Keyword Tag --- */
 .keyword-tag {
     display: inline-flex;
     align-items: center;
@@ -246,7 +243,6 @@ body {
     background: rgba(34, 197, 94, 0.12);
 }
 
-/* --- Controls --- */
 .control-group {
     background: var(--card);
     border: 1px solid var(--border);
@@ -272,7 +268,6 @@ body {
     cursor: pointer;
 }
 
-/* --- Toggle Switch --- */
 .toggle-switch {
     position: relative;
     width: 44px;
@@ -346,7 +341,6 @@ body.disabled .settings-panel {
     text-align: right;
 }
 
-/* --- Settings Panel --- */
 .settings-panel {
     background: var(--card);
     border: 1px solid var(--border);
