@@ -11,7 +11,7 @@
         <div>
             <div class="title-row">
                 <h3>X 内容过滤器</h3>
-                <a href="https://github.com/ethanzhou-dev/x-comment-blocker" target="_blank" class="btn-about" title="GitHub 源码">关于</a>
+                <a href="https://github.com/ethanzhou-dev/x-comment-blocker" target="_blank" class="btn-outline" title="GitHub 源码">关于</a>
             </div>
             <p>评论区屏蔽管理系统</p>
         </div>
@@ -24,15 +24,15 @@
     <div class="stats-bar">
         <span class="stats-text">已屏蔽 <span class="stats-number" id="blockedCount">0</span> 条评论</span>
         <div class="stats-actions">
-            <button class="stats-view" id="viewHistory" title="查看历史记录">查看</button>
-            <button class="stats-reset" id="resetCount" title="清零">重置</button>
+            <button class="btn-outline" id="viewHistory" title="查看历史记录">查看</button>
+            <button class="btn-outline btn-danger" id="resetCount" title="清零">重置</button>
         </div>
     </div>
 
     <div class="control-group">
         <label for="cloudToggle">☁ 云端词库</label>
         <span class="cloud-info" id="cloudInfo"></span>
-        <button class="btn-sync" id="syncBtn" title="同步云端词库">同步</button>
+        <button class="btn-outline" id="syncBtn" title="同步云端词库">同步</button>
         <input type="checkbox" id="cloudToggle">
     </div>
 

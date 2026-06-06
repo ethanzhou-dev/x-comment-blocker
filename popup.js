@@ -233,14 +233,26 @@ resetCountBtn.addEventListener('click', async () => {
 
 viewHistoryBtn.addEventListener('click', async () => {
     historyModal.classList.add('open');
-    historyList.innerHTML = '<div class="empty-hint">加载中...</div>';
+    historyList.innerHTML = `
+        <div class="history-item">
+            <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
+                加载中...
+            </div>
+        </div>
+    `;
     
     const items = await chrome.storage.local.get({ blockedHistory: [] });
     const history = items.blockedHistory;
     
     historyList.innerHTML = '';
     if (history.length === 0) {
-        historyList.innerHTML = '<div class="empty-hint">暂无记录</div>';
+        historyList.innerHTML = `
+            <div class="history-item">
+                <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
+                    暂无记录
+                </div>
+            </div>
+        `;
         return;
     }
     

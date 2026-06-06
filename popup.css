@@ -45,23 +45,7 @@ body {
 .title-row {
     display: flex;
     align-items: center;
-    gap: 8px;
-}
-
-.btn-about {
-    font-size: 10px;
-    padding: 2px 6px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: all 0.2s;
-}
-
-.btn-about:hover {
-    color: var(--text);
-    border-color: var(--text-muted);
-    background: rgba(255, 255, 255, 0.05);
+    gap: 12px;
 }
 
 .header p {
@@ -453,30 +437,7 @@ body.disabled .settings-panel {
 
 .stats-actions {
     display: flex;
-    gap: 4px;
-}
-
-.stats-bar .stats-reset, .stats-bar .stats-view {
-    background: none;
-    border: none;
-    color: var(--text-muted);
-    font-size: 11px;
-    cursor: pointer;
-    padding: 4px 8px;
-    border-radius: 4px;
-    transition: color 0.15s, background 0.15s;
-    width: auto;
-    height: auto;
-}
-
-.stats-bar .stats-reset:hover {
-    color: var(--danger);
-    background: rgba(239, 68, 68, 0.1);
-}
-
-.stats-bar .stats-view:hover {
-    color: var(--accent);
-    background: rgba(14, 165, 233, 0.1);
+    gap: 6px;
 }
 
 .cloud-info {
@@ -486,7 +447,7 @@ body.disabled .settings-panel {
     margin-right: 8px;
 }
 
-.btn-sync {
+.btn-outline {
     background: none;
     border: 1px solid var(--border);
     color: var(--text-muted);
@@ -494,20 +455,31 @@ body.disabled .settings-panel {
     cursor: pointer;
     padding: 3px 8px;
     border-radius: 4px;
+    text-decoration: none;
     transition: color 0.15s, border-color 0.15s;
-    width: auto;
-    height: auto;
-    margin-right: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
-.btn-sync:hover {
+.btn-outline:hover {
     color: var(--accent);
     border-color: var(--accent);
 }
 
-.btn-sync.syncing {
+.btn-outline.btn-danger:hover {
+    color: var(--danger);
+    border-color: var(--danger);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.btn-outline.syncing {
     color: var(--text-muted);
     pointer-events: none;
+}
+
+#syncBtn {
+    margin-right: 8px;
 }
 
 .history-modal {
