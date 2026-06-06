@@ -20,7 +20,10 @@
 
     <div class="stats-bar">
         <span class="stats-text">已屏蔽 <span class="stats-number" id="blockedCount">0</span> 条评论</span>
-        <button class="stats-reset" id="resetCount" title="清零">重置</button>
+        <div class="stats-actions">
+            <button class="stats-view" id="viewHistory" title="查看历史记录">查看</button>
+            <button class="stats-reset" id="resetCount" title="清零">重置</button>
+        </div>
     </div>
 
     <div class="control-group">
@@ -75,6 +78,14 @@
                 <input type="checkbox" id="blockEmoji">
             </div>
         </div>
+    </div>
+
+    <div class="history-modal" id="historyModal">
+        <div class="history-header">
+            <span>屏蔽历史 (最近100条)</span>
+            <button class="history-close" id="closeHistory" title="关闭">✕</button>
+        </div>
+        <div class="history-list" id="historyList"></div>
     </div>
 
     <div id="status">已自动保存</div>

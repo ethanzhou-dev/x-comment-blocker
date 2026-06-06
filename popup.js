@@ -17,6 +17,11 @@ const statusEl = document.getElementById('status');
 const blockedCountEl = document.getElementById('blockedCount');
 const resetCountBtn = document.getElementById('resetCount');
 
+const viewHistoryBtn = document.getElementById('viewHistory');
+const historyModal = document.getElementById('historyModal');
+const closeHistoryBtn = document.getElementById('closeHistory');
+const historyList = document.getElementById('historyList');
+
 function showStatus(text) {
     statusEl.textContent = text;
     statusEl.classList.add('visible');
@@ -222,8 +227,53 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 
 resetCountBtn.addEventListener('click', async () => {
-    await chrome.storage.local.set({ blockedCount: 0 });
+    await chrome.storage.local.set({ blockedCount: 0, blockedHistory: [] });
     blockedCountEl.textContent = '0';
+});
+
+viewHistoryBtn.addEventListener('click', async () => {
+    historyModal.classList.add('open');
+    historyList.innerHTML = '<div class="empty-hint">加载中...</div>';
+    
+    const items = await chrome.storage.local.get({ blockedHistory: [] });
+    const history = items.blockedHistory;
+    
+    historyList.innerHTML = '';
+    if (history.length === 0) {
+        historyList.innerHTML = '<div class="empty-hint">暂无记录</div>';
+        return;
+    }
+    
+    const fragment = document.createDocumentFragment();
+    history.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'history-item';
+        
+        const header = document.createElement('div');
+        header.className = 'history-item-header';
+        
+        const userSpan = document.createElement('span');
+        userSpan.textContent = item.user || '未知用户';
+        
+        const timeSpan = document.createElement('span');
+        timeSpan.textContent = new Date(item.time).toLocaleString();
+        
+        header.appendChild(userSpan);
+        header.appendChild(timeSpan);
+        
+        const textDiv = document.createElement('div');
+        textDiv.className = 'history-item-text';
+        textDiv.textContent = item.text || '[无内容或已隐藏]';
+        
+        div.appendChild(header);
+        div.appendChild(textDiv);
+        fragment.appendChild(div);
+    });
+    historyList.appendChild(fragment);
+});
+
+closeHistoryBtn.addEventListener('click', () => {
+    historyModal.classList.remove('open');
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {

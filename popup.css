@@ -423,7 +423,12 @@ body.disabled .settings-panel {
     font-weight: 700;
 }
 
-.stats-bar .stats-reset {
+.stats-actions {
+    display: flex;
+    gap: 4px;
+}
+
+.stats-bar .stats-reset, .stats-bar .stats-view {
     background: none;
     border: none;
     color: var(--text-muted);
@@ -439,6 +444,11 @@ body.disabled .settings-panel {
 .stats-bar .stats-reset:hover {
     color: var(--danger);
     background: rgba(239, 68, 68, 0.1);
+}
+
+.stats-bar .stats-view:hover {
+    color: var(--accent);
+    background: rgba(14, 165, 233, 0.1);
 }
 
 .cloud-info {
@@ -470,4 +480,72 @@ body.disabled .settings-panel {
 .btn-sync.syncing {
     color: var(--text-muted);
     pointer-events: none;
+}
+
+.history-modal {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--bg);
+    z-index: 100;
+    flex-direction: column;
+}
+
+.history-modal.open {
+    display: flex;
+}
+
+.history-header {
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.history-close {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.history-close:hover {
+    color: var(--danger);
+}
+
+.history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.history-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-size: 12px;
+}
+
+.history-item-header {
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-muted);
+    margin-bottom: 6px;
+    font-size: 11px;
+}
+
+.history-item-text {
+    color: var(--text);
+    word-break: break-word;
 }

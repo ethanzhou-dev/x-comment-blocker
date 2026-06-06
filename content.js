@@ -207,6 +207,7 @@ function filterTweets(specificTweets = null) {
     if (tweets.length === 0 && !specificTweets) return; 
 
     let newBlocks = 0;
+    let newBlockedItems = [];
     
     const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
     const pageStatusId = urlMatch ? urlMatch[1] : null;
@@ -310,6 +311,11 @@ function filterTweets(specificTweets = null) {
                 if (blockedHashes.size >= MAX_HASHES) blockedHashes.clear();
                 blockedHashes.add(stableHash);
                 newBlocks++;
+                newBlockedItems.push({
+                    text: normalizedBody,
+                    user: stableHandle || userName,
+                    time: Date.now()
+                });
             }
         } else {
             tweet.classList.remove('x-comment-blocker-hidden');
@@ -318,7 +324,15 @@ function filterTweets(specificTweets = null) {
 
     if (newBlocks > 0) {
         blockedCount += newBlocks;
-        chrome.storage.local.set({ blockedCount: blockedCount }).catch(()=>{});
+        chrome.storage.local.get({ blockedHistory: [] }).then(items => {
+            let history = items.blockedHistory;
+            history.unshift(...newBlockedItems);
+            if (history.length > 100) history.length = 100;
+            chrome.storage.local.set({ 
+                blockedCount: blockedCount,
+                blockedHistory: history
+            }).catch(()=>{});
+        });
     }
 }
 
