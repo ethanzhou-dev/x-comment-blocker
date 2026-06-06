@@ -63,7 +63,7 @@ body {
 
 .section-actions {
     display: flex;
-    gap: 4px;
+    gap: 2px;
 }
 
 .section-label {
@@ -73,6 +73,24 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     display: block;
+}
+
+.icon-btn {
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.icon-btn:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .keyword-input-row {
@@ -348,7 +366,7 @@ body.disabled .settings-panel {
 .keyword-count {
     font-size: 11px;
     color: var(--text-muted);
-    margin-top: 6px;
+    margin-top: 8px;
     text-align: right;
 }
 
