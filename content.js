@@ -1,4 +1,3 @@
-let blockKeywords = [];
 let blockRegex = null;
 let lastKeywordsKey = '';
 let checkUsername = true;
@@ -6,7 +5,6 @@ let onlyComments = true;
 let blockSpecialChars = true;
 let blockEmoji = false;
 let filterEnabled = true;
-let cloudEnabled = true;
 let filterTimer = null;
 let filterVersion = 0;
 let lastUrl = location.href;
@@ -26,8 +24,7 @@ async function mergeKeywords() {
         const userKws = parseKeywords(items.keywords);
         const cloudKws = items.cloudEnabled ? parseKeywords(items.cloudKeywords) : [];
 
-        cloudEnabled = items.cloudEnabled;
-        blockKeywords = [...new Set([...cloudKws, ...userKws])];
+        const blockKeywords = [...new Set([...cloudKws, ...userKws])];
         
         const newKey = blockKeywords.join('\n');
         if (newKey === lastKeywordsKey) return;
@@ -62,7 +59,6 @@ async function mergeKeywords() {
         blockSpecialChars = items.blockSpecialChars;
         blockEmoji = items.blockEmoji;
         filterEnabled = items.enabled;
-        cloudEnabled = items.cloudEnabled;
 
         await mergeKeywords();
         filterTweets();
@@ -222,62 +218,74 @@ function filterTweets(specificTweets = null) {
             }
             return;
         }
-        tweet.__cbxQuickHash = quickHash;
+        
+        // Skip tweets that are in the background (e.g. behind a photo modal)
+        if (tweet.closest('[aria-hidden="true"]')) {
+            return;
+        }
 
-        let tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
-        let userName = userNode ? getTweetTextForKeywords(userNode) : "";
-        
-        let stableHandle = "";
-        if (userNode) {
-            const handleLink = userNode.querySelector('a[href^="/"]');
-            if (handleLink) {
-                stableHandle = (handleLink.getAttribute('href') || "").toLowerCase();
-            }
-        }
-        
-        let tweetHasEmoji = false;
-        if (blockEmoji && isStatusPage && textNode) {
-            tweetHasEmoji = hasEmoji(textNode);
-        }
+        tweet.__cbxQuickHash = quickHash;
 
         let isSpam = false;
         let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji || blockSpecialChars);
         
-        if (onlyComments && !isStatusPage) {
+        if (shouldCheck && onlyComments && !isStatusPage) {
+            shouldCheck = false;
+        }
+
+        let isMainTweet = false;
+        let tweetBody = "";
+        let userName = "";
+        let stableHandle = "";
+
+        if (shouldCheck && isStatusPage && pageStatusId) {
+            const timeNodes = tweet.querySelectorAll('time');
+            for (let timeEl of timeNodes) {
+                const link = timeEl.closest('a');
+                if (link) {
+                    const href = link.getAttribute('href');
+                    if (href) {
+                        const hrefMatch = href.match(/\/status\/(\d+)/i);
+                        if (hrefMatch && hrefMatch[1] === pageStatusId) {
+                            isMainTweet = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (shouldCheck && onlyComments && isMainTweet) {
             shouldCheck = false;
         }
 
         if (shouldCheck) {
+            tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
+            userName = userNode ? getTweetTextForKeywords(userNode) : "";
+            
+            if (userNode) {
+                const handleLink = userNode.querySelector('a[href^="/"]');
+                if (handleLink) {
+                    stableHandle = (handleLink.getAttribute('href') || "").toLowerCase();
+                }
+            }
+            
+            let tweetHasEmoji = false;
+            if (blockEmoji && isStatusPage && textNode) {
+                tweetHasEmoji = hasEmoji(textNode);
+            }
+
             if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
             
             let isEmojiSpam = false;
             let isSpecialCharSpam = false;
-            if ((blockEmoji || blockSpecialChars) && isStatusPage) {
-                let isMainTweet = false;
-                
-                if (pageStatusId) {
-                    const timeNodes = tweet.querySelectorAll('time');
-                    for (let timeEl of timeNodes) {
-                        const link = timeEl.closest('a');
-                        if (link) {
-                            const href = link.getAttribute('href');
-                            if (!href) continue;
-                            const hrefMatch = href.match(/\/status\/(\d+)/i);
-                            if (hrefMatch && hrefMatch[1] === pageStatusId) {
-                                isMainTweet = true;
-                                break;
-                            }
-                        }
-                    }
+            
+            if (isStatusPage && !isMainTweet) {
+                if (blockEmoji && tweetHasEmoji) {
+                    isEmojiSpam = true;
                 }
-                
-                if (!isMainTweet) {
-                    if (blockEmoji && tweetHasEmoji) {
-                        isEmojiSpam = true;
-                    }
-                    if (blockSpecialChars && textNode && spamCharsRegex.test(textNode.textContent)) {
-                        isSpecialCharSpam = true;
-                    }
+                if (blockSpecialChars && textNode && spamCharsRegex.test(textNode.textContent)) {
+                    isSpecialCharSpam = true;
                 }
             }
             
@@ -292,6 +300,7 @@ function filterTweets(specificTweets = null) {
                 }
             }
         }
+
 
         tweet.__cbxIsSpam = isSpam;
 
