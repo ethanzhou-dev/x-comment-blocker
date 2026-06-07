@@ -201,7 +201,8 @@ function filterTweets(specificTweets = null) {
     
     const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
     const pageStatusId = urlMatch ? urlMatch[1] : null;
-    const isStatusPage = !!pageStatusId;
+    const isPhotoVideoOverlay = /\/status\/\d+\/(?:photo|video)\//i.test(window.location.pathname);
+    const isStatusPage = !!pageStatusId && !isPhotoVideoOverlay;
 
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
@@ -239,6 +240,11 @@ function filterTweets(specificTweets = null) {
 
         if (shouldCheck && isStatusPage && pageStatusId) {
             const timeNodes = tweet.querySelectorAll('time');
+            if (timeNodes.length === 0) {
+                // Time nodes not rendered yet, skip checking to prevent premature blocking
+                tweet.__cbxQuickHash = ""; 
+                return;
+            }
             for (let timeEl of timeNodes) {
                 const link = timeEl.closest('a');
                 if (link) {
