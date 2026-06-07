@@ -241,7 +241,6 @@ function filterTweets(specificTweets = null) {
         if (shouldCheck && isStatusPage && pageStatusId) {
             const timeNodes = tweet.querySelectorAll('time');
             if (timeNodes.length === 0) {
-                // Time nodes not rendered yet, skip checking to prevent premature blocking
                 tweet.__cbxQuickHash = ""; 
                 return;
             }
