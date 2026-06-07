@@ -219,7 +219,6 @@ function filterTweets(specificTweets = null) {
             return;
         }
         
-        // Skip tweets that are in the background (e.g. behind a photo modal)
         if (tweet.closest('[aria-hidden="true"]')) {
             return;
         }
