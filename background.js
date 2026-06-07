@@ -8,13 +8,11 @@ chrome.runtime.onInstalled.addListener(() => {
         periodInMinutes: SYNC_INTERVAL_MINUTES
     });
 
-    chrome.contextMenus.removeAll(() => {
-        chrome.contextMenus.create({
-            id: 'addToBlocklist',
-            title: '添加「%s」到屏蔽词',
-            contexts: ['selection'],
-            documentUrlPatterns: ['*://*.twitter.com/*', '*://*.x.com/*']
-        });
+    chrome.contextMenus.create({
+        id: 'addToBlocklist',
+        title: '添加「%s」到屏蔽词',
+        contexts: ['selection'],
+        documentUrlPatterns: ['*://*.twitter.com/*', '*://*.x.com/*']
     });
 });
 
