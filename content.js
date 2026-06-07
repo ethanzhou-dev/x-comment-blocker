@@ -228,6 +228,7 @@ function filterTweets(specificTweets = null) {
 
         let isSpam = false;
         let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji || blockSpecialChars);
+        let blockReason = "";
         
         if (shouldCheck && onlyComments && !isStatusPage) {
             shouldCheck = false;
@@ -287,9 +288,11 @@ function filterTweets(specificTweets = null) {
             if (isStatusPage && !isMainTweet) {
                 if (blockEmoji && tweetHasEmoji) {
                     isEmojiSpam = true;
+                    blockReason = "表情屏蔽";
                 }
                 if (blockSpecialChars && textNode && spamCharsRegex.test(textNode.textContent)) {
                     isSpecialCharSpam = true;
+                    if (!blockReason) blockReason = "特殊字符屏蔽";
                 }
             }
             
@@ -297,10 +300,16 @@ function filterTweets(specificTweets = null) {
                 isSpam = true;
             } else {
                 isSpam = blockRegex ? blockRegex.test(tweetBody) : false;
+                if (isSpam) {
+                    blockReason = "内容屏蔽";
+                }
 
                 if (!isSpam && checkUsername && userName) {
                     let cleanUserName = userName.replace(/[\s_.-]+/g, '').replace(invisibleCharsRegex, '');
                     isSpam = blockRegex ? blockRegex.test(cleanUserName) : false;
+                    if (isSpam) {
+                        blockReason = "昵称屏蔽";
+                    }
                 }
             }
         }
@@ -321,6 +330,7 @@ function filterTweets(specificTweets = null) {
                 newBlockedItems.push({
                     text: normalizedBody,
                     user: stableHandle || userName,
+                    reason: blockReason,
                     time: Date.now()
                 });
             }

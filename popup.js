@@ -336,9 +336,14 @@ viewHistoryBtn.addEventListener('click', async () => {
         header.appendChild(userSpan);
         header.appendChild(timeSpan);
         
+        let displayText = item.text || '[无内容或已隐藏]';
+        if (item.reason) {
+            displayText = `[${item.reason}] ${displayText}`;
+        }
+        
         const textDiv = document.createElement('div');
         textDiv.className = 'history-item-text';
-        textDiv.textContent = item.text || '[无内容或已隐藏]';
+        textDiv.textContent = displayText;
         
         div.appendChild(header);
         div.appendChild(textDiv);
