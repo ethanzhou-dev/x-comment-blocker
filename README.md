@@ -1,55 +1,43 @@
-# X(Twitter) Comment Blocker - Auto Hide Spam
+# X(Twitter) Comment Blocker
 
-<p align="center">
-  <img src="icon128.png" alt="Icon" width="128">
-</p>
+自动屏蔽 X (Twitter) 评论区垃圾信息与引流机器人。
 
-**一键净化 X (Twitter) 评论区，自动屏蔽垃圾信息与引流机器人。**  
-*Block Specific Comments and Usernames on X.*
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
+![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
+![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen.svg)
 
-<p align="center">
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" />
-  <img src="https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white" alt="Chrome Extension" />
-  <img src="https://img.shields.io/badge/Manifest-V3-brightgreen.svg" alt="Manifest V3" />
-</p>
+## 功能
 
----
+- **云端词库**: 自动同步并定期更新公共垃圾屏蔽词库。
+- **自定义词库**: 支持手动添加、编辑屏蔽词，并提供本地文件的导入/导出功能。
+- **高级过滤**: 
+  - 按用户名包含屏蔽词过滤。
+  - 按特殊字符或 Emoji 过滤。
+  - 支持仅作用于推文评论区。
+- **快捷操作**: 选中网页文本后，右键可将其快速加入自定义屏蔽词库。
+- **数据与历史**: 记录屏蔽数量，并可查看最近拦截的 100 条评论。
 
-## 🌟 功能特性 (Features)
+## 安装
 
-- ☁️ **云端词库 (Cloud Sync)**: 自动订阅并每6小时更新一次维护的云端垃圾屏蔽词库，支持一键同步。
-- ✎ **自定义词库 (Custom Keywords)**: 支持添加你个人的屏蔽词。
-- 📁 **导入与导出 (Import/Export)**: 支持将自定义词库导出备份，或从本地文件批量导入。
-- 🕒 **屏蔽历史 (Blocked History)**: 查看最近拦截的 100 条评论记录。
-- ⚙️ **高级设置 (Advanced Settings)**: 包含多项过滤选项：
-  - **用户名过滤 (Username Filtering)**: 开启后同时验证“用户名”是否包含屏蔽词。
-  - **仅评论区过滤 (Comments Only)**: 只对推文下方的评论区应用屏蔽规则。
-  - **特殊字符屏蔽 (Block Special Chars)**: 拦截包含特殊符号的垃圾评论。
-  - **Emoji 屏蔽 (Block Emojis)**: 屏蔽所有带有 Emoji 表情的回复。
-- 🖱️ **右键快捷添加 (Quick Context Menu)**: 在推特页面划词选中任意文本，右键将其加入到自定义屏蔽词库中。
-- 📊 **屏蔽统计 (Blocking Stats)**: 记录已为你屏蔽了多少条垃圾评论，并支持一键重置。
+当前为开发者版本，适用于基于 Chromium 的浏览器（如 Chrome、Edge）：
 
-## 📥 安装方式 (Installation)
+1. 下载或克隆本项目代码。
+2. 打开扩展程序页面：`chrome://extensions/` 或 `edge://extensions/`。
+3. 开启页面右上角的 **开发者模式**。
+4. 点击 **加载已解压的扩展程序**，选择下载的 `x-comment-blocker` 文件夹。
 
-由于目前为开发者版本（尚未上架应用商店），你可以通过以下方式在 Chrome、Edge 等基于 Chromium 的浏览器中加载本插件：
+## 使用
 
-1. **下载项目代码**：将本项目下载到本地文件夹。
-2. **打开扩展程序页面**：在浏览器地址栏输入 `chrome://extensions/`（Chrome）或 `edge://extensions/`（Edge）并回车。
-3. **开启开发者模式**：在页面右上角开启 **“开发者模式” (Developer mode)**。
-4. **加载已解压的扩展程序**：点击左上角的 **“加载已解压的扩展程序” (Load unpacked)**，选择你下载的 `x-comment-blocker` 文件夹即可。
+- **全局控制**: 点击扩展图标，通过右上角开关启用或关闭插件。
+- **词库管理**: 在弹窗界面中管理自定义词库，可添加、删除，或通过顶部图标进行备份和恢复。
+- **云端同步**: 勾选“云端词库”开启自动更新，点击“同步”按钮可立即拉取最新列表。
+- **快速添加**: 浏览网页时遇到需要屏蔽的词，直接选中并右键点击添加。
+- **拦截记录**: 在弹窗统计区点击“查看”，可浏览最近的屏蔽记录。
 
-## 💡 使用说明 (Usage)
+## 隐私
 
-- **主开关**：点击扩展图标，右上角的主开关可一键开启/关闭插件。
-- **自定义词库**：在弹窗内的输入框中输入词汇并点击 `+` 即可添加。对已添加的标签支持点击编辑 (✎) 或删除 (✕)。点击列表上方的导入/导出图标可进行词库的备份与恢复。
-- **屏蔽历史**：在统计栏点击“查看”按钮，可浏览最近被拦截的评论记录。
-- **快捷划词**：浏览时遇到想要屏蔽的词，选中它，右键点击“添加「...」到屏蔽词”。
-- **云端词库**：勾选“云端词库”可自动下载更新公共词库，点击“同步”按钮可立即拉取最新列表。
+所有过滤规则与数据均在浏览器本地处理。不收集任何账号信息、浏览记录或自定义词库内容。网络请求仅用于获取公开的云端词库。
 
-## 🔒 隐私声明 (Privacy)
-
-插件所有过滤操作完全在**浏览器本地进行**。我们**不会**收集你的浏览记录、推特账号信息，也**不会**上传你的自定义词库。与外部的网络请求仅限于从 GitHub 拉取公开的云端词库。请放心使用。
-
-## 📄 开源协议 (License)
+## 协议
 
 本项目基于 [MIT License](./LICENSE) 协议开源。
