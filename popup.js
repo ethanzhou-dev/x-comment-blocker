@@ -11,7 +11,7 @@ const importFile = document.getElementById('importFile');
 const checkUsernameEl = document.getElementById('checkUsername');
 const onlyCommentsEl = document.getElementById('onlyComments');
 const blockSpecialCharsEl = document.getElementById('blockSpecialChars');
-const blockEmojiEl = document.getElementById('blockEmoji');
+const blockEmojiThresholdEl = document.getElementById('blockEmojiThreshold');
 const enableToggleEl = document.getElementById('enableToggle');
 const cloudToggleEl = document.getElementById('cloudToggle');
 const cloudInfoEl = document.getElementById('cloudInfo');
@@ -33,15 +33,32 @@ function showStatus(text) {
     }, 1500);
 }
 
+function clampEmojiThreshold(value) {
+    if (value === '') return 10;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 10;
+    return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function resolveEmojiThreshold(items) {
+    if (items.blockEmojiThreshold !== null && items.blockEmojiThreshold !== undefined) {
+        return clampEmojiThreshold(items.blockEmojiThreshold);
+    }
+    if (items.blockEmoji) return 0;
+    if (items.blockEmojiRatio) return 10;
+    return 100;
+}
+
 async function autoSave() {
     if (isLoading) return;
+    blockEmojiThresholdEl.value = clampEmojiThreshold(blockEmojiThresholdEl.value);
 
     await chrome.storage.local.set({
         keywords: userKeywords.join('\n'),
         checkUsername: checkUsernameEl.checked,
         onlyComments: onlyCommentsEl.checked,
         blockSpecialChars: blockSpecialCharsEl.checked,
-        blockEmoji: blockEmojiEl.checked,
+        blockEmojiThreshold: clampEmojiThreshold(blockEmojiThresholdEl.value),
         enabled: enableToggleEl.checked,
         cloudEnabled: cloudToggleEl.checked
     });
@@ -234,7 +251,7 @@ enableToggleEl.addEventListener('change', () => {
 checkUsernameEl.addEventListener('change', () => autoSave());
 onlyCommentsEl.addEventListener('change', () => autoSave());
 blockSpecialCharsEl.addEventListener('change', () => autoSave());
-blockEmojiEl.addEventListener('change', () => autoSave());
+blockEmojiThresholdEl.addEventListener('change', () => autoSave());
 cloudToggleEl.addEventListener('change', () => autoSave());
 
 syncBtn.addEventListener('click', () => {
@@ -261,6 +278,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         onlyComments: true,
         blockSpecialChars: true,
         blockEmoji: false,
+        blockEmojiRatio: true,
+        blockEmojiThreshold: null,
         enabled: true,
         cloudEnabled: true,
         blockedCount: 0,
@@ -272,7 +291,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     checkUsernameEl.checked = items.checkUsername;
     onlyCommentsEl.checked = items.onlyComments;
     blockSpecialCharsEl.checked = items.blockSpecialChars;
-    blockEmojiEl.checked = items.blockEmoji;
+    blockEmojiThresholdEl.value = resolveEmojiThreshold(items);
     enableToggleEl.checked = items.enabled;
     cloudToggleEl.checked = items.cloudEnabled;
     blockedCountEl.textContent = items.blockedCount || 0;
