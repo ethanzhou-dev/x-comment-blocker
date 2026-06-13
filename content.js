@@ -3,7 +3,7 @@ let lastKeywordsKey = '';
 let checkUsername = true;
 let onlyComments = true;
 let blockSpecialChars = true;
-let blockEmoji = false;
+let blockEmojiThreshold = 10;
 let filterEnabled = true;
 let filterTimer = null;
 let filterVersion = 0;
@@ -12,6 +12,22 @@ const blockedHashes = new Set();
 const MAX_HASHES = 5000;
 const emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
 const spamCharsRegex = /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
+
+function clampEmojiThreshold(value) {
+    if (value === '') return 10;
+    const parsed = Number(value);
+    if (!Number.isFinite(parsed)) return 10;
+    return Math.min(100, Math.max(0, Math.round(parsed)));
+}
+
+function resolveEmojiThreshold(items) {
+    if (items.blockEmojiThreshold !== null && items.blockEmojiThreshold !== undefined) {
+        return clampEmojiThreshold(items.blockEmojiThreshold);
+    }
+    if (items.blockEmoji) return 0;
+    if (items.blockEmojiRatio) return 10;
+    return 100;
+}
 
 async function mergeKeywords() {
     try {
@@ -48,6 +64,8 @@ async function mergeKeywords() {
             onlyComments: true,
             blockSpecialChars: true,
             blockEmoji: false,
+            blockEmojiRatio: true,
+            blockEmojiThreshold: null,
             enabled: true,
             blockedCount: 0,
             lastSyncTime: 0,
@@ -57,7 +75,7 @@ async function mergeKeywords() {
         checkUsername = items.checkUsername;
         onlyComments = items.onlyComments;
         blockSpecialChars = items.blockSpecialChars;
-        blockEmoji = items.blockEmoji;
+        blockEmojiThreshold = resolveEmojiThreshold(items);
         filterEnabled = items.enabled;
 
         await mergeKeywords();
@@ -133,8 +151,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
         onlyComments = changes.onlyComments.newValue;
         needsFilter = true;
     }
-    if (changes.blockEmoji) {
-        blockEmoji = changes.blockEmoji.newValue;
+    if (changes.blockEmojiThreshold) {
+        blockEmojiThreshold = clampEmojiThreshold(changes.blockEmojiThreshold.newValue);
         needsFilter = true;
     }
     if (changes.blockSpecialChars) {
@@ -176,18 +194,17 @@ function getTweetTextForKeywords(node) {
     return text;
 }
 
-function hasEmoji(node) {
-    if (!node) return false;
-    
-    if (emojiRegex.test(node.textContent || '')) return true;
-    
-    const imgs = node.querySelectorAll('img');
-    for (let img of imgs) {
-        const src = img.src || '';
-        if (src.includes('emoji') || src.includes('twemoji')) return true;
-        if (img.alt && emojiRegex.test(img.alt)) return true;
-    }
-    return false;
+function getEmojiRatio(node) {
+    if (!node) return 0;
+
+    const text = getTweetTextForKeywords(node)
+        .replace(invisibleCharsRegex, '')
+        .replace(/\s+/g, '');
+    const chars = Array.from(text);
+    if (chars.length === 0) return 0;
+
+    const emojiCount = chars.filter(char => emojiRegex.test(char)).length;
+    return emojiCount / chars.length;
 }
 
 function filterTweets(specificTweets = null) {
@@ -207,8 +224,9 @@ function filterTweets(specificTweets = null) {
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
+        const quickText = textNode ? getTweetTextForKeywords(textNode) : "";
 
-        const quickHash = (textNode ? textNode.textContent : "") + "|" + (userNode ? userNode.textContent : "") + "|" + filterVersion + "|" + isStatusPage;
+        const quickHash = quickText + "|" + (userNode ? getTweetTextForKeywords(userNode) : "") + "|" + filterVersion + "|" + isStatusPage;
         if (tweet.__cbxQuickHash === quickHash) {
             if (tweet.__cbxIsSpam) {
                 if (!tweet.classList.contains('x-comment-blocker-hidden')) {
@@ -227,7 +245,7 @@ function filterTweets(specificTweets = null) {
         tweet.__cbxQuickHash = quickHash;
 
         let isSpam = false;
-        let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji || blockSpecialChars);
+        let shouldCheck = filterEnabled && (blockRegex !== null || blockEmojiThreshold < 100 || blockSpecialChars);
         let blockReason = "";
         
         if (shouldCheck && onlyComments && !isStatusPage) {
@@ -265,7 +283,7 @@ function filterTweets(specificTweets = null) {
         }
 
         if (shouldCheck) {
-            tweetBody = textNode ? getTweetTextForKeywords(textNode) : "";
+            tweetBody = quickText;
             userName = userNode ? getTweetTextForKeywords(userNode) : "";
             
             if (userNode) {
@@ -275,20 +293,15 @@ function filterTweets(specificTweets = null) {
                 }
             }
             
-            let tweetHasEmoji = false;
-            if (blockEmoji && isStatusPage && textNode) {
-                tweetHasEmoji = hasEmoji(textNode);
-            }
-
             if (tweetBody) tweetBody = tweetBody.replace(invisibleCharsRegex, '');
             
             let isEmojiSpam = false;
             let isSpecialCharSpam = false;
             
             if (isStatusPage && !isMainTweet) {
-                if (blockEmoji && tweetHasEmoji) {
+                if (textNode && getEmojiRatio(textNode) > blockEmojiThreshold / 100) {
                     isEmojiSpam = true;
-                    blockReason = "表情屏蔽";
+                    blockReason = "Emoji过多屏蔽";
                 }
                 if (blockSpecialChars && textNode && spamCharsRegex.test(textNode.textContent)) {
                     isSpecialCharSpam = true;
@@ -321,7 +334,7 @@ function filterTweets(specificTweets = null) {
             if (!tweet.classList.contains('x-comment-blocker-hidden')) {
                 tweet.classList.add('x-comment-blocker-hidden');
             }
-            const normalizedBody = (textNode ? textNode.textContent : "").replace(invisibleCharsRegex, '').replace(/\s+/g, ' ').trim();
+            const normalizedBody = quickText.replace(invisibleCharsRegex, '').replace(/\s+/g, ' ').trim();
             const stableHash = normalizedBody + "|" + stableHandle;
             if (!blockedHashes.has(stableHash)) {
                 if (blockedHashes.size >= MAX_HASHES) blockedHashes.clear();

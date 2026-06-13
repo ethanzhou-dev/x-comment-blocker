@@ -303,6 +303,31 @@ body {
     cursor: pointer;
 }
 
+.threshold-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+.threshold-input-wrap input[type="number"] {
+    width: 56px;
+    height: 28px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 13px;
+    padding: 0 6px;
+    outline: none;
+}
+
+.threshold-input-wrap input[type="number"]:focus {
+    border-color: var(--accent);
+}
+
 .toggle-switch {
     position: relative;
     width: 44px;
