@@ -202,11 +202,26 @@ function filterTweets(specificTweets = null) {
     const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
     const pageStatusId = urlMatch ? urlMatch[1] : null;
     const isPhotoVideoOverlay = /\/status\/\d+\/(?:photo|video)\//i.test(window.location.pathname);
-    const isStatusPage = !!pageStatusId && !isPhotoVideoOverlay;
 
     tweets.forEach(tweet => {
         const userNode = tweet.querySelector('[data-testid="User-Name"]');
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
+
+        let isStatusPage = false;
+        if (isPhotoVideoOverlay) {
+            const isOverlayTweet = tweet.closest('[role="dialog"]') !== null;
+            if (isOverlayTweet) {
+                isStatusPage = true;
+            } else {
+                if (tweet.__cbxQuickHash) {
+                    isStatusPage = tweet.__cbxQuickHash.endsWith("|true");
+                } else {
+                    isStatusPage = false;
+                }
+            }
+        } else {
+            isStatusPage = !!pageStatusId;
+        }
 
         const quickHash = (textNode ? textNode.textContent : "") + "|" + (userNode ? userNode.textContent : "") + "|" + filterVersion + "|" + isStatusPage;
         if (tweet.__cbxQuickHash === quickHash) {
