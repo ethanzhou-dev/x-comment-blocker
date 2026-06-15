@@ -1,6 +1,6 @@
 # X(Twitter) Comment Blocker
 
-自动屏蔽 X (Twitter) 评论区垃圾信息与引流机器人。
+用于自动屏蔽 X (Twitter) 评论区垃圾信息与引流机器人的浏览器插件。
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
