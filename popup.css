@@ -465,11 +465,11 @@ body.disabled .settings-panel {
     font-size: 11px;
     color: var(--text-muted);
     margin-left: 6px;
-    margin-right: auto;
+    flex: 1;
+    min-width: 0;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    min-width: 0;
 }
 
 .btn-outline {
