@@ -503,17 +503,7 @@ body.disabled .settings-panel {
     margin-right: 8px;
 }
 
-.sync-status {
-    font-size: 11px;
-    color: var(--text-muted);
-    padding: 0 12px;
-    margin-top: -12px;
-    margin-bottom: 4px;
-    min-height: 16px;
-    line-height: 16px;
-}
-
-.sync-status.error {
+.cloud-info.error {
     color: var(--danger);
 }
 
