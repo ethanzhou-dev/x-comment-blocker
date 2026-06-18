@@ -50,10 +50,7 @@ async function mergeKeywords() {
             onlyComments: true,
             blockSpecialChars: true,
             blockEmoji: false,
-            enabled: true,
-            blockedCount: 0,
-            lastSyncTime: 0,
-            cloudEnabled: true
+            enabled: true
         });
 
         checkUsername = items.checkUsername;
@@ -348,7 +345,6 @@ function filterTweets(specificTweets = null) {
                 }
             }
         }
-
 
         tweet.__cbxIsSpam = isSpam;
 

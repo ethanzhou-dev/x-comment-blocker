@@ -294,7 +294,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         enabled: true,
         cloudEnabled: true,
         blockedCount: 0,
-        cloudKeywords: '',
         lastSyncTime: 0
     });
 

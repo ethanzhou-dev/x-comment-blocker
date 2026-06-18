@@ -472,6 +472,10 @@ body.disabled .settings-panel {
     text-overflow: ellipsis;
 }
 
+.cloud-info.error {
+    color: var(--danger);
+}
+
 .btn-outline {
     background: none;
     border: 1px solid var(--border);
@@ -505,10 +509,6 @@ body.disabled .settings-panel {
 
 #syncBtn {
     margin-right: 8px;
-}
-
-.cloud-info.error {
-    color: var(--danger);
 }
 
 .history-modal {
