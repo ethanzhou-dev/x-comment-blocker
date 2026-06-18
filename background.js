@@ -37,7 +37,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'syncNow') {
         doSync().then(sendResponse);
-        return true; // keep channel open for async response
+        return true;
     }
 });
 
