@@ -464,8 +464,12 @@ body.disabled .settings-panel {
 .cloud-info {
     font-size: 11px;
     color: var(--text-muted);
-    margin-left: auto;
-    margin-right: 8px;
+    margin-left: 6px;
+    margin-right: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
 }
 
 .btn-outline {
