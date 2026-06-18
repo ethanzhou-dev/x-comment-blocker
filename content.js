@@ -272,23 +272,30 @@ function filterTweets(specificTweets = null) {
         let stableHandle = "";
 
         if (shouldCheck && isStatusPage && pageStatusId) {
+            let currentTweetId = null;
             const timeNodes = tweet.querySelectorAll('time');
-            if (timeNodes.length === 0) {
-                tweet.__cbxQuickHash = ""; 
-                return;
-            }
+            
             for (let timeEl of timeNodes) {
                 const link = timeEl.closest('a');
                 if (link) {
                     const href = link.getAttribute('href');
-                    if (href) {
-                        const hrefMatch = href.match(/\/status\/(\d+)/i);
-                        if (hrefMatch && hrefMatch[1] === pageStatusId) {
-                            isMainTweet = true;
-                            break;
-                        }
+                    const match = href ? href.match(/\/status\/(\d+)/i) : null;
+                    if (match) {
+                        currentTweetId = match[1];
+                        break;
                     }
                 }
+            }
+
+            if (currentTweetId === pageStatusId) {
+                isMainTweet = true;
+            } else if (!currentTweetId && tweet.querySelector('article')) {
+                isMainTweet = true;
+            }
+
+            if (!tweet.querySelector('article')) {
+                tweet.__cbxQuickHash = ""; 
+                return;
             }
         }
         
