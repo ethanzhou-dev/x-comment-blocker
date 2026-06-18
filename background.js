@@ -1,6 +1,18 @@
 importScripts('utils.js');
 
 const ALARM_NAME = 'cloudKeywordSync';
+let isSyncing = false;
+
+async function doSync() {
+    if (isSyncing) return { success: false, reason: 'busy' };
+    isSyncing = true;
+    try {
+        const success = await syncCloudKeywords();
+        return { success };
+    } finally {
+        isSyncing = false;
+    }
+}
 
 chrome.runtime.onInstalled.addListener(() => {
     chrome.alarms.create(ALARM_NAME, {
@@ -18,7 +30,14 @@ chrome.runtime.onInstalled.addListener(() => {
 
 chrome.alarms.onAlarm.addListener((alarm) => {
     if (alarm.name === ALARM_NAME) {
-        syncCloudKeywords();
+        doSync();
+    }
+});
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'syncNow') {
+        doSync().then(sendResponse);
+        return true; // keep channel open for async response
     }
 });
 

@@ -8,8 +8,10 @@ let filterEnabled = true;
 let filterTimer = null;
 let filterVersion = 0;
 let lastUrl = location.href;
-const blockedHashes = new Set();
+const blockedHashes = new Map();
 const MAX_HASHES = 5000;
+const HASH_TTL_MS = 30 * 60 * 1000;
+let pruneCounter = 0;
 const emojiRegex = new RegExp('[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]', 'u');
 const spamCharsRegex = /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
 
@@ -190,6 +192,24 @@ function hasEmoji(node) {
     return false;
 }
 
+function pruneOldHashes() {
+    if (++pruneCounter < 100) return;
+    pruneCounter = 0;
+    const now = Date.now();
+    for (const [hash, time] of blockedHashes) {
+        if (now - time > HASH_TTL_MS) {
+            blockedHashes.delete(hash);
+        }
+    }
+    if (blockedHashes.size >= MAX_HASHES) {
+        const entries = [...blockedHashes.entries()].sort((a, b) => a[1] - b[1]);
+        const deleteCount = Math.floor(entries.length / 4);
+        for (let i = 0; i < deleteCount; i++) {
+            blockedHashes.delete(entries[i][0]);
+        }
+    }
+}
+
 function filterTweets(specificTweets = null) {
     if (!chrome.runtime?.id) return;
 
@@ -339,8 +359,7 @@ function filterTweets(specificTweets = null) {
             const normalizedBody = (textNode ? textNode.textContent : "").replace(invisibleCharsRegex, '').replace(/\s+/g, ' ').trim();
             const stableHash = normalizedBody + "|" + stableHandle;
             if (!blockedHashes.has(stableHash)) {
-                if (blockedHashes.size >= MAX_HASHES) blockedHashes.clear();
-                blockedHashes.add(stableHash);
+                blockedHashes.set(stableHash, Date.now());
                 newBlocks++;
                 newBlockedItems.push({
                     text: normalizedBody,
@@ -353,6 +372,8 @@ function filterTweets(specificTweets = null) {
             tweet.classList.remove('x-comment-blocker-hidden');
         }
     });
+
+    pruneOldHashes();
 
     if (newBlocks > 0) {
         chrome.storage.local.get({ blockedCount: 0, blockedHistory: [] }).then(items => {

@@ -24,10 +24,17 @@ async function syncCloudKeywords() {
         const resp = await fetch(CLOUD_KEYWORDS_URL, { headers, cache: 'no-store' });
 
         if (resp.status === 304) {
-            await chrome.storage.local.set({ lastSyncTime: Date.now() });
+            await chrome.storage.local.set({ lastSyncTime: Date.now(), syncStatus: 'ok', syncError: '' });
             return true;
         }
-        if (resp.status === 403 || resp.status === 429 || !resp.ok) return false;
+        if (resp.status === 403 || resp.status === 429) {
+            await chrome.storage.local.set({ syncStatus: 'error', syncError: 'API 请求限流，请稍后重试' });
+            return false;
+        }
+        if (!resp.ok) {
+            await chrome.storage.local.set({ syncStatus: 'error', syncError: `HTTP ${resp.status}` });
+            return false;
+        }
 
         const text = await resp.text();
         const newETag = resp.headers.get('ETag') || '';
@@ -36,10 +43,13 @@ async function syncCloudKeywords() {
         await chrome.storage.local.set({
             cloudKeywords: cloudList.join('\n'),
             cloudETag: newETag,
-            lastSyncTime: Date.now()
+            lastSyncTime: Date.now(),
+            syncStatus: 'ok',
+            syncError: ''
         });
         return true;
     } catch (e) {
+        await chrome.storage.local.set({ syncStatus: 'error', syncError: '网络连接失败' }).catch(() => {});
         return false;
     }
 }
