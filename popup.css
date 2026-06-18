@@ -464,7 +464,7 @@ body.disabled .settings-panel {
 .cloud-info {
     font-size: 11px;
     color: var(--text-muted);
-    margin-left: 16px;
+    margin-left: 10px;
     flex: 1;
     min-width: 0;
     white-space: nowrap;
