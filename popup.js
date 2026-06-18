@@ -185,7 +185,7 @@ importFile.addEventListener('change', (e) => {
             if (Array.isArray(parsed)) {
                 newKeywords = parsed.map(k => String(k));
             }
-        } catch(err) {
+        } catch {
             newKeywords = parseKeywords(content);
         }
 
