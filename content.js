@@ -255,7 +255,6 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
         }
     }
 
-    // Emoji and special char spam (only for comments on status pages)
     if (isStatusPage && !isMainTweet) {
         if (blockEmoji && textNode && hasEmoji(textNode)) {
             return { isSpam: true, blockReason: "表情屏蔽", userName, stableHandle };
@@ -265,12 +264,10 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
         }
     }
     
-    // Keyword blocklist against tweet body
     if (matchesBlocklist(tweetBody)) {
         return { isSpam: true, blockReason: "内容屏蔽", userName, stableHandle };
     }
 
-    // Keyword blocklist against username
     if (checkUsername && userName) {
         const cleanUserName = userName.replace(/[\s_.-]+/g, '').replace(invisibleCharsRegex, '');
         if (matchesBlocklist(cleanUserName)) {
@@ -309,7 +306,6 @@ function filterTweets(specificTweets = null) {
         const textNode = tweet.querySelector('[data-testid="tweetText"]');
         const isStatusPage = resolveStatusPage(tweet, pageContext);
 
-        // Quick hash cache check
         const quickHash = (textNode ? textNode.textContent : "") + "|" + (userNode ? userNode.textContent : "") + "|" + filterVersion + "|" + isStatusPage;
         if (tweet.__cbxQuickHash === quickHash) {
             if (tweet.__cbxIsSpam) {
@@ -328,7 +324,6 @@ function filterTweets(specificTweets = null) {
         let shouldCheck = filterEnabled && (blockRegex !== null || blockEmoji || blockSpecialChars);
         if (shouldCheck && onlyComments && !isStatusPage) shouldCheck = false;
 
-        // Main tweet detection
         let isMainTweet = false;
         if (shouldCheck && isStatusPage && pageContext.pageStatusId) {
             isMainTweet = checkIsMainTweet(tweet, pageContext.pageStatusId);
@@ -341,7 +336,6 @@ function filterTweets(specificTweets = null) {
         
         if (shouldCheck && onlyComments && isMainTweet) shouldCheck = false;
 
-        // Spam detection
         let isSpam = false;
         let blockReason = "";
         let userName = "";
@@ -355,7 +349,6 @@ function filterTweets(specificTweets = null) {
             stableHandle = result.stableHandle;
         }
 
-        // Apply visibility
         tweet.__cbxIsSpam = isSpam;
         if (isSpam) {
             if (!tweet.classList.contains('x-comment-blocker-hidden')) {
