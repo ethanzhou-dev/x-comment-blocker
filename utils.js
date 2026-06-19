@@ -3,6 +3,34 @@ const SYNC_INTERVAL_MINUTES = 360;
 const SYNC_INTERVAL_MS = SYNC_INTERVAL_MINUTES * 60 * 1000;
 const invisibleCharsRegex = /[\u00AD\u180E\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g;
 
+const STORAGE_DEFAULTS = {
+    keywords: '',
+    cloudEnabled: true,
+    cloudKeywords: '',
+    checkUsername: true,
+    onlyComments: true,
+    blockSpecialChars: true,
+    blockEmoji: false,
+    enabled: true,
+    blockedCount: 0,
+    blockedHistory: [],
+    lastSyncTime: 0,
+    syncStatus: '',
+    syncError: '',
+    cloudETag: ''
+};
+
+function getStorageDefaults(...keys) {
+    const defaults = {};
+    for (const key of keys) {
+        if (key in STORAGE_DEFAULTS) {
+            const val = STORAGE_DEFAULTS[key];
+            defaults[key] = Array.isArray(val) ? [] : val;
+        }
+    }
+    return defaults;
+}
+
 function parseKeywords(text) {
     if (!text) return [];
     return text.split('\n')
@@ -11,12 +39,12 @@ function parseKeywords(text) {
 }
 
 async function syncCloudKeywords() {
-    const { cloudEnabled } = await chrome.storage.local.get({ cloudEnabled: true });
+    const { cloudEnabled } = await chrome.storage.local.get(getStorageDefaults('cloudEnabled'));
     if (!cloudEnabled) return false;
 
     try {
         const headers = { 'Accept': 'application/vnd.github.v3.raw' };
-        const { cloudETag } = await chrome.storage.local.get({ cloudETag: '' });
+        const { cloudETag } = await chrome.storage.local.get(getStorageDefaults('cloudETag'));
         if (cloudETag) {
             headers['If-None-Match'] = cloudETag;
         }

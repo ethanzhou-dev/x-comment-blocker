@@ -48,7 +48,7 @@ chrome.contextMenus.onClicked.addListener((info) => {
         
         const keyword = inputKws[0];
 
-        chrome.storage.local.get({ keywords: '' }, (items) => {
+        chrome.storage.local.get(getStorageDefaults('keywords'), (items) => {
             const existing = parseKeywords(items.keywords);
             if (!existing.includes(keyword)) {
                 existing.push(keyword);

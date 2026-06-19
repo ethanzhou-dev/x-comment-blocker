@@ -71,20 +71,20 @@ function renderUserKeywords() {
     const fragment = document.createDocumentFragment();
 
     userKeywords.forEach((kw, index) => {
-        let tag;
-        const editBtn = el('button', { className: 'tag-btn tag-btn-edit', textContent: '✎', title: '编辑', onclick: () => startEdit(tag, index) });
+        const editBtn = el('button', { className: 'tag-btn tag-btn-edit', textContent: '✎', title: '编辑' });
         const delBtn = el('button', { className: 'tag-btn tag-btn-del', textContent: '✕', title: '删除', onclick: () => {
             userKeywords.splice(index, 1);
             renderUserKeywords();
             autoSave();
         }});
 
-        tag = el('span', { className: 'keyword-tag' }, [
+        const tag = el('span', { className: 'keyword-tag' }, [
             el('span', { className: 'tag-text', textContent: kw, title: kw }),
             editBtn,
             delBtn
         ]);
 
+        editBtn.onclick = () => startEdit(tag, index);
         fragment.appendChild(tag);
     });
 
@@ -222,7 +222,7 @@ function relativeTime(ts) {
 }
 
 function updateCloudInfo() {
-    chrome.storage.local.get({ cloudKeywords: '', lastSyncTime: 0, syncStatus: '', syncError: '' }).then(items => {
+    chrome.storage.local.get(getStorageDefaults('cloudKeywords', 'lastSyncTime', 'syncStatus', 'syncError')).then(items => {
         const cloudList = parseKeywords(items.cloudKeywords);
         const countText = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
 
@@ -285,17 +285,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    const items = await chrome.storage.local.get({
-        keywords: '',
-        checkUsername: true,
-        onlyComments: true,
-        blockSpecialChars: true,
-        blockEmoji: false,
-        enabled: true,
-        cloudEnabled: true,
-        blockedCount: 0,
-        lastSyncTime: 0
-    });
+    const items = await chrome.storage.local.get(
+        getStorageDefaults('keywords', 'checkUsername', 'onlyComments', 'blockSpecialChars', 'blockEmoji', 'enabled', 'cloudEnabled', 'blockedCount', 'lastSyncTime')
+    );
 
     userKeywords = parseKeywords(items.keywords);
     checkUsernameEl.checked = items.checkUsername;
@@ -331,7 +323,7 @@ viewHistoryBtn.addEventListener('click', async () => {
         </div>
     `;
     
-    const items = await chrome.storage.local.get({ blockedHistory: [] });
+    const items = await chrome.storage.local.get(getStorageDefaults('blockedHistory'));
     const history = items.blockedHistory;
     
     historyList.innerHTML = '';
