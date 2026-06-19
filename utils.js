@@ -1,3 +1,4 @@
+/* exported SYNC_INTERVAL_MS, syncCloudKeywords, parseKeywords, getStorageDefaults, invisibleCharsRegex, SYNC_INTERVAL_MINUTES */
 const CLOUD_KEYWORDS_URL = 'https://api.github.com/repos/ethanzhou-dev/x-comment-blocker/contents/keywords.txt';
 const SYNC_INTERVAL_MINUTES = 360;
 const SYNC_INTERVAL_MS = SYNC_INTERVAL_MINUTES * 60 * 1000;

@@ -245,8 +245,8 @@ async function triggerCloudSync(manual = false) {
         const result = await chrome.runtime.sendMessage({ action: 'syncNow' });
         if (!result || !result.success) {
             if (manual) showStatus('同步失败，请检查网络');
-        } else {
-            if (manual) showStatus('云端词库已同步');
+        } else if (manual) {
+            showStatus('云端词库已同步');
         }
     } catch (e) {
         if (manual) showStatus('同步失败，请检查网络');
