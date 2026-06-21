@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 ![Chrome Extension](https://img.shields.io/badge/Chrome-Extension-4285F4?logo=googlechrome&logoColor=white)
 ![Manifest V3](https://img.shields.io/badge/Manifest-V3-brightgreen.svg)
+[![Chrome Web Store](https://img.shields.io/chrome-web-store/v/gagacedifiphcndckimeihhcbcclkach.svg)](https://chromewebstore.google.com/detail/xtwitter-comment-blocker/gagacedifiphcndckimeihhcbcclkach)
 
 ## 功能
 
@@ -19,7 +20,14 @@
 
 ## 安装
 
-当前为开发者版本，适用于基于 Chromium 的浏览器（如 Chrome、Edge）：
+**从 Chrome 应用商店安装**
+
+您可以直接在 Chrome 应用商店获取最新版本：
+[X(Twitter) Comment Blocker - Chrome 应用商店](https://chromewebstore.google.com/detail/xtwitter-comment-blocker/gagacedifiphcndckimeihhcbcclkach)
+
+**开发者版本安装：**
+
+适用于基于 Chromium 的浏览器（如 Chrome、Edge）：
 
 1. 下载或克隆本项目代码。
 2. 打开扩展程序页面：`chrome://extensions/` 或 `edge://extensions/`。
