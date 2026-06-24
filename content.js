@@ -65,7 +65,6 @@ async function mergeKeywords() {
         filterTweets();
 
         const pendingTweets = new Set();
-        let rafScheduled = false;
 
         const observer = new MutationObserver((mutations) => {
             if (!isExtensionAlive()) { observer.disconnect(); return; }
@@ -98,13 +97,9 @@ async function mergeKeywords() {
                 }
             }
             
-            if (pendingTweets.size > 0 && !rafScheduled) {
-                rafScheduled = true;
-                requestAnimationFrame(() => {
-                    filterTweets(Array.from(pendingTweets));
-                    pendingTweets.clear();
-                    rafScheduled = false;
-                });
+            if (pendingTweets.size > 0) {
+                filterTweets(Array.from(pendingTweets));
+                pendingTweets.clear();
             }
         });
 
