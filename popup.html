@@ -35,7 +35,10 @@
     </div>
 
     <div class="control-group">
-        <label for="cloudToggle">☁ 云端词库</label>
+        <label for="cloudToggle" style="display: flex; align-items: center; gap: 8px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"></path></svg>
+            云端词库
+        </label>
         <span class="cloud-info" id="cloudInfo"></span>
         <button class="btn-outline" id="syncBtn" title="同步云端词库">同步</button>
         <input type="checkbox" id="cloudToggle">
@@ -43,7 +46,10 @@
 
     <div class="section-user">
         <div class="section-header">
-            <span class="section-label">✎ 自定义词库</span>
+            <span class="section-label" style="display: flex; align-items: center; gap: 4px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+                自定义词库
+            </span>
             <div class="section-actions">
                 <button class="icon-btn" id="importBtn" title="导入词库">
                     <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" fill="none" stroke-width="2"
