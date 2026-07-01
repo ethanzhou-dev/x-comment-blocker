@@ -251,9 +251,20 @@ async function triggerCloudSync(manual = false) {
     } catch (e) {
         if (manual) showStatus('同步失败，请检查网络');
     }
-    syncBtn.textContent = '同步';
-    syncBtn.classList.remove('syncing');
+    
     updateCloudInfo();
+
+    if (syncBtn.classList.contains('syncing')) {
+        const startTime = parseInt(syncBtn.dataset.syncStartTime || Date.now());
+        const elapsed = Date.now() - startTime;
+        const animationDuration = 1000;
+        const mod = elapsed % animationDuration;
+        const remaining = mod === 0 ? 0 : animationDuration - mod;
+        
+        setTimeout(() => {
+            syncBtn.classList.remove('syncing');
+        }, remaining);
+    }
 }
 
 enableToggleEl.addEventListener('change', () => {
@@ -268,7 +279,7 @@ blockEmojiEl.addEventListener('change', () => autoSave());
 cloudToggleEl.addEventListener('change', () => autoSave());
 
 syncBtn.addEventListener('click', () => {
-    syncBtn.textContent = '同步中…';
+    syncBtn.dataset.syncStartTime = Date.now();
     syncBtn.classList.add('syncing');
     triggerCloudSync(true);
 });
@@ -304,6 +315,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateCloudInfo();
 
     if (!items.lastSyncTime || (Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS)) {
+        syncBtn.dataset.syncStartTime = Date.now();
+        syncBtn.classList.add('syncing');
         triggerCloudSync();
     }
 });

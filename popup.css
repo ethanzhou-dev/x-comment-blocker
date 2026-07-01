@@ -478,7 +478,7 @@ body.disabled .settings-panel {
 .cloud-info {
     font-size: 11px;
     color: var(--text-muted);
-    margin-left: 8px;
+    margin-left: 12px;
     flex: 1;
     min-width: 0;
     white-space: nowrap;
@@ -519,6 +519,19 @@ body.disabled .settings-panel {
 .btn-outline.syncing {
     color: var(--text-muted);
     pointer-events: none;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(-360deg); }
+}
+
+.icon-btn.syncing {
+    pointer-events: none;
+}
+
+.icon-btn.syncing .spin-inner {
+    animation: spin 1s linear infinite;
 }
 
 #syncBtn {
