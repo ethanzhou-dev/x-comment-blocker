@@ -413,6 +413,13 @@ body.disabled .settings-panel {
     gap: 8px;
 }
 
+.control-group label svg,
+.section-label svg,
+.settings-title svg {
+    position: relative;
+    top: 1px;
+}
+
 .settings-arrow {
     display: flex;
     align-items: center;
