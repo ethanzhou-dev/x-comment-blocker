@@ -47,6 +47,12 @@ body {
     gap: 12px;
 }
 
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
 .header p {
     margin: 4px 0 0;
     font-size: 12px;
