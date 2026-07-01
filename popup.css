@@ -93,8 +93,8 @@ body {
 }
 
 .keyword-input-row {
+    position: relative;
     display: flex;
-    gap: 8px;
     margin-bottom: 12px;
 }
 
@@ -105,7 +105,7 @@ body {
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text);
-    padding: 0 12px;
+    padding: 0 42px 0 12px;
     font-family: inherit;
     font-size: 13px;
     outline: none;
@@ -120,26 +120,27 @@ body {
     color: var(--text-muted);
 }
 
-.btn-add {
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
-    font-weight: 500;
+.btn-add-inside {
+    position: absolute;
+    right: 5px;
+    top: 5px;
+    width: 30px;
+    height: 30px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text-muted);
+    border-radius: 6px;
     cursor: pointer;
-    transition: background 0.2s;
-    flex-shrink: 0;
+    transition: color 0.15s, border-color 0.15s;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 0;
 }
 
-.btn-add:hover {
-    background: var(--accent-hover);
+.btn-add-inside:hover {
+    color: var(--accent);
+    border-color: var(--accent);
 }
 
 .keyword-list {
