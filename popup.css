@@ -105,7 +105,7 @@ body {
     border: 1px solid var(--border);
     border-radius: 8px;
     color: var(--text);
-    padding: 0 42px 0 12px;
+    padding: 0 43px 0 12px;
     font-family: inherit;
     font-size: 13px;
     outline: none;
@@ -122,7 +122,7 @@ body {
 
 .btn-add-inside {
     position: absolute;
-    right: 5px;
+    right: 6px;
     top: 5px;
     width: 30px;
     height: 30px;
