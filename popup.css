@@ -102,7 +102,7 @@ body {
 .keyword-input-row {
     position: relative;
     display: flex;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
 }
 
 .keyword-input-row input {
@@ -154,7 +154,7 @@ body {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 10px;
+    padding: 12px;
     min-height: 40px;
     max-height: 130px;
     overflow-y: auto;
@@ -198,7 +198,7 @@ body {
     background: var(--tag-bg);
     border: 1px solid var(--tag-border);
     border-radius: 6px;
-    padding: 4px 6px 4px 10px;
+    padding: 4px 8px 4px 12px;
     font-size: 13px;
     color: var(--text);
     transition: border-color 0.2s, background 0.2s;
@@ -447,7 +447,7 @@ body.disabled .settings-panel {
     border-bottom: 1px solid var(--border);
     background: transparent;
     margin: 0;
-    padding: 10px 0;
+    padding: 12px 0;
     height: auto;
     border-radius: 0;
 }
@@ -589,7 +589,7 @@ body.disabled .settings-panel {
     background: var(--card);
     border: 1px solid var(--border);
     border-radius: 6px;
-    padding: 8px 10px;
+    padding: 8px 12px;
     font-size: 12px;
 }
 
