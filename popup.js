@@ -59,7 +59,7 @@ function el(tag, props, children) {
     return element;
 }
 
-function renderUserKeywords() {
+function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
     keywordList.innerHTML = '';
 
     if (userKeywords.length === 0) {
@@ -73,12 +73,15 @@ function renderUserKeywords() {
     userKeywords.forEach((kw, index) => {
         const editBtn = el('button', { className: 'tag-btn tag-btn-edit', textContent: '✎', title: '编辑' });
         const delBtn = el('button', { className: 'tag-btn tag-btn-del', textContent: '✕', title: '删除', onclick: () => {
-            userKeywords.splice(index, 1);
-            renderUserKeywords();
-            autoSave();
+            tag.classList.add('animate-out');
+            setTimeout(() => {
+                userKeywords.splice(index, 1);
+                renderUserKeywords();
+                autoSave();
+            }, 150);
         }});
 
-        const tag = el('span', { className: 'keyword-tag' }, [
+        const tag = el('span', { className: 'keyword-tag' + (index === animateIndex ? ' animate-in' : '') + (index === fadeIndex ? ' fade-in' : '') }, [
             el('span', { className: 'tag-text', textContent: kw, title: kw }),
             editBtn,
             delBtn
@@ -94,18 +97,19 @@ function renderUserKeywords() {
 
 function startEdit(tagEl, index) {
     tagEl.innerHTML = '';
+    tagEl.classList.add('is-editing');
 
     const input = el('input', { className: 'tag-edit-input', value: userKeywords[index] });
     input.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
             confirmEdit(input, index);
         } else if (e.key === 'Escape') {
-            renderUserKeywords();
+            renderUserKeywords(-1, index);
         }
     });
 
     const confirmBtn = el('button', { className: 'tag-btn tag-btn-save', textContent: '✓', title: '确认', onclick: () => confirmEdit(input, index) });
-    const cancelBtn = el('button', { className: 'tag-btn tag-btn-del', textContent: '✕', title: '取消', onclick: () => renderUserKeywords() });
+    const cancelBtn = el('button', { className: 'tag-btn tag-btn-del', textContent: '✕', title: '取消', onclick: () => renderUserKeywords(-1, index) });
 
     tagEl.appendChild(input);
     tagEl.appendChild(confirmBtn);
@@ -120,7 +124,7 @@ function confirmEdit(inputEl, index) {
     if (inputKws.length > 0) {
         userKeywords[index] = inputKws[0];
     }
-    renderUserKeywords();
+    renderUserKeywords(-1, index);
     autoSave();
 }
 
@@ -138,7 +142,7 @@ function addKeyword() {
     userKeywords.push(val);
     newKeywordInput.value = '';
     newKeywordInput.focus();
-    renderUserKeywords();
+    renderUserKeywords(userKeywords.length - 1);
     autoSave();
 
     keywordList.scrollTop = keywordList.scrollHeight;

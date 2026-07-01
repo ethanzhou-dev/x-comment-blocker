@@ -202,18 +202,46 @@ body {
     font-size: 13px;
     color: var(--text);
     transition: border-color 0.2s, background 0.2s;
-    animation: tagIn 0.2s ease;
 }
 
-@keyframes tagIn {
+.keyword-tag.animate-in {
+    animation: fadeInUp 0.2s ease;
+}
+
+.keyword-tag.animate-out {
+    animation: fadeOutDown 0.15s ease forwards;
+}
+
+.keyword-tag.is-editing > *,
+.keyword-tag.fade-in > * {
+    animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeInUp {
     from {
         opacity: 0;
-        transform: scale(0.85);
+        transform: translateY(4px);
     }
     to {
         opacity: 1;
-        transform: scale(1);
+        transform: translateY(0);
     }
+}
+
+@keyframes fadeOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 .keyword-tag:hover {
