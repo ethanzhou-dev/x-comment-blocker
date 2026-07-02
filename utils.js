@@ -77,7 +77,7 @@ async function syncCloudKeywords() {
             syncError: ''
         });
         return true;
-    } catch (e) {
+    } catch {
         await chrome.storage.local.set({ syncStatus: 'error', syncError: '网络连接失败' }).catch(() => {});
         return false;
     }

@@ -256,7 +256,7 @@ async function triggerCloudSync(manual = false) {
         } else if (manual) {
             showStatus('云端词库已同步');
         }
-    } catch (e) {
+    } catch {
         if (manual) showStatus('同步失败，请检查网络');
     }
     
