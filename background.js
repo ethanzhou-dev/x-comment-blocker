@@ -1,3 +1,4 @@
+/* global importScripts, syncCloudKeywords, SYNC_INTERVAL_MINUTES, parseKeywords, getStorageDefaults */
 importScripts("utils.js");
 
 const ALARM_NAME = "cloudKeywordSync";

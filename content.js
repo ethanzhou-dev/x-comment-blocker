@@ -1,3 +1,4 @@
+/* global getStorageDefaults, parseKeywords, invisibleCharsRegex */
 let blockRegex = null;
 let lastKeywordsKey = "";
 let checkUsername = true;

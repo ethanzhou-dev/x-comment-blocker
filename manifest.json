@@ -8,14 +8,8 @@
     "48": "icon48.png",
     "128": "icon128.png"
   },
-  "permissions": [
-    "storage",
-    "alarms",
-    "contextMenus"
-  ],
-  "host_permissions": [
-    "https://api.github.com/*"
-  ],
+  "permissions": ["storage", "alarms", "contextMenus"],
+  "host_permissions": ["https://api.github.com/*"],
   "background": {
     "service_worker": "background.js"
   },
@@ -29,17 +23,9 @@
   },
   "content_scripts": [
     {
-      "matches": [
-        "*://*.twitter.com/*",
-        "*://*.x.com/*"
-      ],
-      "css": [
-        "content.css"
-      ],
-      "js": [
-        "utils.js",
-        "content.js"
-      ]
+      "matches": ["*://*.twitter.com/*", "*://*.x.com/*"],
+      "css": ["content.css"],
+      "js": ["utils.js", "content.js"]
     }
   ]
 }
