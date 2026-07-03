@@ -518,7 +518,7 @@ body {
 
 .stats-actions {
   display: flex;
-  gap: 6px;
+  gap: 8px;
 }
 
 .cloud-info {
@@ -542,7 +542,7 @@ body {
   color: var(--text-muted);
   font-size: 11px;
   cursor: pointer;
-  padding: 3px 8px;
+  padding: 4px 8px;
   border-radius: 4px;
   text-decoration: none;
   transition:
