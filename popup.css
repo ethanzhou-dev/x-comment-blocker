@@ -54,7 +54,7 @@ body {
 .title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .header-actions {
@@ -613,7 +613,7 @@ body {
   justify-content: space-between;
   align-items: center;
   border-bottom: 1px solid var(--border);
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
 }
 
