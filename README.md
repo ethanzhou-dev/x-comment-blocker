@@ -20,12 +20,12 @@
 
 ## 安装
 
-**1.从 Chrome 应用商店安装：**
+**1. 从 Chrome 应用商店安装：**
 
 您可以在 Chrome 应用商店获取最新版本：
 👉 [X(Twitter) Comment Blocker - Chrome 应用商店](https://chromewebstore.google.com/detail/xtwitter-comment-blocker/gagacedifiphcndckimeihhcbcclkach)
 
-**2.手动安装：**
+**2. 手动安装：**
 
 适用于基于 Chromium 的浏览器（如 Chrome、Edge）：
 
