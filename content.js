@@ -8,7 +8,6 @@ let blockEmoji = false;
 let filterEnabled = true;
 let filterTimer = null;
 let filterVersion = 0;
-let lastUrl = location.href;
 const blockedHashes = new Map();
 const MAX_HASHES = 5000;
 const HASH_TTL_MS = 30 * 60 * 1000;
@@ -87,11 +86,6 @@ async function mergeKeywords() {
       if (!isExtensionAlive()) {
         observer.disconnect();
         return;
-      }
-
-      if (location.href !== lastUrl) {
-        lastUrl = location.href;
-        blockedHashes.clear();
       }
 
       for (const mutation of mutations) {
