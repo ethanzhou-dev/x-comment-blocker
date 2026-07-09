@@ -97,12 +97,12 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
       innerHTML: ICON_DEL,
       title: "删除",
       onclick: () => {
-        tag.classList.add("animate-out");
+        tag.classList.add("fade-out-tag");
         setTimeout(() => {
           userKeywords.splice(index, 1);
           renderUserKeywords();
           autoSave();
-        }, 150);
+        }, 200);
       },
     });
 
@@ -111,7 +111,7 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
       {
         className:
           "keyword-tag" +
-          (index === animateIndex ? " animate-in" : "") +
+          (index === animateIndex ? " fade-in-tag" : "") +
           (index === fadeIndex ? " fade-in" : ""),
       },
       [

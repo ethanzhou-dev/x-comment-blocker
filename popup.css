@@ -162,13 +162,17 @@ body {
   border-color: var(--accent);
 }
 
-.keyword-list {
+.keyword-list-wrapper {
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 8px;
-  padding: 12px;
-  min-height: 40px;
-  max-height: 130px;
+  padding: 12px 0;
+}
+
+.keyword-list {
+  padding: 0 12px;
+  min-height: 28px;
+  max-height: 64px;
   overflow-y: auto;
   display: flex;
   flex-wrap: wrap;
@@ -216,44 +220,20 @@ body {
   transition:
     border-color 0.2s,
     background 0.2s;
+  width: calc(50% - 4px);
+  height: 28px;
+  box-sizing: border-box;
+}
+.keyword-tag.fade-out-tag {
+  animation: fade-out 0.2s ease forwards;
 }
 
-.keyword-tag.animate-in {
-  animation: fade-in-up 0.2s ease;
-}
-
-.keyword-tag.animate-out {
-  animation: fade-out-down 0.15s ease forwards;
-}
-
+.keyword-tag.fade-in-tag,
 .keyword-tag.is-editing > *,
 .keyword-tag.fade-in > * {
   animation: fade-in 0.2s ease;
 }
 
-@keyframes fade-in-up {
-  from {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fade-out-down {
-  from {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
-  to {
-    opacity: 0;
-    transform: translateY(4px);
-  }
-}
 
 @keyframes fade-in {
   from {
@@ -265,12 +245,23 @@ body {
   }
 }
 
+@keyframes fade-out {
+  from {
+    opacity: 1;
+  }
+
+  to {
+    opacity: 0;
+  }
+}
+
 .keyword-tag:hover {
   border-color: var(--accent);
 }
 
 .keyword-tag .tag-text {
-  max-width: 160px;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -284,7 +275,8 @@ body {
   color: var(--text);
   font-size: 12px;
   padding: 1px 4px;
-  width: 80px;
+  flex: 1;
+  min-width: 0;
   outline: none;
   font-family: inherit;
 }
