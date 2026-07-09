@@ -97,6 +97,7 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
       innerHTML: ICON_DEL,
       title: "删除",
       onclick: () => {
+        tag.classList.remove("fade-in-tag");
         tag.classList.add("fade-out-tag");
         setTimeout(() => {
           userKeywords.splice(index, 1);
