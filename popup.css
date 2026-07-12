@@ -649,7 +649,27 @@ body {
 .history-item-user-info {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+}
+
+.history-display-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 1;
+}
+
+.history-handle {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.history-time {
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-left: 8px;
 }
 
 .btn-block-x {
@@ -661,6 +681,8 @@ body {
   font-size: 10px;
   cursor: pointer;
   transition: all 0.2s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .btn-block-x:hover:not(:disabled) {

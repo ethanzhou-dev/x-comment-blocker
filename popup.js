@@ -264,6 +264,27 @@ importFile.addEventListener("change", (e) => {
   importFile.value = "";
 });
 
+function formatHistoryTime(timestamp) {
+  const date = new Date(timestamp);
+  const now = new Date();
+  
+  const isToday = date.getDate() === now.getDate() && 
+                  date.getMonth() === now.getMonth() && 
+                  date.getFullYear() === now.getFullYear();
+                  
+  const isThisYear = date.getFullYear() === now.getFullYear();
+  
+  if (isToday) {
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
+    return `${hh}:${mm}`;
+  } else if (isThisYear) {
+    return `${date.getMonth() + 1}月${date.getDate()}日`;
+  } else {
+    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+  }
+}
+
 function relativeTime(ts) {
   if (!ts) return "";
   const diff = Math.floor((Date.now() - ts) / 1000);
@@ -443,20 +464,33 @@ viewHistoryBtn.addEventListener("click", async () => {
     const userInfo = document.createElement("div");
     userInfo.className = "history-item-user-info";
 
-    const userSpan = document.createElement("span");
-    
-    let displayUser = item.user || "未知用户";
     if (item.user && item.user.startsWith("/")) {
       const handle = item.user.substring(1);
+      
       if (item.displayName) {
-        displayUser = `${item.displayName} @${handle}`;
+        const nameSpan = document.createElement("span");
+        nameSpan.className = "history-display-name";
+        nameSpan.textContent = item.displayName;
+        nameSpan.title = item.displayName;
+
+        const handleSpan = document.createElement("span");
+        handleSpan.className = "history-handle";
+        handleSpan.textContent = `@${handle}`;
+        
+        userInfo.appendChild(nameSpan);
+        userInfo.appendChild(handleSpan);
       } else {
-        displayUser = `@${handle}`; // fall back to `@handle`
+        const userSpan = document.createElement("span");
+        userSpan.className = "history-handle";
+        userSpan.textContent = `@${handle}`;
+        userInfo.appendChild(userSpan);
       }
+    } else {
+      const userSpan = document.createElement("span");
+      userSpan.className = "history-display-name";
+      userSpan.textContent = item.user || "未知用户";
+      userInfo.appendChild(userSpan);
     }
-    
-    userSpan.textContent = displayUser;
-    userInfo.appendChild(userSpan);
 
     if (item.user && item.user.startsWith("/")) {
       const blockBtn = document.createElement("button");
@@ -511,7 +545,8 @@ viewHistoryBtn.addEventListener("click", async () => {
     }
 
     const timeSpan = document.createElement("span");
-    timeSpan.textContent = new Date(item.time).toLocaleString();
+    timeSpan.className = "history-time";
+    timeSpan.textContent = formatHistoryTime(item.time);
 
     header.appendChild(userInfo);
     header.appendChild(timeSpan);
