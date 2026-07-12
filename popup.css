@@ -641,7 +641,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   color: var(--text-muted);
   margin-bottom: 4px;
   font-size: 11px;
@@ -670,7 +670,7 @@ body {
 .history-item-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   flex-shrink: 0;
 }
 
