@@ -745,7 +745,7 @@ body.disabled .settings-panel {
   cursor: pointer;
   transition: all 0.2s;
   flex-shrink: 0;
-  margin-left: 8px;
+  margin-left: 12px;
   margin-right: 4px;
 }
 
