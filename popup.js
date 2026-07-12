@@ -491,6 +491,9 @@ viewHistoryBtn.addEventListener("click", async () => {
       userSpan.textContent = item.user || "未知用户";
       userInfo.appendChild(userSpan);
     }
+    
+    const actionsDiv = document.createElement("div");
+    actionsDiv.className = "history-item-actions";
 
     if (item.user && item.user.startsWith("/")) {
       const blockBtn = document.createElement("button");
@@ -541,15 +544,16 @@ viewHistoryBtn.addEventListener("click", async () => {
         }
         blockBtn.disabled = false;
       };
-      userInfo.appendChild(blockBtn);
+      actionsDiv.appendChild(blockBtn);
     }
 
     const timeSpan = document.createElement("span");
     timeSpan.className = "history-time";
     timeSpan.textContent = formatHistoryTime(item.time);
+    actionsDiv.appendChild(timeSpan);
 
     header.appendChild(userInfo);
-    header.appendChild(timeSpan);
+    header.appendChild(actionsDiv);
 
     let displayText = item.text || "[无内容或已隐藏]";
     if (item.reason) {

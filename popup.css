@@ -641,8 +641,9 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
   color: var(--text-muted);
-  margin-bottom: 6px;
+  margin-bottom: 4px;
   font-size: 11px;
 }
 
@@ -666,10 +667,16 @@ body {
   flex-shrink: 0;
 }
 
+.history-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 .history-time {
   white-space: nowrap;
   flex-shrink: 0;
-  margin-left: 8px;
 }
 
 .btn-block-x {
