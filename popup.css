@@ -688,9 +688,12 @@ body {
   border: 1px solid var(--border);
   color: var(--text-muted);
   border-radius: 4px;
-  padding: 2px 0;
+  padding: 0;
   width: 52px;
-  text-align: center;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-size: 10px;
   cursor: pointer;
   transition: all 0.2s;
@@ -733,7 +736,7 @@ body.disabled .settings-panel {
   border: 1px solid var(--border);
   color: var(--text-muted);
   border-radius: 4px;
-  padding: 2px;
+  padding: 0;
   width: 22px;
   height: 22px;
   display: flex;
