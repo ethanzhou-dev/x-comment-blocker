@@ -8,10 +8,7 @@ let blockEmoji = false;
 let filterEnabled = true;
 let filterTimer = null;
 let filterVersion = 0;
-const blockedHashes = new Map();
-const MAX_HASHES = 5000;
-const HASH_TTL_MS = 30 * 60 * 1000;
-let pruneCounter = 0;
+const localSentIds = new Set();
 const emojiRegex = new RegExp(
   "[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]",
   "u",
@@ -205,22 +202,19 @@ function hasEmoji(node) {
   return false;
 }
 
-function pruneOldHashes() {
-  if (++pruneCounter < 100) return;
-  pruneCounter = 0;
-  const now = Date.now();
-  for (const [hash, time] of blockedHashes) {
-    if (now - time > HASH_TTL_MS) {
-      blockedHashes.delete(hash);
+function getTweetId(tweet) {
+  const timeNodes = tweet.querySelectorAll("time");
+  for (const timeEl of timeNodes) {
+    const link = timeEl.closest("a");
+    if (link) {
+      const href = link.getAttribute("href");
+      const match = href ? href.match(/\/status\/(\d+)/i) : null;
+      if (match) {
+        return match[1];
+      }
     }
   }
-  if (blockedHashes.size >= MAX_HASHES) {
-    const entries = [...blockedHashes.entries()].sort((a, b) => a[1] - b[1]);
-    const deleteCount = Math.floor(entries.length / 4);
-    for (let i = 0; i < deleteCount; i++) {
-      blockedHashes.delete(entries[i][0]);
-    }
-  }
+  return null;
 }
 
 function getPageContext() {
@@ -310,22 +304,7 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
   return { isSpam: false, blockReason: "", userName, stableHandle, displayName };
 }
 
-function recordBlocked(newBlocks, newBlockedItems) {
-  if (newBlocks <= 0) return;
-  chrome.storage.local
-    .get(getStorageDefaults("blockedCount", "blockedHistory"))
-    .then((items) => {
-      const history = items.blockedHistory;
-      history.unshift(...newBlockedItems);
-      if (history.length > 300) history.length = 300;
-      chrome.storage.local
-        .set({
-          blockedCount: items.blockedCount + newBlocks,
-          blockedHistory: history,
-        })
-        .catch(() => {});
-    });
-}
+
 
 function filterTweets(specificTweets = null) {
   if (!isExtensionAlive()) return;
@@ -334,8 +313,7 @@ function filterTweets(specificTweets = null) {
     specificTweets || document.querySelectorAll('[data-testid="cellInnerDiv"]');
   if (tweets.length === 0 && !specificTweets) return;
 
-  let newBlocks = 0;
-  const newBlockedItems = [];
+  const pendingSpam = [];
   const pageContext = getPageContext();
 
   tweets.forEach((tweet) => {
@@ -405,11 +383,18 @@ function filterTweets(specificTweets = null) {
         .replace(invisibleCharsRegex, "")
         .replace(/\s+/g, " ")
         .trim();
-      const stableHash = normalizedBody + "|" + stableHandle;
-      if (!blockedHashes.has(stableHash)) {
-        blockedHashes.set(stableHash, Date.now());
-        newBlocks++;
-        newBlockedItems.push({
+        
+      const tweetId = getTweetId(tweet);
+      
+      if (tweetId && !localSentIds.has(tweetId)) {
+        localSentIds.add(tweetId);
+        if (localSentIds.size > 2000) {
+          const iter = localSentIds.values();
+          for (let i = 0; i < 500; i++) localSentIds.delete(iter.next().value);
+        }
+        
+        pendingSpam.push({
+          id: tweetId,
           text: normalizedBody,
           user: stableHandle || userName,
           displayName: displayName || "",
@@ -422,8 +407,12 @@ function filterTweets(specificTweets = null) {
     }
   });
 
-  pruneOldHashes();
-  recordBlocked(newBlocks, newBlockedItems);
+  if (pendingSpam.length > 0) {
+    try {
+      chrome.runtime.sendMessage({ action: "recordSpam", items: pendingSpam }).catch(() => {});
+    } catch (e) {
+    }
+  }
 }
 
 function scheduleFilter() {

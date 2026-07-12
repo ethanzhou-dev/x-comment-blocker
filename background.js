@@ -4,6 +4,9 @@ importScripts("utils.js");
 const ALARM_NAME = "cloudKeywordSync";
 let isSyncing = false;
 
+const globalSpamCache = new Set();
+let storageWritePromise = Promise.resolve();
+
 async function doSync() {
   if (isSyncing) return { success: false, reason: "busy" };
   isSyncing = true;
@@ -48,7 +51,55 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleBlockUser(message.screenName, false).then(sendResponse);
     return true;
   }
+  if (message.action === "recordSpam") {
+    handleRecordSpam(message.items);
+    sendResponse({ success: true });
+    return false; 
+  }
 });
+
+function handleRecordSpam(items) {
+  if (!items || items.length === 0) return;
+
+  const newSpams = [];
+  for (const item of items) {
+    if (!globalSpamCache.has(item.id)) {
+      globalSpamCache.add(item.id);
+      newSpams.push({
+        text: item.text,
+        user: item.user,
+        displayName: item.displayName,
+        reason: item.reason,
+        time: item.time
+      });
+      if (globalSpamCache.size > 5000) {
+        const iter = globalSpamCache.values();
+        for (let i = 0; i < 1000; i++) globalSpamCache.delete(iter.next().value);
+      }
+    }
+  }
+
+  if (newSpams.length === 0) return;
+
+  storageWritePromise = storageWritePromise.then(() => {
+    return new Promise((resolve) => {
+      chrome.storage.local.get(getStorageDefaults("blockedCount", "blockedHistory"), (storageItems) => {
+        const history = storageItems.blockedHistory || [];
+        history.unshift(...newSpams);
+        if (history.length > 300) history.length = 300;
+        
+        chrome.storage.local.set({
+          blockedCount: (storageItems.blockedCount || 0) + newSpams.length,
+          blockedHistory: history
+        }, () => {
+          resolve();
+        });
+      });
+    });
+  }).catch((e) => {
+    console.error("[X-Blocker] storage update error", e);
+  });
+}
 
 async function handleBlockUser(screenName, isBlock) {
   try {
