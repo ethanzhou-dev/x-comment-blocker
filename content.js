@@ -314,7 +314,7 @@ function recordBlocked(newBlocks, newBlockedItems) {
     .then((items) => {
       const history = items.blockedHistory;
       history.unshift(...newBlockedItems);
-      if (history.length > 100) history.length = 100;
+      if (history.length > 300) history.length = 300;
       chrome.storage.local
         .set({
           blockedCount: items.blockedCount + newBlocks,
