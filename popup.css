@@ -641,7 +641,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   color: var(--text-muted);
   margin-bottom: 4px;
   font-size: 11px;
@@ -684,7 +684,9 @@ body {
   border: 1px solid var(--border);
   color: var(--text-muted);
   border-radius: 4px;
-  padding: 2px 6px;
+  padding: 2px 0;
+  width: 52px;
+  text-align: center;
   font-size: 10px;
   cursor: pointer;
   transition: all 0.2s;
