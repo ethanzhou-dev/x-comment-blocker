@@ -265,17 +265,19 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
     : "";
   const userName = userNode ? getTweetTextForKeywords(userNode) : "";
   let stableHandle = "";
+  let displayName = "";
 
   if (userNode) {
     const handleLink = userNode.querySelector('a[href^="/"]');
     if (handleLink) {
       stableHandle = (handleLink.getAttribute("href") || "").toLowerCase();
+      displayName = handleLink.textContent.replace(invisibleCharsRegex, "").trim();
     }
   }
 
   if (isStatusPage && !isMainTweet) {
     if (blockEmoji && textNode && hasEmoji(textNode)) {
-      return { isSpam: true, blockReason: "表情屏蔽", userName, stableHandle };
+      return { isSpam: true, blockReason: "表情屏蔽", userName, stableHandle, displayName };
     }
     if (
       blockSpecialChars &&
@@ -287,12 +289,13 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
         blockReason: "特殊字符屏蔽",
         userName,
         stableHandle,
+        displayName,
       };
     }
   }
 
   if (matchesBlocklist(tweetBody)) {
-    return { isSpam: true, blockReason: "内容屏蔽", userName, stableHandle };
+    return { isSpam: true, blockReason: "内容屏蔽", userName, stableHandle, displayName };
   }
 
   if (checkUsername && userName) {
@@ -300,11 +303,11 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
       .replace(/[\s_.-]+/g, "")
       .replace(invisibleCharsRegex, "");
     if (matchesBlocklist(cleanUserName)) {
-      return { isSpam: true, blockReason: "昵称屏蔽", userName, stableHandle };
+      return { isSpam: true, blockReason: "昵称屏蔽", userName, stableHandle, displayName };
     }
   }
 
-  return { isSpam: false, blockReason: "", userName, stableHandle };
+  return { isSpam: false, blockReason: "", userName, stableHandle, displayName };
 }
 
 function recordBlocked(newBlocks, newBlockedItems) {
@@ -382,6 +385,7 @@ function filterTweets(specificTweets = null) {
     let blockReason = "";
     let userName = "";
     let stableHandle = "";
+    let displayName = "";
 
     if (shouldCheck) {
       const result = detectSpam(textNode, userNode, isStatusPage, isMainTweet);
@@ -389,6 +393,7 @@ function filterTweets(specificTweets = null) {
       blockReason = result.blockReason;
       userName = result.userName;
       stableHandle = result.stableHandle;
+      displayName = result.displayName;
     }
 
     tweet.__cbxIsSpam = isSpam;
@@ -407,6 +412,7 @@ function filterTweets(specificTweets = null) {
         newBlockedItems.push({
           text: normalizedBody,
           user: stableHandle || userName,
+          displayName: displayName || "",
           reason: blockReason,
           time: Date.now(),
         });

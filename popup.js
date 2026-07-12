@@ -444,7 +444,18 @@ viewHistoryBtn.addEventListener("click", async () => {
     userInfo.className = "history-item-user-info";
 
     const userSpan = document.createElement("span");
-    userSpan.textContent = item.user || "未知用户";
+    
+    let displayUser = item.user || "未知用户";
+    if (item.user && item.user.startsWith("/")) {
+      const handle = item.user.substring(1);
+      if (item.displayName) {
+        displayUser = `${item.displayName} @${handle}`;
+      } else {
+        displayUser = `@${handle}`; // fall back to `@handle`
+      }
+    }
+    
+    userSpan.textContent = displayUser;
     userInfo.appendChild(userSpan);
 
     if (item.user && item.user.startsWith("/")) {
