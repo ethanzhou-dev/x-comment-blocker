@@ -569,6 +569,10 @@ viewHistoryBtn.addEventListener("click", async () => {
     fragment.appendChild(div);
   });
   historyList.appendChild(fragment);
+  
+  const nameSpans = Array.from(historyList.querySelectorAll('.history-display-name'));
+  const overflowingSpans = nameSpans.filter(span => span.scrollWidth > span.clientWidth);
+  overflowingSpans.forEach(span => span.classList.add('is-overflowing'));
 });
 
 closeHistoryBtn.addEventListener("click", () => {

@@ -660,6 +660,9 @@ body {
   overflow: hidden;
   text-overflow: clip;
   flex-shrink: 1;
+}
+
+.history-display-name.is-overflowing {
   -webkit-mask-image: linear-gradient(to left, transparent 0, black 12px);
   mask-image: linear-gradient(to left, transparent 0, black 12px);
 }
@@ -672,7 +675,7 @@ body {
 .history-item-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-shrink: 0;
 }
 
