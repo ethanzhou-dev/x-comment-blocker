@@ -495,6 +495,11 @@ viewHistoryBtn.addEventListener("click", async () => {
     const actionsDiv = document.createElement("div");
     actionsDiv.className = "history-item-actions";
 
+    const timeSpan = document.createElement("span");
+    timeSpan.className = "history-time";
+    timeSpan.textContent = formatHistoryTime(item.time);
+    actionsDiv.appendChild(timeSpan);
+
     if (item.user && item.user.startsWith("/")) {
       const blockBtn = document.createElement("button");
       blockBtn.className = "btn-block-x";
@@ -546,11 +551,6 @@ viewHistoryBtn.addEventListener("click", async () => {
       };
       actionsDiv.appendChild(blockBtn);
     }
-
-    const timeSpan = document.createElement("span");
-    timeSpan.className = "history-time";
-    timeSpan.textContent = formatHistoryTime(item.time);
-    actionsDiv.appendChild(timeSpan);
 
     header.appendChild(userInfo);
     header.appendChild(actionsDiv);
