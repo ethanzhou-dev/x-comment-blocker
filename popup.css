@@ -641,7 +641,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   color: var(--text-muted);
   margin-bottom: 4px;
   font-size: 11px;
