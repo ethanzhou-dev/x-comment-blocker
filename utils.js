@@ -12,7 +12,7 @@ const STORAGE_DEFAULTS = {
   cloudKeywords: "",
   checkUsername: true,
   onlyComments: true,
-  blockSpecialChars: true,
+  blockSpecialChars: false,
   blockEmoji: false,
   enabled: true,
   blockedCount: 0,
