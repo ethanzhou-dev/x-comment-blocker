@@ -56,6 +56,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     sendResponse({ success: true });
     return false; 
   }
+  if (message.action === "clearSpamCache") {
+    globalSpamCache.clear();
+    sendResponse({ success: true });
+    return false;
+  }
 });
 
 function handleRecordSpam(items) {
