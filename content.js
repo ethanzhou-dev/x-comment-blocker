@@ -385,16 +385,17 @@ function filterTweets(specificTweets = null) {
         .trim();
         
       const tweetId = getTweetId(tweet);
+      const uniqueId = tweetId ? tweetId : (normalizedBody + "|" + stableHandle);
       
-      if (tweetId && !localSentIds.has(tweetId)) {
-        localSentIds.add(tweetId);
+      if (!localSentIds.has(uniqueId)) {
+        localSentIds.add(uniqueId);
         if (localSentIds.size > 2000) {
           const iter = localSentIds.values();
           for (let i = 0; i < 500; i++) localSentIds.delete(iter.next().value);
         }
         
         pendingSpam.push({
-          id: tweetId,
+          id: uniqueId,
           text: normalizedBody,
           user: stableHandle || userName,
           displayName: displayName || "",
