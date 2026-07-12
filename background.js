@@ -40,7 +40,43 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     doSync().then(sendResponse);
     return true;
   }
+  if (message.action === "blockUserOnX") {
+    handleBlockUser(message.screenName, true).then(sendResponse);
+    return true;
+  }
+  if (message.action === "unblockUserOnX") {
+    handleBlockUser(message.screenName, false).then(sendResponse);
+    return true;
+  }
 });
+
+async function handleBlockUser(screenName, isBlock) {
+  try {
+    const cookie = await chrome.cookies.get({ url: "https://x.com", name: "ct0" });
+    if (!cookie) {
+      return { success: false, reason: "无法获取身份凭证，请确保已登录 X" };
+    }
+    
+    const endpoint = isBlock ? "create.json" : "destroy.json";
+    const response = await fetch(`https://x.com/i/api/1.1/blocks/${endpoint}`, {
+      method: "POST",
+      headers: {
+        "authorization": "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+        "x-csrf-token": cookie.value,
+        "content-type": "application/x-www-form-urlencoded"
+      },
+      body: `screen_name=${encodeURIComponent(screenName)}`
+    });
+
+    if (response.ok) {
+      return { success: true };
+    } else {
+      return { success: false, reason: `请求失败: HTTP ${response.status}` };
+    }
+  } catch (error) {
+    return { success: false, reason: error.message };
+  }
+}
 
 chrome.contextMenus.onClicked.addListener((info) => {
   if (info.menuItemId === "addToBlocklist" && info.selectionText) {

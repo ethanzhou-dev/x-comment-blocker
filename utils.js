@@ -21,6 +21,7 @@ const STORAGE_DEFAULTS = {
   syncStatus: "",
   syncError: "",
   cloudETag: "",
+  blockedUsersOnX: [],
 };
 
 function getStorageDefaults(...keys) {

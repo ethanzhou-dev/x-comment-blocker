@@ -415,9 +415,10 @@ viewHistoryBtn.addEventListener("click", async () => {
     `;
 
   const items = await chrome.storage.local.get(
-    getStorageDefaults("blockedHistory"),
+    getStorageDefaults("blockedHistory", "blockedUsersOnX"),
   );
   const history = items.blockedHistory;
+  const blockedUsersOnX = items.blockedUsersOnX || [];
 
   historyList.innerHTML = "";
   if (history.length === 0) {
@@ -439,13 +440,69 @@ viewHistoryBtn.addEventListener("click", async () => {
     const header = document.createElement("div");
     header.className = "history-item-header";
 
+    const userInfo = document.createElement("div");
+    userInfo.className = "history-item-user-info";
+
     const userSpan = document.createElement("span");
     userSpan.textContent = item.user || "未知用户";
+    userInfo.appendChild(userSpan);
+
+    if (item.user && item.user.startsWith("/")) {
+      const blockBtn = document.createElement("button");
+      blockBtn.className = "btn-block-x";
+      
+      const screenName = item.user.substring(1);
+      let isBlocked = blockedUsersOnX.includes(screenName);
+      
+      const updateBtnState = () => {
+        if (isBlocked) {
+          blockBtn.textContent = "已拉黑";
+          blockBtn.classList.add("success");
+          blockBtn.title = "点击解除拉黑";
+        } else {
+          blockBtn.textContent = "拉黑";
+          blockBtn.classList.remove("success");
+          blockBtn.title = "在 X 上拉黑该账号";
+        }
+      };
+      updateBtnState();
+
+      blockBtn.onclick = async () => {
+        blockBtn.disabled = true;
+        blockBtn.textContent = "请求中...";
+        try {
+          const action = isBlocked ? "unblockUserOnX" : "blockUserOnX";
+          const res = await chrome.runtime.sendMessage({ action, screenName });
+          if (res && res.success) {
+            isBlocked = !isBlocked;
+            
+            const currentItems = await chrome.storage.local.get(getStorageDefaults("blockedUsersOnX"));
+            let currentList = currentItems.blockedUsersOnX || [];
+            if (isBlocked) {
+              if (!currentList.includes(screenName)) currentList.push(screenName);
+            } else {
+              currentList = currentList.filter(u => u !== screenName);
+            }
+            await chrome.storage.local.set({ blockedUsersOnX: currentList });
+            
+            updateBtnState();
+          } else {
+            updateBtnState();
+            showStatus(res?.reason || "操作失败");
+          }
+        } catch (e) {
+          updateBtnState();
+          showStatus("请求失败");
+        }
+        blockBtn.disabled = false;
+      };
+      userInfo.appendChild(blockBtn);
+    }
 
     const timeSpan = document.createElement("span");
     timeSpan.textContent = new Date(item.time).toLocaleString();
 
-    header.appendChild(userSpan);
+    header.appendChild(userInfo);
     header.appendChild(timeSpan);
 
     let displayText = item.text || "[无内容或已隐藏]";

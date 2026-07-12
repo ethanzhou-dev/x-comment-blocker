@@ -640,9 +640,44 @@ body {
 .history-item-header {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   color: var(--text-muted);
   margin-bottom: 6px;
   font-size: 11px;
+}
+
+.history-item-user-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-block-x {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-block-x:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgb(239 68 68 / 10%);
+}
+
+.btn-block-x:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-block-x.success {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgb(14 165 233 / 10%);
 }
 
 .history-item-text {
