@@ -501,6 +501,32 @@ viewHistoryBtn.addEventListener("click", async () => {
     timeSpan.textContent = formatHistoryTime(item.time);
     actionsDiv.appendChild(timeSpan);
 
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "btn-remove-x";
+    removeBtn.innerHTML = ICON_DEL;
+    removeBtn.title = "从记录中移除此项";
+    removeBtn.onclick = async () => {
+      removeBtn.disabled = true;
+      div.style.opacity = '0.5';
+      await chrome.runtime.sendMessage({ 
+        action: "removeSpamRecord", 
+        id: item.id, 
+        time: item.time 
+      }).catch(() => {});
+      div.remove();
+      
+      if (historyList.querySelectorAll('.history-item').length === 0) {
+        historyList.innerHTML = `
+            <div class="history-item">
+                <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
+                    暂无记录
+                </div>
+            </div>
+        `;
+      }
+    };
+    actionsDiv.appendChild(removeBtn);
+
     if (item.user && item.user.startsWith("/")) {
       const blockBtn = document.createElement("button");
       blockBtn.className = "btn-block-x";

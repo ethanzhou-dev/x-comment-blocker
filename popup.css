@@ -675,7 +675,6 @@ body {
 .history-item-actions {
   display: flex;
   align-items: center;
-  gap: 12px;
   flex-shrink: 0;
 }
 
@@ -727,4 +726,28 @@ body.disabled .section-user,
 body.disabled .settings-panel {
   opacity: 0.35;
   pointer-events: none;
+}
+
+.btn-remove-x {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  border-radius: 4px;
+  padding: 2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  flex-shrink: 0;
+  margin-left: 8px;
+  margin-right: 4px;
+}
+
+.btn-remove-x:hover:not(:disabled) {
+  color: var(--danger);
+  border-color: var(--danger);
+  background: rgb(239 68 68 / 10%);
 }
