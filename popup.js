@@ -97,10 +97,13 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
       innerHTML: ICON_DEL,
       title: "删除",
       onclick: () => {
+        if (tag.classList.contains("fade-out-tag")) return;
         tag.classList.remove("fade-in-tag");
         tag.classList.add("fade-out-tag");
+        const kwToRemove = kw;
         setTimeout(() => {
-          userKeywords.splice(index, 1);
+          const idx = userKeywords.indexOf(kwToRemove);
+          if (idx !== -1) userKeywords.splice(idx, 1);
           renderUserKeywords();
           autoSave();
         }, 200);
@@ -170,7 +173,11 @@ function startEdit(tagEl, index) {
 function confirmEdit(inputEl, index) {
   const inputKws = parseKeywords(inputEl.value);
   if (inputKws.length > 0) {
-    userKeywords[index] = inputKws[0];
+    const newVal = inputKws[0];
+    const existingIndex = userKeywords.indexOf(newVal);
+    if (existingIndex === -1 || existingIndex === index) {
+      userKeywords[index] = newVal;
+    }
   }
   renderUserKeywords(-1, index);
   autoSave();
@@ -235,7 +242,7 @@ importFile.addEventListener("change", (e) => {
     try {
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed)) {
-        newKeywords = parsed.map((k) => String(k));
+        newKeywords = parseKeywords(parsed.map((k) => String(k)).join("\n"));
       }
     } catch {
       newKeywords = parseKeywords(content);
@@ -506,7 +513,7 @@ function renderHistoryPage() {
       }).catch(() => {});
       div.remove();
       
-      currentHistory = currentHistory.filter(h => h.id !== item.id);
+      currentHistory = currentHistory.filter(h => !(h.id === item.id && h.time === item.time));
       if (currentHistory.length === 0) {
         historyList.innerHTML = `
             <div class="history-item">
@@ -516,7 +523,6 @@ function renderHistoryPage() {
             </div>
         `;
       } else if (historyList.querySelectorAll('.history-item').length === 0) {
-        // 如果当前可视节点全部被删除了，但后面还有数据，自动加载下一页
         renderHistoryPage();
       }
     };

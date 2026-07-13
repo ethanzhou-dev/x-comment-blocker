@@ -134,10 +134,14 @@ function handleRecordSpam(items) {
       chrome.storage.local.get(getStorageDefaults("blockedCount", "blockedHistory"), (storageItems) => {
         const history = storageItems.blockedHistory || [];
         history.unshift(...newSpams);
-        if (history.length > 2000) history.length = 2000;
+        let droppedCount = 0;
+        if (history.length > 2000) {
+          droppedCount = history.length - 2000;
+          history.length = 2000;
+        }
         
         chrome.storage.local.set({
-          blockedCount: (storageItems.blockedCount || 0) + newSpams.length,
+          blockedCount: (storageItems.blockedCount || 0) + newSpams.length - droppedCount,
           blockedHistory: history
         }, () => resolve());
       });
