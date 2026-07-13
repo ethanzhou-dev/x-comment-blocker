@@ -32,11 +32,13 @@ chrome.runtime.onInstalled.addListener(() => {
     periodInMinutes: SYNC_INTERVAL_MINUTES,
   });
 
-  chrome.contextMenus.create({
-    id: "addToBlocklist",
-    title: "添加「%s」到屏蔽词",
-    contexts: ["selection"],
-    documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
+  chrome.contextMenus.removeAll(() => {
+    chrome.contextMenus.create({
+      id: "addToBlocklist",
+      title: "添加「%s」到屏蔽词",
+      contexts: ["selection"],
+      documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
+    });
   });
 });
 
@@ -150,7 +152,14 @@ function handleRecordSpam(items) {
           getStorageDefaults("blockedCount", "blockedHistory"),
           (storageItems) => {
             const history = storageItems.blockedHistory || [];
-            history.unshift(...newSpams);
+            const historyIds = new Set(history.map((h) => h.id));
+            const uniqueSpams = newSpams.filter(
+              (s) => !historyIds.has(s.id),
+            );
+
+            if (uniqueSpams.length === 0) return resolve();
+
+            history.unshift(...uniqueSpams);
             let droppedCount = 0;
             if (history.length > 2000) {
               droppedCount = history.length - 2000;
@@ -161,7 +170,7 @@ function handleRecordSpam(items) {
               {
                 blockedCount:
                   (storageItems.blockedCount || 0) +
-                  newSpams.length -
+                  uniqueSpams.length -
                   droppedCount,
                 blockedHistory: history,
               },

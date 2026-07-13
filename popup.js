@@ -232,6 +232,7 @@ exportBtn.addEventListener("click", () => {
   a.download = `x-comment-blocker-keywords-${new Date().toISOString().slice(0, 10)}.txt`;
   a.click();
   URL.revokeObjectURL(url);
+  showStatus("导出成功");
 });
 
 importBtn.addEventListener("click", () => {
