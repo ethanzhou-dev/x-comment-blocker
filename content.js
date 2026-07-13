@@ -343,7 +343,7 @@ function filterTweets(specificTweets = null) {
 
   const tweets =
     specificTweets || document.querySelectorAll('[data-testid="cellInnerDiv"]');
-  if (tweets.length === 0 && !specificTweets) return;
+  if (tweets.length === 0) return;
 
   const pendingSpam = [];
   const pageContext = getPageContext();

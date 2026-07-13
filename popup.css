@@ -556,10 +556,6 @@ body {
   background: rgb(239 68 68 / 10%);
 }
 
-.btn-outline.syncing {
-  color: var(--text-muted);
-  pointer-events: none;
-}
 
 @keyframes spin {
   from {
