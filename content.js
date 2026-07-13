@@ -265,13 +265,21 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
     const handleLink = userNode.querySelector('a[href^="/"]');
     if (handleLink) {
       stableHandle = (handleLink.getAttribute("href") || "").toLowerCase();
-      displayName = handleLink.textContent.replace(invisibleCharsRegex, "").trim();
+      displayName = handleLink.textContent
+        .replace(invisibleCharsRegex, "")
+        .trim();
     }
   }
 
   if (isStatusPage && !isMainTweet) {
     if (blockEmoji && textNode && hasEmoji(textNode)) {
-      return { isSpam: true, blockReason: "表情屏蔽", userName, stableHandle, displayName };
+      return {
+        isSpam: true,
+        blockReason: "表情屏蔽",
+        userName,
+        stableHandle,
+        displayName,
+      };
     }
     if (
       blockSpecialChars &&
@@ -289,7 +297,13 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
   }
 
   if (matchesBlocklist(tweetBody)) {
-    return { isSpam: true, blockReason: "内容屏蔽", userName, stableHandle, displayName };
+    return {
+      isSpam: true,
+      blockReason: "内容屏蔽",
+      userName,
+      stableHandle,
+      displayName,
+    };
   }
 
   if (checkUsername && userName) {
@@ -297,14 +311,24 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
       .replace(/[\s_.-]+/g, "")
       .replace(invisibleCharsRegex, "");
     if (matchesBlocklist(cleanUserName)) {
-      return { isSpam: true, blockReason: "昵称屏蔽", userName, stableHandle, displayName };
+      return {
+        isSpam: true,
+        blockReason: "昵称屏蔽",
+        userName,
+        stableHandle,
+        displayName,
+      };
     }
   }
 
-  return { isSpam: false, blockReason: "", userName, stableHandle, displayName };
+  return {
+    isSpam: false,
+    blockReason: "",
+    userName,
+    stableHandle,
+    displayName,
+  };
 }
-
-
 
 function filterTweets(specificTweets = null) {
   if (!isExtensionAlive()) return;
@@ -383,17 +407,17 @@ function filterTweets(specificTweets = null) {
         .replace(invisibleCharsRegex, "")
         .replace(/\s+/g, " ")
         .trim();
-        
+
       const tweetId = getTweetId(tweet);
-      const uniqueId = tweetId ? tweetId : (normalizedBody + "|" + stableHandle);
-      
+      const uniqueId = tweetId ? tweetId : normalizedBody + "|" + stableHandle;
+
       if (!localSentIds.has(uniqueId)) {
         localSentIds.add(uniqueId);
         if (localSentIds.size > 2000) {
           const iter = localSentIds.values();
           for (let i = 0; i < 500; i++) localSentIds.delete(iter.next().value);
         }
-        
+
         pendingSpam.push({
           id: uniqueId,
           text: normalizedBody,
@@ -410,9 +434,10 @@ function filterTweets(specificTweets = null) {
 
   if (pendingSpam.length > 0) {
     try {
-      chrome.runtime.sendMessage({ action: "recordSpam", items: pendingSpam }).catch(() => {});
-    } catch (e) {
-    }
+      chrome.runtime
+        .sendMessage({ action: "recordSpam", items: pendingSpam })
+        .catch(() => {});
+    } catch (e) {}
   }
 }
 

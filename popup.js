@@ -274,16 +274,17 @@ importFile.addEventListener("change", (e) => {
 function formatHistoryTime(timestamp) {
   const date = new Date(timestamp);
   const now = new Date();
-  
-  const isToday = date.getDate() === now.getDate() && 
-                  date.getMonth() === now.getMonth() && 
-                  date.getFullYear() === now.getFullYear();
-                  
+
+  const isToday =
+    date.getDate() === now.getDate() &&
+    date.getMonth() === now.getMonth() &&
+    date.getFullYear() === now.getFullYear();
+
   const isThisYear = date.getFullYear() === now.getFullYear();
-  
+
   if (isToday) {
-    const hh = String(date.getHours()).padStart(2, '0');
-    const mm = String(date.getMinutes()).padStart(2, '0');
+    const hh = String(date.getHours()).padStart(2, "0");
+    const mm = String(date.getMinutes()).padStart(2, "0");
     return `${hh}:${mm}`;
   } else if (isThisYear) {
     return `${date.getMonth() + 1}月${date.getDate()}日`;
@@ -445,7 +446,7 @@ function renderHistoryPage() {
 
   const start = historyCurrentPage * HISTORY_PAGE_SIZE;
   const end = Math.min(start + HISTORY_PAGE_SIZE, currentHistory.length);
-  
+
   if (start >= currentHistory.length) {
     isHistoryLoading = false;
     return;
@@ -465,7 +466,7 @@ function renderHistoryPage() {
 
     if (item.user && item.user.startsWith("/")) {
       const handle = item.user.substring(1);
-      
+
       if (item.displayName) {
         const nameSpan = document.createElement("span");
         nameSpan.className = "history-display-name";
@@ -475,7 +476,7 @@ function renderHistoryPage() {
         const handleSpan = document.createElement("span");
         handleSpan.className = "history-handle";
         handleSpan.textContent = `@${handle}`;
-        
+
         userInfo.appendChild(nameSpan);
         userInfo.appendChild(handleSpan);
       } else {
@@ -490,7 +491,7 @@ function renderHistoryPage() {
       userSpan.textContent = item.user || "未知用户";
       userInfo.appendChild(userSpan);
     }
-    
+
     const actionsDiv = document.createElement("div");
     actionsDiv.className = "history-item-actions";
 
@@ -505,15 +506,19 @@ function renderHistoryPage() {
     removeBtn.title = "从记录中移除此项";
     removeBtn.onclick = async () => {
       removeBtn.disabled = true;
-      div.style.opacity = '0.5';
-      await chrome.runtime.sendMessage({ 
-        action: "removeSpamRecord", 
-        id: item.id, 
-        time: item.time 
-      }).catch(() => {});
+      div.style.opacity = "0.5";
+      await chrome.runtime
+        .sendMessage({
+          action: "removeSpamRecord",
+          id: item.id,
+          time: item.time,
+        })
+        .catch(() => {});
       div.remove();
-      
-      currentHistory = currentHistory.filter(h => !(h.id === item.id && h.time === item.time));
+
+      currentHistory = currentHistory.filter(
+        (h) => !(h.id === item.id && h.time === item.time),
+      );
       if (currentHistory.length === 0) {
         historyList.innerHTML = `
             <div class="history-item">
@@ -522,7 +527,7 @@ function renderHistoryPage() {
                 </div>
             </div>
         `;
-      } else if (historyList.querySelectorAll('.history-item').length === 0) {
+      } else if (historyList.querySelectorAll(".history-item").length === 0) {
         renderHistoryPage();
       }
     };
@@ -531,10 +536,10 @@ function renderHistoryPage() {
     if (item.user && item.user.startsWith("/")) {
       const blockBtn = document.createElement("button");
       blockBtn.className = "btn-block-x";
-      
+
       const screenName = item.user.substring(1);
       let isBlocked = currentBlockedUsersOnX.includes(screenName);
-      
+
       const updateBtnState = () => {
         if (isBlocked) {
           blockBtn.textContent = "已拉黑";
@@ -556,17 +561,20 @@ function renderHistoryPage() {
           const res = await chrome.runtime.sendMessage({ action, screenName });
           if (res && res.success) {
             isBlocked = !isBlocked;
-            
-            const currentItems = await chrome.storage.local.get(getStorageDefaults("blockedUsersOnX"));
+
+            const currentItems = await chrome.storage.local.get(
+              getStorageDefaults("blockedUsersOnX"),
+            );
             let currentList = currentItems.blockedUsersOnX || [];
             if (isBlocked) {
-              if (!currentList.includes(screenName)) currentList.push(screenName);
+              if (!currentList.includes(screenName))
+                currentList.push(screenName);
             } else {
-              currentList = currentList.filter(u => u !== screenName);
+              currentList = currentList.filter((u) => u !== screenName);
             }
             await chrome.storage.local.set({ blockedUsersOnX: currentList });
             currentBlockedUsersOnX = currentList;
-            
+
             updateBtnState();
           } else {
             updateBtnState();
@@ -598,17 +606,24 @@ function renderHistoryPage() {
     fragment.appendChild(div);
   }
   historyList.appendChild(fragment);
-  
-  const nameSpans = Array.from(historyList.querySelectorAll('.history-display-name'));
-  const overflowingSpans = nameSpans.filter(span => span.scrollWidth > span.clientWidth);
-  overflowingSpans.forEach(span => span.classList.add('is-overflowing'));
+
+  const nameSpans = Array.from(
+    historyList.querySelectorAll(".history-display-name"),
+  );
+  const overflowingSpans = nameSpans.filter(
+    (span) => span.scrollWidth > span.clientWidth,
+  );
+  overflowingSpans.forEach((span) => span.classList.add("is-overflowing"));
 
   historyCurrentPage++;
   isHistoryLoading = false;
 }
 
 historyList.addEventListener("scroll", () => {
-  if (historyList.scrollTop + historyList.clientHeight >= historyList.scrollHeight - 50) {
+  if (
+    historyList.scrollTop + historyList.clientHeight >=
+    historyList.scrollHeight - 50
+  ) {
     renderHistoryPage();
   }
 });
