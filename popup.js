@@ -33,10 +33,12 @@ const historyModal = document.getElementById("historyModal");
 const closeHistoryBtn = document.getElementById("closeHistory");
 const historyList = document.getElementById("historyList");
 
+let statusTimer = 0;
 function showStatus(text) {
   statusEl.textContent = text;
   statusEl.classList.add("visible");
-  setTimeout(() => {
+  clearTimeout(statusTimer);
+  statusTimer = setTimeout(() => {
     statusEl.classList.remove("visible");
   }, 1500);
 }
@@ -442,7 +444,7 @@ resetCountBtn.addEventListener("click", async () => {
 
 let currentHistory = [];
 let currentBlockedUsersOnX = [];
-let historyCurrentPage = 0;
+let historyNextIndex = 0;
 const HISTORY_PAGE_SIZE = 50;
 let isHistoryLoading = false;
 
@@ -450,7 +452,7 @@ function renderHistoryPage() {
   if (isHistoryLoading) return;
   isHistoryLoading = true;
 
-  const start = historyCurrentPage * HISTORY_PAGE_SIZE;
+  const start = historyNextIndex;
   const end = Math.min(start + HISTORY_PAGE_SIZE, currentHistory.length);
 
   if (start >= currentHistory.length) {
@@ -525,6 +527,7 @@ function renderHistoryPage() {
       currentHistory = currentHistory.filter(
         (h) => !(h.id === item.id && h.time === item.time),
       );
+      historyNextIndex = Math.max(0, historyNextIndex - 1);
       if (currentHistory.length === 0) {
         historyList.innerHTML = `
             <div class="history-item">
@@ -621,7 +624,7 @@ function renderHistoryPage() {
   );
   overflowingSpans.forEach((span) => span.classList.add("is-overflowing"));
 
-  historyCurrentPage++;
+  historyNextIndex = end;
   isHistoryLoading = false;
 }
 
@@ -649,7 +652,7 @@ viewHistoryBtn.addEventListener("click", async () => {
   );
   currentHistory = items.blockedHistory || [];
   currentBlockedUsersOnX = items.blockedUsersOnX || [];
-  historyCurrentPage = 0;
+  historyNextIndex = 0;
 
   historyList.innerHTML = "";
   if (currentHistory.length === 0) {

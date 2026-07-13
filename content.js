@@ -155,6 +155,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
     needsFilter = true;
   }
 
+  if (changes.blockedHistory) {
+    const newHistory = changes.blockedHistory.newValue;
+    if (!newHistory || newHistory.length === 0) {
+      localSentIds.clear();
+    }
+  }
+
   if (needsFilter) {
     filterVersion++;
   }
