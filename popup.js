@@ -426,36 +426,27 @@ resetCountBtn.addEventListener("click", async () => {
   blockedCountEl.textContent = "0";
 });
 
-viewHistoryBtn.addEventListener("click", async () => {
-  historyModal.classList.add("open");
-  historyList.innerHTML = `
-        <div class="history-item">
-            <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
-                加载中...
-            </div>
-        </div>
-    `;
+let currentHistory = [];
+let currentBlockedUsersOnX = [];
+let historyCurrentPage = 0;
+const HISTORY_PAGE_SIZE = 50;
+let isHistoryLoading = false;
 
-  const items = await chrome.storage.local.get(
-    getStorageDefaults("blockedHistory", "blockedUsersOnX"),
-  );
-  const history = items.blockedHistory;
-  const blockedUsersOnX = items.blockedUsersOnX || [];
+function renderHistoryPage() {
+  if (isHistoryLoading) return;
+  isHistoryLoading = true;
 
-  historyList.innerHTML = "";
-  if (history.length === 0) {
-    historyList.innerHTML = `
-            <div class="history-item">
-                <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
-                    暂无记录
-                </div>
-            </div>
-        `;
+  const start = historyCurrentPage * HISTORY_PAGE_SIZE;
+  const end = Math.min(start + HISTORY_PAGE_SIZE, currentHistory.length);
+  
+  if (start >= currentHistory.length) {
+    isHistoryLoading = false;
     return;
   }
 
   const fragment = document.createDocumentFragment();
-  history.forEach((item) => {
+  for (let i = start; i < end; i++) {
+    const item = currentHistory[i];
     const div = document.createElement("div");
     div.className = "history-item";
 
@@ -515,7 +506,8 @@ viewHistoryBtn.addEventListener("click", async () => {
       }).catch(() => {});
       div.remove();
       
-      if (historyList.querySelectorAll('.history-item').length === 0) {
+      currentHistory = currentHistory.filter(h => h.id !== item.id);
+      if (currentHistory.length === 0) {
         historyList.innerHTML = `
             <div class="history-item">
                 <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
@@ -523,6 +515,9 @@ viewHistoryBtn.addEventListener("click", async () => {
                 </div>
             </div>
         `;
+      } else if (historyList.querySelectorAll('.history-item').length === 0) {
+        // 如果当前可视节点全部被删除了，但后面还有数据，自动加载下一页
+        renderHistoryPage();
       }
     };
     actionsDiv.appendChild(removeBtn);
@@ -532,7 +527,7 @@ viewHistoryBtn.addEventListener("click", async () => {
       blockBtn.className = "btn-block-x";
       
       const screenName = item.user.substring(1);
-      let isBlocked = blockedUsersOnX.includes(screenName);
+      let isBlocked = currentBlockedUsersOnX.includes(screenName);
       
       const updateBtnState = () => {
         if (isBlocked) {
@@ -564,6 +559,7 @@ viewHistoryBtn.addEventListener("click", async () => {
               currentList = currentList.filter(u => u !== screenName);
             }
             await chrome.storage.local.set({ blockedUsersOnX: currentList });
+            currentBlockedUsersOnX = currentList;
             
             updateBtnState();
           } else {
@@ -594,12 +590,53 @@ viewHistoryBtn.addEventListener("click", async () => {
     div.appendChild(header);
     div.appendChild(textDiv);
     fragment.appendChild(div);
-  });
+  }
   historyList.appendChild(fragment);
   
   const nameSpans = Array.from(historyList.querySelectorAll('.history-display-name'));
   const overflowingSpans = nameSpans.filter(span => span.scrollWidth > span.clientWidth);
   overflowingSpans.forEach(span => span.classList.add('is-overflowing'));
+
+  historyCurrentPage++;
+  isHistoryLoading = false;
+}
+
+historyList.addEventListener("scroll", () => {
+  if (historyList.scrollTop + historyList.clientHeight >= historyList.scrollHeight - 50) {
+    renderHistoryPage();
+  }
+});
+
+viewHistoryBtn.addEventListener("click", async () => {
+  historyModal.classList.add("open");
+  historyList.innerHTML = `
+        <div class="history-item">
+            <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
+                加载中...
+            </div>
+        </div>
+    `;
+
+  const items = await chrome.storage.local.get(
+    getStorageDefaults("blockedHistory", "blockedUsersOnX"),
+  );
+  currentHistory = items.blockedHistory || [];
+  currentBlockedUsersOnX = items.blockedUsersOnX || [];
+  historyCurrentPage = 0;
+
+  historyList.innerHTML = "";
+  if (currentHistory.length === 0) {
+    historyList.innerHTML = `
+            <div class="history-item">
+                <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
+                    暂无记录
+                </div>
+            </div>
+        `;
+    return;
+  }
+
+  renderHistoryPage();
 });
 
 closeHistoryBtn.addEventListener("click", () => {
