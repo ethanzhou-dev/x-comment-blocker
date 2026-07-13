@@ -172,15 +172,21 @@ function startEdit(tagEl, index) {
 
 function confirmEdit(inputEl, index) {
   const inputKws = parseKeywords(inputEl.value);
+  let changed = false;
   if (inputKws.length > 0) {
     const newVal = inputKws[0];
     const existingIndex = userKeywords.indexOf(newVal);
     if (existingIndex === -1 || existingIndex === index) {
-      userKeywords[index] = newVal;
+      if (userKeywords[index] !== newVal) {
+        userKeywords[index] = newVal;
+        changed = true;
+      }
+    } else {
+      showStatus("该屏蔽词已存在");
     }
   }
   renderUserKeywords(-1, index);
-  autoSave();
+  if (changed) autoSave();
 }
 
 function addKeyword() {

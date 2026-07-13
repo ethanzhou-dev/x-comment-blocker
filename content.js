@@ -122,6 +122,7 @@ async function mergeKeywords() {
     observer.observe(document.body, {
       childList: true,
       subtree: true,
+      characterData: true,
     });
   } catch (e) {
     console.debug("[X-Blocker] init error:", e.message);
