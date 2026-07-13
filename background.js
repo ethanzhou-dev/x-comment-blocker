@@ -161,8 +161,7 @@ function handleRecordSpam(items) {
               {
                 blockedCount:
                   (storageItems.blockedCount || 0) +
-                  newSpams.length -
-                  droppedCount,
+                  newSpams.length,
                 blockedHistory: history,
               },
               () => resolve(),
