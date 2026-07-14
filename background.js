@@ -19,7 +19,7 @@ chrome.webRequest.onSendHeaders.addListener(
 
     if (auth && inMemoryAuth !== auth) {
       inMemoryAuth = auth;
-      chrome.storage.local.set({ xAuthHeaders: { authorization: auth } });
+      chrome.storage.local.remove('xAuthHeaders');
     }
   },
   { urls: ["*://*.x.com/i/api/*", "*://*.twitter.com/i/api/*"] },
@@ -27,9 +27,8 @@ chrome.webRequest.onSendHeaders.addListener(
 );
 
 async function getAuthHeaders() {
-  const res = await chrome.storage.local.get(['xAuthHeaders']);
-  if (res.xAuthHeaders && res.xAuthHeaders.authorization) {
-    return { authorization: res.xAuthHeaders.authorization };
+  if (inMemoryAuth) {
+    return { authorization: inMemoryAuth };
   }
   return {
     authorization: "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
