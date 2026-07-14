@@ -4,6 +4,38 @@ importScripts("utils.js");
 const ALARM_NAME = "cloudKeywordSync";
 let isSyncing = false;
 
+let inMemoryAuth = null;
+
+chrome.webRequest.onSendHeaders.addListener(
+  (details) => {
+    let auth = null;
+
+    for (let header of details.requestHeaders) {
+      if (header.name.toLowerCase() === 'authorization') {
+        auth = header.value;
+        break;
+      }
+    }
+
+    if (auth && inMemoryAuth !== auth) {
+      inMemoryAuth = auth;
+      chrome.storage.local.set({ xAuthHeaders: { authorization: auth } });
+    }
+  },
+  { urls: ["*://*.x.com/i/api/*", "*://*.twitter.com/i/api/*"] },
+  ["requestHeaders"]
+);
+
+async function getAuthHeaders() {
+  const res = await chrome.storage.local.get(['xAuthHeaders']);
+  if (res.xAuthHeaders && res.xAuthHeaders.authorization) {
+    return { authorization: res.xAuthHeaders.authorization };
+  }
+  return {
+    authorization: "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+  };
+}
+
 const globalSpamCache = new Set();
 let storageWritePromise = new Promise((resolve) => {
   chrome.storage.local.get(getStorageDefaults("blockedHistory"), (items) => {
@@ -194,14 +226,13 @@ async function handleBlockUser(screenName, isBlock) {
     }
 
     const endpoint = isBlock ? "create.json" : "destroy.json";
+    const headers = await getAuthHeaders();
+    headers["x-csrf-token"] = cookie.value;
+    headers["content-type"] = "application/x-www-form-urlencoded";
+
     const response = await fetch(`https://x.com/i/api/1.1/blocks/${endpoint}`, {
       method: "POST",
-      headers: {
-        authorization:
-          "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
-        "x-csrf-token": cookie.value,
-        "content-type": "application/x-www-form-urlencoded",
-      },
+      headers,
       body: `screen_name=${encodeURIComponent(screenName)}`,
     });
 
