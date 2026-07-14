@@ -444,26 +444,100 @@ resetCountBtn.addEventListener("click", async () => {
 });
 
 let currentHistory = [];
+let filteredHistory = [];
 let currentBlockedUsersOnX = [];
 let historyNextIndex = 0;
 const HISTORY_PAGE_SIZE = 50;
 let isHistoryLoading = false;
+let currentFilterReason = "all";
+
+const filterHistoryBtn = document.getElementById("filterHistoryBtn");
+const filterDropdown = document.getElementById("filterDropdown");
+
+if (filterHistoryBtn && filterDropdown) {
+  filterHistoryBtn.addEventListener("click", () => {
+    filterDropdown.classList.toggle("open");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest('#filterDropdown') && !e.target.closest('#filterHistoryBtn')) {
+      filterDropdown.classList.remove("open");
+    }
+  });
+
+  filterDropdown.addEventListener("click", (e) => {
+    const option = e.target.closest('.filter-option');
+    if (option) {
+      const reason = option.dataset.reason;
+      if (reason !== currentFilterReason) {
+        filterDropdown.querySelectorAll(".filter-option").forEach((opt) => opt.classList.remove("active"));
+        option.classList.add("active");
+        
+        currentFilterReason = reason;
+        
+        applyHistoryFilter();
+      }
+    }
+  });
+}
+
+function updateFilterOptions() {
+  if (!filterDropdown) return;
+  
+  const reasonsSet = new Set();
+  currentHistory.forEach(item => {
+    if (item.reason) reasonsSet.add(item.reason);
+  });
+  
+  const reasons = Array.from(reasonsSet);
+  
+  let html = `<div class="filter-option ${currentFilterReason === 'all' ? 'active' : ''}" data-reason="all">全部原因</div>`;
+  reasons.forEach(reason => {
+    html += `<div class="filter-option ${currentFilterReason === reason ? 'active' : ''}" data-reason="${reason}">${reason}</div>`;
+  });
+  
+  filterDropdown.innerHTML = html;
+}
+
+function applyHistoryFilter() {
+  if (currentFilterReason === "all") {
+    filteredHistory = currentHistory;
+  } else {
+    filteredHistory = currentHistory.filter((item) => item.reason === currentFilterReason);
+  }
+  
+  historyNextIndex = 0;
+  historyList.innerHTML = "";
+  
+  if (filteredHistory.length === 0) {
+    historyList.innerHTML = `
+      <div class="history-item">
+          <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
+              暂无记录
+          </div>
+      </div>
+    `;
+    return;
+  }
+  
+  renderHistoryPage();
+}
 
 function renderHistoryPage() {
   if (isHistoryLoading) return;
   isHistoryLoading = true;
 
   const start = historyNextIndex;
-  const end = Math.min(start + HISTORY_PAGE_SIZE, currentHistory.length);
+  const end = Math.min(start + HISTORY_PAGE_SIZE, filteredHistory.length);
 
-  if (start >= currentHistory.length) {
+  if (start >= filteredHistory.length) {
     isHistoryLoading = false;
     return;
   }
 
   const fragment = document.createDocumentFragment();
   for (let i = start; i < end; i++) {
-    const item = currentHistory[i];
+    const item = filteredHistory[i];
     const div = document.createElement("div");
     div.className = "history-item";
 
@@ -528,8 +602,11 @@ function renderHistoryPage() {
       currentHistory = currentHistory.filter(
         (h) => !(h.id === item.id && h.time === item.time),
       );
+      filteredHistory = filteredHistory.filter(
+        (h) => !(h.id === item.id && h.time === item.time),
+      );
       historyNextIndex = Math.max(0, historyNextIndex - 1);
-      if (currentHistory.length === 0) {
+      if (filteredHistory.length === 0) {
         historyList.innerHTML = `
             <div class="history-item">
                 <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
@@ -653,21 +730,12 @@ viewHistoryBtn.addEventListener("click", async () => {
   );
   currentHistory = items.blockedHistory || [];
   currentBlockedUsersOnX = items.blockedUsersOnX || [];
-  historyNextIndex = 0;
+  
+  // reset filter and update options
+  currentFilterReason = "all";
+  updateFilterOptions();
 
-  historyList.innerHTML = "";
-  if (currentHistory.length === 0) {
-    historyList.innerHTML = `
-            <div class="history-item">
-                <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
-                    暂无记录
-                </div>
-            </div>
-        `;
-    return;
-  }
-
-  renderHistoryPage();
+  applyHistoryFilter();
 });
 
 closeHistoryBtn.addEventListener("click", () => {

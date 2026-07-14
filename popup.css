@@ -749,3 +749,50 @@ body.disabled .settings-panel {
   border-color: var(--danger);
   background: rgb(239 68 68 / 10%);
 }
+
+.filter-dropdown {
+  display: none;
+  position: absolute;
+  top: 100%;
+  right: 28px;
+  margin-top: 8px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  z-index: 100;
+  padding: 4px;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.filter-dropdown.open {
+  display: flex;
+}
+
+.filter-option {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 4px;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.filter-option:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.filter-option.active {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgb(14 165 233 / 10%);
+}
