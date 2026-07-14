@@ -83,6 +83,7 @@ async function mergeKeywords() {
     filterTweets();
 
     const pendingTweets = new Set();
+    let isFilterScheduled = false;
 
     const observer = new MutationObserver((mutations) => {
       if (!isExtensionAlive()) {
@@ -110,6 +111,9 @@ async function mergeKeywords() {
               ? mutation.target
               : mutation.target.parentElement;
           if (el && el.closest) {
+            if (!el.closest('[data-testid="tweetText"], [data-testid="User-Name"]')) {
+              continue;
+            }
             const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
             if (closestTweet) {
               pendingTweets.add(closestTweet);
@@ -118,9 +122,13 @@ async function mergeKeywords() {
         }
       }
 
-      if (pendingTweets.size > 0) {
-        filterTweets(Array.from(pendingTweets));
-        pendingTweets.clear();
+      if (pendingTweets.size > 0 && !isFilterScheduled) {
+        isFilterScheduled = true;
+        requestAnimationFrame(() => {
+          filterTweets(Array.from(pendingTweets));
+          pendingTweets.clear();
+          isFilterScheduled = false;
+        });
       }
     });
 
@@ -276,11 +284,9 @@ function checkIsMainTweet(tweet, pageStatusId) {
   return false;
 }
 
-function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
-  const tweetBody = textNode
-    ? getTweetTextForKeywords(textNode).replace(invisibleCharsRegex, "")
-    : "";
-  const userName = userNode ? getTweetTextForKeywords(userNode) : "";
+function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage, isMainTweet) {
+  const tweetBody = rawTweetText.replace(invisibleCharsRegex, "");
+  const userName = rawUserName;
   let stableHandle = "";
   let displayName = "";
 
@@ -379,10 +385,13 @@ function filterTweets(specificTweets = null) {
     }
     tweet.__cbxIsStatusPage = isStatusPage;
 
+    const rawTweetText = textNode ? getTweetTextForKeywords(textNode) : "";
+    const rawUserName = userNode ? getTweetTextForKeywords(userNode) : "";
+
     const quickHash =
-      (textNode ? getTweetTextForKeywords(textNode) : "") +
+      rawTweetText +
       "|" +
-      (userNode ? getTweetTextForKeywords(userNode) : "") +
+      rawUserName +
       "|" +
       filterVersion +
       "|" +
@@ -426,7 +435,7 @@ function filterTweets(specificTweets = null) {
     let displayName = "";
 
     if (shouldCheck) {
-      const result = detectSpam(textNode, userNode, isStatusPage, isMainTweet);
+      const result = detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage, isMainTweet);
       isSpam = result.isSpam;
       blockReason = result.blockReason;
       userName = result.userName;
@@ -439,7 +448,7 @@ function filterTweets(specificTweets = null) {
       if (!tweet.classList.contains("x-comment-blocker-hidden")) {
         tweet.classList.add("x-comment-blocker-hidden");
       }
-      const normalizedBody = (textNode ? getTweetTextForKeywords(textNode) : "")
+      const normalizedBody = rawTweetText
         .replace(invisibleCharsRegex, "")
         .replace(/\s+/g, " ")
         .trim();
