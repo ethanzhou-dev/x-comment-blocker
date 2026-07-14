@@ -184,7 +184,13 @@ function getTweetTextForKeywords(node) {
       text += n.textContent;
     } else if (n.nodeType === Node.ELEMENT_NODE) {
       if (n.tagName.toLowerCase() === "img" && n.alt) {
-        text += n.alt;
+        let altText = n.alt;
+        if (n.src && (n.src.includes("emoji") || n.src.includes("twemoji")) && !altText.endsWith("\uFE0F")) {
+          if (altText.length <= 2) {
+            altText += "\uFE0F";
+          }
+        }
+        text += altText;
       } else {
         for (const child of n.childNodes) {
           traverse(child);
@@ -273,7 +279,7 @@ function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
     const handleLink = userNode.querySelector('a[href^="/"]');
     if (handleLink) {
       stableHandle = (handleLink.getAttribute("href") || "").toLowerCase();
-      displayName = handleLink.textContent
+      displayName = getTweetTextForKeywords(handleLink)
         .replace(invisibleCharsRegex, "")
         .trim();
     }
@@ -364,7 +370,7 @@ function filterTweets(specificTweets = null) {
     const quickHash =
       (textNode ? getTweetTextForKeywords(textNode) : "") +
       "|" +
-      (userNode ? userNode.textContent : "") +
+      (userNode ? getTweetTextForKeywords(userNode) : "") +
       "|" +
       filterVersion +
       "|" +
