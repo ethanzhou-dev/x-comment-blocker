@@ -83,7 +83,6 @@ async function mergeKeywords() {
     filterTweets();
 
     const pendingTweets = new Set();
-    let isFilterScheduled = false;
 
     const observer = new MutationObserver((mutations) => {
       if (!isExtensionAlive()) {
@@ -122,13 +121,9 @@ async function mergeKeywords() {
         }
       }
 
-      if (pendingTweets.size > 0 && !isFilterScheduled) {
-        isFilterScheduled = true;
-        requestAnimationFrame(() => {
-          filterTweets(Array.from(pendingTweets));
-          pendingTweets.clear();
-          isFilterScheduled = false;
-        });
+      if (pendingTweets.size > 0) {
+        filterTweets(Array.from(pendingTweets));
+        pendingTweets.clear();
       }
     });
 
