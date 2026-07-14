@@ -362,7 +362,7 @@ function filterTweets(specificTweets = null) {
     tweet.__cbxIsStatusPage = isStatusPage;
 
     const quickHash =
-      (textNode ? textNode.textContent : "") +
+      (textNode ? getTweetTextForKeywords(textNode) : "") +
       "|" +
       (userNode ? userNode.textContent : "") +
       "|" +
@@ -421,7 +421,7 @@ function filterTweets(specificTweets = null) {
       if (!tweet.classList.contains("x-comment-blocker-hidden")) {
         tweet.classList.add("x-comment-blocker-hidden");
       }
-      const normalizedBody = (textNode ? textNode.textContent : "")
+      const normalizedBody = (textNode ? getTweetTextForKeywords(textNode) : "")
         .replace(invisibleCharsRegex, "")
         .replace(/\s+/g, " ")
         .trim();
