@@ -13,10 +13,8 @@ const emojiRegex = new RegExp(
   "[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]",
   "u",
 );
-/* eslint-disable no-misleading-character-class */
 const spamCharsRegex =
   /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
-/* eslint-enable no-misleading-character-class */
 
 function isExtensionAlive() {
   return !!chrome.runtime?.id;
@@ -468,7 +466,7 @@ function filterTweets(specificTweets = null) {
       chrome.runtime
         .sendMessage({ action: "recordSpam", items: pendingSpam })
         .catch(() => {});
-    } catch (e) {
+    } catch {
       // Ignore error if background script is not ready
     }
   }

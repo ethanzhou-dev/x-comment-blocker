@@ -590,7 +590,7 @@ function renderHistoryPage() {
             updateBtnState();
             showStatus(res?.reason || "操作失败");
           }
-        } catch (e) {
+        } catch {
           updateBtnState();
           showStatus("请求失败");
         }
