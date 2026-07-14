@@ -19,7 +19,7 @@ chrome.webRequest.onSendHeaders.addListener(
 
     if (auth && inMemoryAuth !== auth) {
       inMemoryAuth = auth;
-      chrome.storage.local.remove('xAuthHeaders');
+      chrome.storage.local.set({ xAuthHeaders: auth });
     }
   },
   { urls: ["*://*.x.com/i/api/*", "*://*.twitter.com/i/api/*"] },
@@ -30,9 +30,14 @@ async function getAuthHeaders() {
   if (inMemoryAuth) {
     return { authorization: inMemoryAuth };
   }
-  return {
-    authorization: "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
-  };
+  
+  const storage = await chrome.storage.local.get('xAuthHeaders');
+  if (storage.xAuthHeaders) {
+    inMemoryAuth = storage.xAuthHeaders;
+    return { authorization: inMemoryAuth };
+  }
+
+  return null;
 }
 
 const globalSpamCache = new Set();
@@ -226,6 +231,11 @@ async function handleBlockUser(screenName, isBlock) {
 
     const endpoint = isBlock ? "create.json" : "destroy.json";
     const headers = await getAuthHeaders();
+
+    if (!headers) {
+      return { success: false, reason: "尚未获取到授权 Token，请先浏览 X 页面并刷新重试" };
+    }
+
     headers["x-csrf-token"] = cookie.value;
     headers["content-type"] = "application/x-www-form-urlencoded";
 
