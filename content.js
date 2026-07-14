@@ -273,7 +273,7 @@ function checkIsMainTweet(tweet, pageStatusId) {
     }
   }
 
-  return !!tweet.querySelector("article");
+  return false;
 }
 
 function detectSpam(textNode, userNode, isStatusPage, isMainTweet) {
