@@ -474,6 +474,7 @@ if (filterHistoryBtn && filterDropdown) {
         option.classList.add("active");
         
         currentFilterReason = reason;
+        chrome.storage.local.set({ historyFilterReason: reason });
         
         applyHistoryFilter();
       }
@@ -490,6 +491,10 @@ function updateFilterOptions() {
   });
   
   const reasons = Array.from(reasonsSet);
+  
+  if (currentFilterReason !== 'all' && !reasons.includes(currentFilterReason)) {
+    currentFilterReason = 'all';
+  }
   
   let html = `<div class="filter-option ${currentFilterReason === 'all' ? 'active' : ''}" data-reason="all">全部原因</div>`;
   reasons.forEach(reason => {
@@ -605,6 +610,15 @@ function renderHistoryPage() {
       filteredHistory = filteredHistory.filter(
         (h) => !(h.id === item.id && h.time === item.time),
       );
+
+      const oldReason = currentFilterReason;
+      updateFilterOptions();
+      if (oldReason !== currentFilterReason) {
+        chrome.storage.local.set({ historyFilterReason: currentFilterReason });
+        applyHistoryFilter();
+        return;
+      }
+
       historyNextIndex = Math.max(0, historyNextIndex - 1);
       if (filteredHistory.length === 0) {
         historyList.innerHTML = `
@@ -625,9 +639,10 @@ function renderHistoryPage() {
       blockBtn.className = "btn-block-x";
 
       const screenName = item.user.substring(1);
-      let isBlocked = currentBlockedUsersOnX.includes(screenName);
-
+      blockBtn.dataset.screenName = screenName;
+      
       const updateBtnState = () => {
+        const isBlocked = currentBlockedUsersOnX.includes(screenName);
         if (isBlocked) {
           blockBtn.textContent = "已拉黑";
           blockBtn.classList.add("success");
@@ -641,37 +656,65 @@ function renderHistoryPage() {
       updateBtnState();
 
       blockBtn.onclick = async () => {
-        blockBtn.disabled = true;
-        blockBtn.textContent = "请求中...";
+        const isCurrentlyBlocked = currentBlockedUsersOnX.includes(screenName);
+        
+        // Disable all buttons for this user to prevent double clicks
+        const allBtns = document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`);
+        allBtns.forEach(btn => {
+          btn.disabled = true;
+          btn.textContent = "请求中...";
+        });
+        
         try {
-          const action = isBlocked ? "unblockUserOnX" : "blockUserOnX";
+          const action = isCurrentlyBlocked ? "unblockUserOnX" : "blockUserOnX";
           const res = await chrome.runtime.sendMessage({ action, screenName });
           if (res && res.success) {
-            isBlocked = !isBlocked;
-
             const currentItems = await chrome.storage.local.get(
               getStorageDefaults("blockedUsersOnX"),
             );
             let currentList = currentItems.blockedUsersOnX || [];
-            if (isBlocked) {
+            
+            if (!isCurrentlyBlocked) {
               if (!currentList.includes(screenName))
                 currentList.push(screenName);
             } else {
               currentList = currentList.filter((u) => u !== screenName);
             }
+            
             await chrome.storage.local.set({ blockedUsersOnX: currentList });
             currentBlockedUsersOnX = currentList;
 
-            updateBtnState();
+            // Update all buttons for this user
+            allBtns.forEach(btn => {
+              const isNowBlocked = currentBlockedUsersOnX.includes(screenName);
+              if (isNowBlocked) {
+                btn.textContent = "已拉黑";
+                btn.classList.add("success");
+                btn.title = "点击解除拉黑";
+              } else {
+                btn.textContent = "拉黑";
+                btn.classList.remove("success");
+                btn.title = "在 X 上拉黑该账号";
+              }
+              btn.disabled = false;
+            });
           } else {
-            updateBtnState();
+            allBtns.forEach(btn => {
+              btn.disabled = false;
+              // Reset text to original state
+              const isBlocked = currentBlockedUsersOnX.includes(screenName);
+              btn.textContent = isBlocked ? "已拉黑" : "拉黑";
+            });
             showStatus(res?.reason || "操作失败");
           }
         } catch {
-          updateBtnState();
+          allBtns.forEach(btn => {
+            btn.disabled = false;
+            const isBlocked = currentBlockedUsersOnX.includes(screenName);
+            btn.textContent = isBlocked ? "已拉黑" : "拉黑";
+          });
           showStatus("请求失败");
         }
-        blockBtn.disabled = false;
       };
       actionsDiv.appendChild(blockBtn);
     }
@@ -726,14 +769,19 @@ viewHistoryBtn.addEventListener("click", async () => {
     `;
 
   const items = await chrome.storage.local.get(
-    getStorageDefaults("blockedHistory", "blockedUsersOnX"),
+    getStorageDefaults("blockedHistory", "blockedUsersOnX", "historyFilterReason"),
   );
   currentHistory = items.blockedHistory || [];
   currentBlockedUsersOnX = items.blockedUsersOnX || [];
   
-  // reset filter and update options
-  currentFilterReason = "all";
+  // load filter and update options
+  const oldReason = items.historyFilterReason || "all";
+  currentFilterReason = oldReason;
   updateFilterOptions();
+  
+  if (currentFilterReason !== oldReason) {
+    chrome.storage.local.set({ historyFilterReason: currentFilterReason });
+  }
 
   applyHistoryFilter();
 });
