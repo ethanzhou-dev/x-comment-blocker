@@ -460,22 +460,27 @@ if (filterHistoryBtn && filterDropdown) {
   });
 
   document.addEventListener("click", (e) => {
-    if (!e.target.closest('#filterDropdown') && !e.target.closest('#filterHistoryBtn')) {
+    if (
+      !e.target.closest("#filterDropdown") &&
+      !e.target.closest("#filterHistoryBtn")
+    ) {
       filterDropdown.classList.remove("open");
     }
   });
 
   filterDropdown.addEventListener("click", (e) => {
-    const option = e.target.closest('.filter-option');
+    const option = e.target.closest(".filter-option");
     if (option) {
       const reason = option.dataset.reason;
       if (reason !== currentFilterReason) {
-        filterDropdown.querySelectorAll(".filter-option").forEach((opt) => opt.classList.remove("active"));
+        filterDropdown
+          .querySelectorAll(".filter-option")
+          .forEach((opt) => opt.classList.remove("active"));
         option.classList.add("active");
-        
+
         currentFilterReason = reason;
         chrome.storage.local.set({ historyFilterReason: reason });
-        
+
         applyHistoryFilter();
       }
     }
@@ -484,29 +489,29 @@ if (filterHistoryBtn && filterDropdown) {
 
 function updateFilterOptions() {
   if (!filterDropdown) return;
-  
+
   const reasonsSet = new Set();
-  currentHistory.forEach(item => {
+  currentHistory.forEach((item) => {
     if (item.reason) reasonsSet.add(item.reason);
   });
-  
+
   const reasons = Array.from(reasonsSet);
-  
-  if (currentFilterReason !== 'all' && !reasons.includes(currentFilterReason)) {
-    currentFilterReason = 'all';
+
+  if (currentFilterReason !== "all" && !reasons.includes(currentFilterReason)) {
+    currentFilterReason = "all";
   }
-  
+
   filterDropdown.innerHTML = "";
-  
+
   const allOption = document.createElement("div");
-  allOption.className = `filter-option ${currentFilterReason === 'all' ? 'active' : ''}`;
+  allOption.className = `filter-option ${currentFilterReason === "all" ? "active" : ""}`;
   allOption.dataset.reason = "all";
   allOption.textContent = "全部原因";
   filterDropdown.appendChild(allOption);
-  
-  reasons.forEach(reason => {
+
+  reasons.forEach((reason) => {
     const opt = document.createElement("div");
-    opt.className = `filter-option ${currentFilterReason === reason ? 'active' : ''}`;
+    opt.className = `filter-option ${currentFilterReason === reason ? "active" : ""}`;
     opt.dataset.reason = reason;
     opt.textContent = reason;
     filterDropdown.appendChild(opt);
@@ -517,12 +522,14 @@ function applyHistoryFilter() {
   if (currentFilterReason === "all") {
     filteredHistory = currentHistory;
   } else {
-    filteredHistory = currentHistory.filter((item) => item.reason === currentFilterReason);
+    filteredHistory = currentHistory.filter(
+      (item) => item.reason === currentFilterReason,
+    );
   }
-  
+
   historyNextIndex = 0;
   historyList.innerHTML = "";
-  
+
   if (filteredHistory.length === 0) {
     historyList.innerHTML = `
       <div class="history-item">
@@ -533,7 +540,7 @@ function applyHistoryFilter() {
     `;
     return;
   }
-  
+
   renderHistoryPage();
 }
 
@@ -649,7 +656,7 @@ function renderHistoryPage() {
 
       const screenName = item.user.substring(1);
       blockBtn.dataset.screenName = screenName;
-      
+
       const updateBtnState = () => {
         const isBlocked = currentBlockedUsersOnX.includes(screenName);
         if (isBlocked) {
@@ -666,13 +673,16 @@ function renderHistoryPage() {
 
       blockBtn.onclick = async () => {
         const isCurrentlyBlocked = currentBlockedUsersOnX.includes(screenName);
-        
-        // Disable all currently visible buttons for this user to prevent double clicks
-        document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
-          btn.disabled = true;
-          btn.textContent = "请求中...";
-        });
-        
+
+        document
+          .querySelectorAll(
+            `button.btn-block-x[data-screen-name="${screenName}"]`,
+          )
+          .forEach((btn) => {
+            btn.disabled = true;
+            btn.textContent = "请求中...";
+          });
+
         try {
           const action = isCurrentlyBlocked ? "unblockUserOnX" : "blockUserOnX";
           const res = await chrome.runtime.sendMessage({ action, screenName });
@@ -681,47 +691,57 @@ function renderHistoryPage() {
               getStorageDefaults("blockedUsersOnX"),
             );
             let currentList = currentItems.blockedUsersOnX || [];
-            
+
             if (!isCurrentlyBlocked) {
               if (!currentList.includes(screenName))
                 currentList.push(screenName);
             } else {
               currentList = currentList.filter((u) => u !== screenName);
             }
-            
+
             await chrome.storage.local.set({ blockedUsersOnX: currentList });
             currentBlockedUsersOnX = currentList;
 
-            // Re-query buttons! Ensure we update any newly rendered buttons during the await
-            document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
-              const isNowBlocked = currentBlockedUsersOnX.includes(screenName);
-              if (isNowBlocked) {
-                btn.textContent = "已拉黑";
-                btn.classList.add("success");
-                btn.title = "点击解除拉黑";
-              } else {
-                btn.textContent = "拉黑";
-                btn.classList.remove("success");
-                btn.title = "在 X 上拉黑该账号";
-              }
-              btn.disabled = false;
-            });
+            document
+              .querySelectorAll(
+                `button.btn-block-x[data-screen-name="${screenName}"]`,
+              )
+              .forEach((btn) => {
+                const isNowBlocked =
+                  currentBlockedUsersOnX.includes(screenName);
+                if (isNowBlocked) {
+                  btn.textContent = "已拉黑";
+                  btn.classList.add("success");
+                  btn.title = "点击解除拉黑";
+                } else {
+                  btn.textContent = "拉黑";
+                  btn.classList.remove("success");
+                  btn.title = "在 X 上拉黑该账号";
+                }
+                btn.disabled = false;
+              });
           } else {
-            // Re-query on failure as well
-            document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
+            document
+              .querySelectorAll(
+                `button.btn-block-x[data-screen-name="${screenName}"]`,
+              )
+              .forEach((btn) => {
+                btn.disabled = false;
+                const isBlocked = currentBlockedUsersOnX.includes(screenName);
+                btn.textContent = isBlocked ? "已拉黑" : "拉黑";
+              });
+            showStatus(res?.reason || "操作失败");
+          }
+        } catch {
+          document
+            .querySelectorAll(
+              `button.btn-block-x[data-screen-name="${screenName}"]`,
+            )
+            .forEach((btn) => {
               btn.disabled = false;
               const isBlocked = currentBlockedUsersOnX.includes(screenName);
               btn.textContent = isBlocked ? "已拉黑" : "拉黑";
             });
-            showStatus(res?.reason || "操作失败");
-          }
-        } catch {
-          // Re-query on catch as well
-          document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
-            btn.disabled = false;
-            const isBlocked = currentBlockedUsersOnX.includes(screenName);
-            btn.textContent = isBlocked ? "已拉黑" : "拉黑";
-          });
           showStatus("请求失败");
         }
       };
@@ -778,16 +798,19 @@ viewHistoryBtn.addEventListener("click", async () => {
     `;
 
   const items = await chrome.storage.local.get(
-    getStorageDefaults("blockedHistory", "blockedUsersOnX", "historyFilterReason"),
+    getStorageDefaults(
+      "blockedHistory",
+      "blockedUsersOnX",
+      "historyFilterReason",
+    ),
   );
   currentHistory = items.blockedHistory || [];
   currentBlockedUsersOnX = items.blockedUsersOnX || [];
-  
-  // load filter and update options
+
   const oldReason = items.historyFilterReason || "all";
   currentFilterReason = oldReason;
   updateFilterOptions();
-  
+
   if (currentFilterReason !== oldReason) {
     chrome.storage.local.set({ historyFilterReason: currentFilterReason });
   }
