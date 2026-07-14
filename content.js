@@ -185,7 +185,11 @@ function getTweetTextForKeywords(node) {
     } else if (n.nodeType === Node.ELEMENT_NODE) {
       if (n.tagName.toLowerCase() === "img" && n.alt) {
         let altText = n.alt;
-        if (n.src && (n.src.includes("emoji") || n.src.includes("twemoji")) && !altText.endsWith("\uFE0F")) {
+        if (
+          n.src &&
+          (n.src.includes("emoji") || n.src.includes("twemoji")) &&
+          !altText.endsWith("\uFE0F")
+        ) {
           if (altText.length <= 2) {
             altText += "\uFE0F";
           }
@@ -358,9 +362,12 @@ function filterTweets(specificTweets = null) {
     const userNode = tweet.querySelector('[data-testid="User-Name"]');
     const textNode = tweet.querySelector('[data-testid="tweetText"]');
     const isStatusPage = resolveStatusPage(tweet, pageContext);
-    
+
     let logicalPageStatusId = pageContext.pageStatusId;
-    if (pageContext.isPhotoVideoOverlay && tweet.closest('[role="dialog"]') === null) {
+    if (
+      pageContext.isPhotoVideoOverlay &&
+      tweet.closest('[role="dialog"]') === null
+    ) {
       logicalPageStatusId = tweet.__cbxPageStatusId || pageContext.pageStatusId;
     } else {
       tweet.__cbxPageStatusId = pageContext.pageStatusId;
@@ -461,7 +468,9 @@ function filterTweets(specificTweets = null) {
       chrome.runtime
         .sendMessage({ action: "recordSpam", items: pendingSpam })
         .catch(() => {});
-    } catch (e) {}
+    } catch (e) {
+      // Ignore error if background script is not ready
+    }
   }
 }
 

@@ -153,9 +153,7 @@ function handleRecordSpam(items) {
           (storageItems) => {
             const history = storageItems.blockedHistory || [];
             const historyIds = new Set(history.map((h) => h.id));
-            const uniqueSpams = newSpams.filter(
-              (s) => !historyIds.has(s.id),
-            );
+            const uniqueSpams = newSpams.filter((s) => !historyIds.has(s.id));
 
             if (uniqueSpams.length === 0) return resolve();
 

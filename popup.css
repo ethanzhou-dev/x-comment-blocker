@@ -556,7 +556,6 @@ body {
   background: rgb(239 68 68 / 10%);
 }
 
-
 @keyframes spin {
   from {
     transform: rotate(0deg);
