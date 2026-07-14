@@ -496,12 +496,21 @@ function updateFilterOptions() {
     currentFilterReason = 'all';
   }
   
-  let html = `<div class="filter-option ${currentFilterReason === 'all' ? 'active' : ''}" data-reason="all">全部原因</div>`;
-  reasons.forEach(reason => {
-    html += `<div class="filter-option ${currentFilterReason === reason ? 'active' : ''}" data-reason="${reason}">${reason}</div>`;
-  });
+  filterDropdown.innerHTML = "";
   
-  filterDropdown.innerHTML = html;
+  const allOption = document.createElement("div");
+  allOption.className = `filter-option ${currentFilterReason === 'all' ? 'active' : ''}`;
+  allOption.dataset.reason = "all";
+  allOption.textContent = "全部原因";
+  filterDropdown.appendChild(allOption);
+  
+  reasons.forEach(reason => {
+    const opt = document.createElement("div");
+    opt.className = `filter-option ${currentFilterReason === reason ? 'active' : ''}`;
+    opt.dataset.reason = reason;
+    opt.textContent = reason;
+    filterDropdown.appendChild(opt);
+  });
 }
 
 function applyHistoryFilter() {
@@ -658,9 +667,8 @@ function renderHistoryPage() {
       blockBtn.onclick = async () => {
         const isCurrentlyBlocked = currentBlockedUsersOnX.includes(screenName);
         
-        // Disable all buttons for this user to prevent double clicks
-        const allBtns = document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`);
-        allBtns.forEach(btn => {
+        // Disable all currently visible buttons for this user to prevent double clicks
+        document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
           btn.disabled = true;
           btn.textContent = "请求中...";
         });
@@ -684,8 +692,8 @@ function renderHistoryPage() {
             await chrome.storage.local.set({ blockedUsersOnX: currentList });
             currentBlockedUsersOnX = currentList;
 
-            // Update all buttons for this user
-            allBtns.forEach(btn => {
+            // Re-query buttons! Ensure we update any newly rendered buttons during the await
+            document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
               const isNowBlocked = currentBlockedUsersOnX.includes(screenName);
               if (isNowBlocked) {
                 btn.textContent = "已拉黑";
@@ -699,16 +707,17 @@ function renderHistoryPage() {
               btn.disabled = false;
             });
           } else {
-            allBtns.forEach(btn => {
+            // Re-query on failure as well
+            document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
               btn.disabled = false;
-              // Reset text to original state
               const isBlocked = currentBlockedUsersOnX.includes(screenName);
               btn.textContent = isBlocked ? "已拉黑" : "拉黑";
             });
             showStatus(res?.reason || "操作失败");
           }
         } catch {
-          allBtns.forEach(btn => {
+          // Re-query on catch as well
+          document.querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`).forEach(btn => {
             btn.disabled = false;
             const isBlocked = currentBlockedUsersOnX.includes(screenName);
             btn.textContent = isBlocked ? "已拉黑" : "拉黑";
