@@ -1,5 +1,5 @@
 /* global getStorageDefaults, parseKeywords, invisibleCharsRegex */
-let blockRegex = null;
+let blockRegexes = [];
 let lastKeywordsKey = "";
 let checkUsername = true;
 let onlyComments = true;
@@ -21,7 +21,8 @@ function isExtensionAlive() {
 }
 
 function matchesBlocklist(text) {
-  return blockRegex ? blockRegex.test(text) : false;
+  if (blockRegexes.length === 0) return false;
+  return blockRegexes.some((regex) => regex.test(text));
 }
 
 async function mergeKeywords() {
@@ -45,9 +46,15 @@ async function mergeKeywords() {
       const escaped = blockKeywords.map((kw) =>
         kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
       );
-      blockRegex = new RegExp(escaped.join("|"), "i");
+      escaped.sort((a, b) => b.length - a.length);
+      const CHUNK_SIZE = 400;
+      blockRegexes = [];
+      for (let i = 0; i < escaped.length; i += CHUNK_SIZE) {
+        const chunk = escaped.slice(i, i + CHUNK_SIZE);
+        blockRegexes.push(new RegExp(chunk.join("|"), "i"));
+      }
     } else {
-      blockRegex = null;
+      blockRegexes = [];
     }
   } catch (e) {
     console.debug("[X-Blocker] mergeKeywords error:", e.message);
@@ -397,7 +404,7 @@ function filterTweets(specificTweets = null) {
     tweet.__cbxQuickHash = quickHash;
 
     let shouldCheck =
-      filterEnabled && (blockRegex !== null || blockEmoji || blockSpecialChars);
+      filterEnabled && (blockRegexes.length > 0 || blockEmoji || blockSpecialChars);
     if (shouldCheck && onlyComments && !isStatusPage) shouldCheck = false;
 
     let isMainTweet = false;
