@@ -281,14 +281,18 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
     const inputKws = parseKeywords(info.selectionText);
     if (inputKws.length === 0) return;
 
-    const keyword = inputKws[0];
-
     const items = await chrome.storage.local.get(
       getStorageDefaults("keywords"),
     );
     const existing = parseKeywords(items.keywords);
-    if (!existing.includes(keyword)) {
-      existing.push(keyword);
+    let added = false;
+    for (const kw of inputKws) {
+      if (!existing.includes(kw)) {
+        existing.push(kw);
+        added = true;
+      }
+    }
+    if (added) {
       await chrome.storage.local.set({ keywords: existing.join("\n") });
     }
   }

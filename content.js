@@ -182,16 +182,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
     needsFilter = true;
   }
 
-  if (needsFilter) {
-    filterVersion++;
-  }
-
   if (changes.cloudEnabled || changes.cloudKeywords || changes.keywords) {
     mergeKeywords().then(() => {
       filterVersion++;
       scheduleFilter();
     });
   } else if (needsFilter) {
+    filterVersion++;
     scheduleFilter();
   }
 });
@@ -240,7 +237,7 @@ function hasEmoji(node) {
   return false;
 }
 
-function getTweetId(tweet) {
+function getTweetStatusInfo(tweet, pageStatusId) {
   const timeNodes = tweet.querySelectorAll("time");
   for (const timeEl of timeNodes) {
     const link = timeEl.closest("a");
@@ -248,11 +245,14 @@ function getTweetId(tweet) {
       const href = link.getAttribute("href");
       const match = href ? href.match(/\/status\/(\d+)/i) : null;
       if (match) {
-        return match[1];
+        return {
+          id: match[1],
+          isMainTweet: pageStatusId ? match[1] === pageStatusId : false,
+        };
       }
     }
   }
-  return null;
+  return { id: null, isMainTweet: false };
 }
 
 function getPageContext() {
@@ -272,23 +272,6 @@ function resolveStatusPage(tweet, pageContext) {
     return false;
   }
   return !!pageContext.pageStatusId;
-}
-
-function checkIsMainTweet(tweet, pageStatusId) {
-  const timeNodes = tweet.querySelectorAll("time");
-
-  for (const timeEl of timeNodes) {
-    const link = timeEl.closest("a");
-    if (link) {
-      const href = link.getAttribute("href");
-      const match = href ? href.match(/\/status\/(\d+)/i) : null;
-      if (match) {
-        return match[1] === pageStatusId;
-      }
-    }
-  }
-
-  return false;
 }
 
 function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage, isMainTweet) {
@@ -424,12 +407,17 @@ function filterTweets(specificTweets = null) {
     if (shouldCheck && onlyComments && !isStatusPage) shouldCheck = false;
 
     let isMainTweet = false;
-    if (shouldCheck && isStatusPage && logicalPageStatusId) {
-      isMainTweet = checkIsMainTweet(tweet, logicalPageStatusId);
+    let tweetId = null;
+    if (shouldCheck) {
+      const statusInfo = getTweetStatusInfo(tweet, logicalPageStatusId || null);
+      tweetId = statusInfo.id;
 
-      if (!tweet.querySelector("article")) {
-        tweet.__cbxQuickHash = "";
-        return;
+      if (isStatusPage && logicalPageStatusId) {
+        isMainTweet = statusInfo.isMainTweet;
+        if (!tweet.querySelector("article")) {
+          tweet.__cbxQuickHash = "";
+          return;
+        }
       }
     }
 
@@ -460,7 +448,6 @@ function filterTweets(specificTweets = null) {
         .replace(/\s+/g, " ")
         .trim();
 
-      const tweetId = getTweetId(tweet);
       const uniqueId = tweetId ? tweetId : normalizedBody + "|" + stableHandle;
 
       if (!localSentIds.has(uniqueId)) {

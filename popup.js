@@ -194,20 +194,20 @@ function confirmEdit(inputEl, index) {
 function addKeyword() {
   const inputKws = parseKeywords(newKeywordInput.value);
   if (inputKws.length === 0) return;
-  const val = inputKws[0];
 
-  if (userKeywords.includes(val)) {
-    newKeywordInput.value = "";
-    newKeywordInput.focus();
+  const newKws = inputKws.filter((kw) => !userKeywords.includes(kw));
+
+  newKeywordInput.value = "";
+  newKeywordInput.focus();
+
+  if (newKws.length === 0) {
+    showStatus("该屏蔽词已存在");
     return;
   }
 
-  userKeywords.push(val);
-  newKeywordInput.value = "";
-  newKeywordInput.focus();
+  userKeywords.push(...newKws);
   renderUserKeywords(userKeywords.length - 1);
   autoSave();
-
   keywordList.scrollTop = keywordList.scrollHeight;
 }
 
