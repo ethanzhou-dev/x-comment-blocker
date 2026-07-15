@@ -50,6 +50,8 @@ async function syncCloudKeywords() {
   );
   if (!cloudEnabled) return false;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
   try {
     const headers = { Accept: "application/vnd.github.v3.raw" };
     const { cloudETag } = await chrome.storage.local.get(
@@ -62,6 +64,7 @@ async function syncCloudKeywords() {
     const resp = await fetch(CLOUD_KEYWORDS_URL, {
       headers,
       cache: "no-store",
+      signal: controller.signal,
     });
 
     if (resp.status === 304) {
@@ -99,10 +102,16 @@ async function syncCloudKeywords() {
       syncError: "",
     });
     return true;
-  } catch {
+  } catch (e) {
+    const isTimeout = e.name === "AbortError";
     await chrome.storage.local
-      .set({ syncStatus: "error", syncError: "网络连接失败" })
+      .set({
+        syncStatus: "error",
+        syncError: isTimeout ? "同步超时，请检查网络" : "网络连接失败",
+      })
       .catch(() => {});
     return false;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

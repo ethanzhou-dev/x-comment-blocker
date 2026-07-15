@@ -110,8 +110,6 @@ chrome.runtime.onInstalled.addListener(() => {
       documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
     });
   });
-
-  chrome.storage.local.remove("xAuthHeaders");
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
