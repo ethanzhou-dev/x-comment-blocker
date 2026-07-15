@@ -122,11 +122,8 @@ async function mergeKeywords() {
       }
 
       if (pendingTweets.size > 0) {
-        if (filterTimer) cancelAnimationFrame(filterTimer);
-        filterTimer = requestAnimationFrame(() => {
-          filterTweets(Array.from(pendingTweets));
-          pendingTweets.clear();
-        });
+        filterTweets(Array.from(pendingTweets));
+        pendingTweets.clear();
       }
     });
 
