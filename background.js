@@ -23,7 +23,7 @@ chrome.webRequest.onSendHeaders.addListener(
     }
   },
   { urls: ["*://*.x.com/i/api/*", "*://*.twitter.com/i/api/*"] },
-  ["requestHeaders"]
+  ["requestHeaders", "extraHeaders"]
 );
 
 async function getAuthHeaders() {

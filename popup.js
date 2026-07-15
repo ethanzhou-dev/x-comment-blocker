@@ -827,8 +827,40 @@ closeHistoryBtn.addEventListener("click", () => {
   historyModal.classList.remove("open");
 });
 
+function refreshHistoryDisplay() {
+  const prevScrollTop = historyList.scrollTop;
+  const prevScrollHeight = historyList.scrollHeight;
+  const prevRenderedCount = historyList.querySelectorAll(".history-item").length;
+
+  const oldReason = currentFilterReason;
+  updateFilterOptions();
+  if (oldReason !== currentFilterReason) {
+    chrome.storage.local.set({ historyFilterReason: currentFilterReason });
+    applyHistoryFilter();
+    return;
+  }
+
+  applyHistoryFilter();
+
+  const targetCount = Math.min(prevRenderedCount, filteredHistory.length);
+  while (historyNextIndex < targetCount) {
+    renderHistoryPage();
+  }
+
+  const heightDiff = historyList.scrollHeight - prevScrollHeight;
+  historyList.scrollTop = Math.max(0, prevScrollTop + heightDiff);
+}
+
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area === "local" && changes.blockedCount) {
+  if (area !== "local") return;
+  if (changes.blockedCount) {
     blockedCountEl.textContent = changes.blockedCount.newValue || 0;
+  }
+  if (changes.blockedHistory && historyModal.classList.contains("open")) {
+    const newHistory = changes.blockedHistory.newValue || [];
+    if (newHistory.length > currentHistory.length) {
+      currentHistory = newHistory;
+      refreshHistoryDisplay();
+    }
   }
 });
