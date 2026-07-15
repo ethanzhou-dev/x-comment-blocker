@@ -8,6 +8,7 @@ let blockEmoji = false;
 let filterEnabled = true;
 let filterTimer = null;
 let filterVersion = 0;
+let observerFlushScheduled = false;
 const localSentIds = new Set();
 const emojiRegex = new RegExp(
   "[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]",
@@ -121,9 +122,15 @@ async function mergeKeywords() {
         }
       }
 
-      if (pendingTweets.size > 0) {
-        filterTweets(Array.from(pendingTweets));
-        pendingTweets.clear();
+      if (pendingTweets.size > 0 && !observerFlushScheduled) {
+        observerFlushScheduled = true;
+        queueMicrotask(() => {
+          observerFlushScheduled = false;
+          if (pendingTweets.size > 0) {
+            filterTweets(Array.from(pendingTweets));
+            pendingTweets.clear();
+          }
+        });
       }
     });
 
