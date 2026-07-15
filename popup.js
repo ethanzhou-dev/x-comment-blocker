@@ -276,6 +276,9 @@ importFile.addEventListener("change", (e) => {
       showStatus("文件内容无效");
     }
   };
+  reader.onerror = () => {
+    showStatus("文件读取失败");
+  };
   reader.readAsText(file);
   importFile.value = "";
 });
@@ -438,8 +441,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 resetCountBtn.addEventListener("click", async () => {
+  await chrome.runtime
+    .sendMessage({ action: "clearSpamCache" })
+    .catch(() => {});
   await chrome.storage.local.set({ blockedCount: 0, blockedHistory: [] });
-  chrome.runtime.sendMessage({ action: "clearSpamCache" }).catch(() => {});
   blockedCountEl.textContent = "0";
 });
 

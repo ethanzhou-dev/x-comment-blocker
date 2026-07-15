@@ -57,7 +57,7 @@ async function mergeKeywords() {
       blockRegexes = [];
     }
   } catch (e) {
-    console.debug("[X-Blocker] mergeKeywords error:", e.message);
+    console.error("[X-Blocker] mergeKeywords error:", e);
   }
 }
 
@@ -122,8 +122,11 @@ async function mergeKeywords() {
       }
 
       if (pendingTweets.size > 0) {
-        filterTweets(Array.from(pendingTweets));
-        pendingTweets.clear();
+        if (filterTimer) cancelAnimationFrame(filterTimer);
+        filterTimer = requestAnimationFrame(() => {
+          filterTweets(Array.from(pendingTweets));
+          pendingTweets.clear();
+        });
       }
     });
 
@@ -133,9 +136,21 @@ async function mergeKeywords() {
       characterData: true,
     });
   } catch (e) {
-    console.debug("[X-Blocker] init error:", e.message);
+    console.error("[X-Blocker] init error:", e);
   }
 })();
+
+chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (!isExtensionAlive()) return;
+  if (message.action === "removeLocalSentId" && message.id) {
+    localSentIds.delete(message.id);
+    return false;
+  }
+  if (message.action === "clearLocalSentIds") {
+    localSentIds.clear();
+    return false;
+  }
+});
 
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area !== "local" || !isExtensionAlive()) return;
@@ -161,13 +176,6 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (changes.blockSpecialChars) {
     blockSpecialChars = changes.blockSpecialChars.newValue;
     needsFilter = true;
-  }
-
-  if (changes.blockedHistory) {
-    const newHistory = changes.blockedHistory.newValue;
-    if (!newHistory || newHistory.length === 0) {
-      localSentIds.clear();
-    }
   }
 
   if (needsFilter) {

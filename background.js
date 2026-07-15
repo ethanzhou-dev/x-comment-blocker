@@ -139,7 +139,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return false;
   }
   if (message.action === "clearSpamCache") {
-    globalSpamCache.clear();
+    storageQueue.enqueue(async () => {
+      globalSpamCache.clear();
+    });
+    notifyContentScripts({ action: "clearLocalSentIds" });
     sendResponse({ success: true });
     return false;
   }
@@ -150,12 +153,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
+function notifyContentScripts(message) {
+  chrome.tabs.query({}, (tabs) => {
+    for (const tab of tabs) {
+      chrome.tabs
+        .sendMessage(tab.id, message)
+        .catch(() => {});
+    }
+  });
+}
+
 function handleRemoveSpamRecord(id, time) {
   if (id) {
-    globalSpamCache.delete(id);
+    notifyContentScripts({ action: "removeLocalSentId", id });
   }
 
   storageQueue.enqueue(async () => {
+    if (id) {
+      globalSpamCache.delete(id);
+    }
     const storageItems = await chrome.storage.local.get(
       getStorageDefaults("blockedCount", "blockedHistory"),
     );
@@ -215,17 +231,12 @@ function handleRecordSpam(items) {
     if (uniqueSpams.length === 0) return;
 
     history.unshift(...uniqueSpams);
-    let droppedCount = 0;
     if (history.length > 2000) {
-      droppedCount = history.length - 2000;
       history.length = 2000;
     }
 
     await chrome.storage.local.set({
-      blockedCount:
-        (storageItems.blockedCount || 0) +
-        uniqueSpams.length -
-        droppedCount,
+      blockedCount: (storageItems.blockedCount || 0) + uniqueSpams.length,
       blockedHistory: history,
     });
   });
