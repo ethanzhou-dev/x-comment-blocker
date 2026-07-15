@@ -19,7 +19,7 @@ chrome.webRequest.onSendHeaders.addListener(
 
     if (auth && inMemoryAuth !== auth) {
       inMemoryAuth = auth;
-      chrome.storage.local.set({ xAuthHeaders: auth });
+      chrome.storage.session.set({ xAuthHeaders: auth });
     }
   },
   { urls: ["*://*.x.com/i/api/*", "*://*.twitter.com/i/api/*"] },
@@ -30,10 +30,10 @@ async function getAuthHeaders() {
   if (inMemoryAuth) {
     return { authorization: inMemoryAuth };
   }
-  
-  const storage = await chrome.storage.local.get('xAuthHeaders');
-  if (storage.xAuthHeaders) {
-    inMemoryAuth = storage.xAuthHeaders;
+
+  const session = await chrome.storage.session.get("xAuthHeaders");
+  if (session.xAuthHeaders) {
+    inMemoryAuth = session.xAuthHeaders;
     return { authorization: inMemoryAuth };
   }
 
@@ -75,16 +75,14 @@ class AsyncQueue {
 const globalSpamCache = new Set();
 const storageQueue = new AsyncQueue();
 
-storageQueue.enqueue(() => {
-  return new Promise((resolve) => {
-    chrome.storage.local.get(getStorageDefaults("blockedHistory"), (items) => {
-      const history = items.blockedHistory || [];
-      for (const item of history) {
-        if (item.id) globalSpamCache.add(item.id);
-      }
-      resolve();
-    });
-  });
+storageQueue.enqueue(async () => {
+  const items = await chrome.storage.local.get(
+    getStorageDefaults("blockedHistory"),
+  );
+  const history = items.blockedHistory || [];
+  for (const item of history) {
+    if (item.id) globalSpamCache.add(item.id);
+  }
 });
 
 async function doSync() {
@@ -112,6 +110,8 @@ chrome.runtime.onInstalled.addListener(() => {
       documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
     });
   });
+
+  chrome.storage.local.remove("xAuthHeaders");
 });
 
 chrome.alarms.onAlarm.addListener((alarm) => {
@@ -155,94 +155,78 @@ function handleRemoveSpamRecord(id, time) {
     globalSpamCache.delete(id);
   }
 
-  storageQueue.enqueue(() => {
-    return new Promise((resolve) => {
-      chrome.storage.local.get(
-        getStorageDefaults("blockedCount", "blockedHistory"),
-        (storageItems) => {
-          let history = storageItems.blockedHistory || [];
-          const originalLength = history.length;
-          history = history.filter(
-            (item) => !(item.id === id && item.time === time),
-          );
+  storageQueue.enqueue(async () => {
+    const storageItems = await chrome.storage.local.get(
+      getStorageDefaults("blockedCount", "blockedHistory"),
+    );
+    let history = storageItems.blockedHistory || [];
+    const originalLength = history.length;
+    history = history.filter(
+      (item) => !(item.id === id && item.time === time),
+    );
 
-          const removedCount = originalLength - history.length;
-          if (removedCount > 0) {
-            const newCount = Math.max(
-              0,
-              (storageItems.blockedCount || 0) - removedCount,
-            );
-            chrome.storage.local.set(
-              {
-                blockedCount: newCount,
-                blockedHistory: history,
-              },
-              () => resolve(),
-            );
-          } else {
-            resolve();
-          }
-        },
+    const removedCount = originalLength - history.length;
+    if (removedCount > 0) {
+      const newCount = Math.max(
+        0,
+        (storageItems.blockedCount || 0) - removedCount,
       );
-    });
+      await chrome.storage.local.set({
+        blockedCount: newCount,
+        blockedHistory: history,
+      });
+    }
   });
 }
 
 function handleRecordSpam(items) {
   if (!items || items.length === 0) return;
 
-  storageQueue.enqueue(() => {
-    return new Promise((resolve) => {
-      const newSpams = [];
-      for (const item of items) {
-        if (!globalSpamCache.has(item.id)) {
-          globalSpamCache.add(item.id);
-          newSpams.push({
-            id: item.id,
-            text: item.text,
-            user: item.user,
-            displayName: item.displayName,
-            reason: item.reason,
-            time: item.time,
-          });
-          if (globalSpamCache.size > 5000) {
-            const iter = globalSpamCache.values();
-            for (let i = 0; i < 1000; i++)
-              globalSpamCache.delete(iter.next().value);
-          }
+  storageQueue.enqueue(async () => {
+    const newSpams = [];
+    for (const item of items) {
+      if (!globalSpamCache.has(item.id)) {
+        globalSpamCache.add(item.id);
+        newSpams.push({
+          id: item.id,
+          text: item.text,
+          user: item.user,
+          displayName: item.displayName,
+          reason: item.reason,
+          time: item.time,
+        });
+        if (globalSpamCache.size > 5000) {
+          const iter = globalSpamCache.values();
+          for (let i = 0; i < 1000; i++)
+            globalSpamCache.delete(iter.next().value);
         }
       }
+    }
 
-      if (newSpams.length === 0) return resolve();
+    if (newSpams.length === 0) return;
 
-      chrome.storage.local.get(
-        getStorageDefaults("blockedCount", "blockedHistory"),
-        (storageItems) => {
-          const history = storageItems.blockedHistory || [];
-          const historyIds = new Set(history.map((h) => h.id));
-          const uniqueSpams = newSpams.filter((s) => !historyIds.has(s.id));
+    const storageItems = await chrome.storage.local.get(
+      getStorageDefaults("blockedCount", "blockedHistory"),
+    );
+    const history = storageItems.blockedHistory || [];
+    const historyIds = new Set(history.map((h) => h.id));
+    const uniqueSpams = newSpams.filter((s) => !historyIds.has(s.id));
 
-          if (uniqueSpams.length === 0) return resolve();
+    if (uniqueSpams.length === 0) return;
 
-          history.unshift(...uniqueSpams);
-          let droppedCount = 0;
-          if (history.length > 2000) {
-            droppedCount = history.length - 2000;
-            history.length = 2000;
-          }
+    history.unshift(...uniqueSpams);
+    let droppedCount = 0;
+    if (history.length > 2000) {
+      droppedCount = history.length - 2000;
+      history.length = 2000;
+    }
 
-          chrome.storage.local.set(
-            {
-              blockedCount:
-                (storageItems.blockedCount || 0) +
-                uniqueSpams.length -
-                droppedCount,
-              blockedHistory: history,
-            },
-            () => resolve(),
-          );
-        },
-      );
+    await chrome.storage.local.set({
+      blockedCount:
+        (storageItems.blockedCount || 0) +
+        uniqueSpams.length -
+        droppedCount,
+      blockedHistory: history,
     });
   });
 }
@@ -283,19 +267,20 @@ async function handleBlockUser(screenName, isBlock) {
   }
 }
 
-chrome.contextMenus.onClicked.addListener((info) => {
+chrome.contextMenus.onClicked.addListener(async (info) => {
   if (info.menuItemId === "addToBlocklist" && info.selectionText) {
     const inputKws = parseKeywords(info.selectionText);
     if (inputKws.length === 0) return;
 
     const keyword = inputKws[0];
 
-    chrome.storage.local.get(getStorageDefaults("keywords"), (items) => {
-      const existing = parseKeywords(items.keywords);
-      if (!existing.includes(keyword)) {
-        existing.push(keyword);
-        chrome.storage.local.set({ keywords: existing.join("\n") });
-      }
-    });
+    const items = await chrome.storage.local.get(
+      getStorageDefaults("keywords"),
+    );
+    const existing = parseKeywords(items.keywords);
+    if (!existing.includes(keyword)) {
+      existing.push(keyword);
+      await chrome.storage.local.set({ keywords: existing.join("\n") });
+    }
   }
 });
