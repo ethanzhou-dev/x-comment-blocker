@@ -19,7 +19,7 @@ chrome.webRequest.onSendHeaders.addListener(
 
     if (auth && inMemoryAuth !== auth) {
       inMemoryAuth = auth;
-      chrome.storage.session.set({ xAuthHeaders: auth });
+      chrome.storage.local.set({ xAuthHeaders: auth });
     }
   },
   { urls: ["*://*.x.com/i/api/*", "*://*.twitter.com/i/api/*"] },
@@ -31,9 +31,9 @@ async function getAuthHeaders() {
     return { authorization: inMemoryAuth };
   }
 
-  const session = await chrome.storage.session.get("xAuthHeaders");
-  if (session.xAuthHeaders) {
-    inMemoryAuth = session.xAuthHeaders;
+  const storage = await chrome.storage.local.get("xAuthHeaders");
+  if (storage.xAuthHeaders) {
+    inMemoryAuth = storage.xAuthHeaders;
     return { authorization: inMemoryAuth };
   }
 
@@ -152,7 +152,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 function notifyContentScripts(message) {
-  chrome.tabs.query({}, (tabs) => {
+  chrome.tabs.query({ url: ["*://*.twitter.com/*", "*://*.x.com/*"] }, (tabs) => {
     for (const tab of tabs) {
       chrome.tabs
         .sendMessage(tab.id, message)
