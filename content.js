@@ -10,6 +10,7 @@ let filterTimer = null;
 let filterVersion = 0;
 let observerFlushScheduled = false;
 const localSentIds = new Set();
+const tweetStateMap = new WeakMap();
 const emojiRegex = new RegExp("\\p{RGI_Emoji}", "v");
 const spamCharsRegex =
   /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u; // eslint-disable-line no-misleading-character-class
@@ -264,7 +265,8 @@ function getPageContext() {
 function resolveStatusPage(tweet, pageContext) {
   if (pageContext.isPhotoVideoOverlay) {
     if (tweet.closest('[role="dialog"]') !== null) return true;
-    if (tweet.__cbxIsStatusPage !== undefined) return tweet.__cbxIsStatusPage;
+    const state = tweetStateMap.get(tweet);
+    if (state && state.isStatusPage !== undefined) return state.isStatusPage;
     return false;
   }
   return !!pageContext.pageStatusId;
@@ -360,16 +362,22 @@ function filterTweets(specificTweets = null) {
     const textNode = tweet.querySelector('[data-testid="tweetText"]');
     const isStatusPage = resolveStatusPage(tweet, pageContext);
 
+    let state = tweetStateMap.get(tweet);
+    if (!state) {
+      state = {};
+      tweetStateMap.set(tweet, state);
+    }
+
     let logicalPageStatusId = pageContext.pageStatusId;
     if (
       pageContext.isPhotoVideoOverlay &&
       tweet.closest('[role="dialog"]') === null
     ) {
-      logicalPageStatusId = tweet.__cbxPageStatusId || pageContext.pageStatusId;
+      logicalPageStatusId = state.pageStatusId || pageContext.pageStatusId;
     } else {
-      tweet.__cbxPageStatusId = pageContext.pageStatusId;
+      state.pageStatusId = pageContext.pageStatusId;
     }
-    tweet.__cbxIsStatusPage = isStatusPage;
+    state.isStatusPage = isStatusPage;
 
     const rawTweetText = textNode ? getTweetTextForKeywords(textNode) : "";
     const rawUserName = userNode ? getTweetTextForKeywords(userNode) : "";
@@ -384,8 +392,8 @@ function filterTweets(specificTweets = null) {
       isStatusPage +
       "|" +
       (logicalPageStatusId || "");
-    if (tweet.__cbxQuickHash === quickHash) {
-      if (tweet.__cbxIsSpam) {
+    if (state.quickHash === quickHash) {
+      if (state.isSpam) {
         if (!tweet.classList.contains("x-comment-blocker-hidden")) {
           tweet.classList.add("x-comment-blocker-hidden");
         }
@@ -396,7 +404,7 @@ function filterTweets(specificTweets = null) {
     }
 
     if (tweet.closest('[aria-hidden="true"]')) return;
-    tweet.__cbxQuickHash = quickHash;
+    state.quickHash = quickHash;
 
     let shouldCheck =
       filterEnabled && (blockRegexes.length > 0 || blockEmoji || blockSpecialChars);
@@ -411,7 +419,7 @@ function filterTweets(specificTweets = null) {
       if (isStatusPage && logicalPageStatusId) {
         isMainTweet = statusInfo.isMainTweet;
         if (!tweet.querySelector("article")) {
-          tweet.__cbxQuickHash = "";
+          state.quickHash = "";
           return;
         }
       }
@@ -434,7 +442,7 @@ function filterTweets(specificTweets = null) {
       displayName = result.displayName;
     }
 
-    tweet.__cbxIsSpam = isSpam;
+    state.isSpam = isSpam;
     if (isSpam) {
       if (!tweet.classList.contains("x-comment-blocker-hidden")) {
         tweet.classList.add("x-comment-blocker-hidden");
