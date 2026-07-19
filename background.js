@@ -6,7 +6,8 @@ let isSyncing = false;
 
 async function getAuthHeaders() {
   return {
-    authorization: "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
+    authorization:
+      "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
   };
 }
 
@@ -35,6 +36,7 @@ class AsyncQueue {
       try {
         await task();
       } catch (e) {
+        // eslint-disable-next-line no-console
         console.error("[X-Blocker] Queue task error:", e);
       }
     }
@@ -121,11 +123,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function notifyContentScripts(message) {
-  const tabs = await chrome.tabs.query({ url: ["*://*.twitter.com/*", "*://*.x.com/*"] });
+  const tabs = await chrome.tabs.query({
+    url: ["*://*.twitter.com/*", "*://*.x.com/*"],
+  });
   for (const tab of tabs) {
-    chrome.tabs
-      .sendMessage(tab.id, message)
-      .catch(() => {});
+    chrome.tabs.sendMessage(tab.id, message).catch(() => {});
   }
 }
 
@@ -143,9 +145,7 @@ function handleRemoveSpamRecord(id, time) {
     );
     let history = storageItems.blockedHistory || [];
     const originalLength = history.length;
-    history = history.filter(
-      (item) => !(item.id === id && item.time === time),
-    );
+    history = history.filter((item) => !(item.id === id && item.time === time));
 
     const removedCount = originalLength - history.length;
     if (removedCount > 0) {

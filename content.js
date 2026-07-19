@@ -56,6 +56,7 @@ async function mergeKeywords() {
       blockRegexes = [];
     }
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("[X-Blocker] mergeKeywords error:", e);
   }
 }
@@ -109,7 +110,11 @@ async function mergeKeywords() {
               ? mutation.target
               : mutation.target.parentElement;
           if (el && el.closest) {
-            if (!el.closest('[data-testid="tweetText"], [data-testid="User-Name"]')) {
+            if (
+              !el.closest(
+                '[data-testid="tweetText"], [data-testid="User-Name"]',
+              )
+            ) {
               continue;
             }
             const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
@@ -137,11 +142,12 @@ async function mergeKeywords() {
       subtree: true,
     });
   } catch (e) {
+    // eslint-disable-next-line no-console
     console.error("[X-Blocker] init error:", e);
   }
 })();
 
-chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message) => {
   if (!isExtensionAlive()) return;
   if (message.action === "removeLocalSentId" && message.id) {
     localSentIds.delete(message.id);
@@ -272,7 +278,14 @@ function resolveStatusPage(tweet, pageContext) {
   return !!pageContext.pageStatusId;
 }
 
-function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage, isMainTweet) {
+function detectSpam(
+  textNode,
+  userNode,
+  rawTweetText,
+  rawUserName,
+  isStatusPage,
+  isMainTweet,
+) {
   const tweetBody = rawTweetText.replace(invisibleCharsRegex, "");
   const userName = rawUserName;
   let stableHandle = "";
@@ -407,7 +420,8 @@ function filterTweets(specificTweets = null) {
     state.quickHash = quickHash;
 
     let shouldCheck =
-      filterEnabled && (blockRegexes.length > 0 || blockEmoji || blockSpecialChars);
+      filterEnabled &&
+      (blockRegexes.length > 0 || blockEmoji || blockSpecialChars);
     if (shouldCheck && onlyComments && !isStatusPage) shouldCheck = false;
 
     let isMainTweet = false;
@@ -434,7 +448,14 @@ function filterTweets(specificTweets = null) {
     let displayName = "";
 
     if (shouldCheck) {
-      const result = detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage, isMainTweet);
+      const result = detectSpam(
+        textNode,
+        userNode,
+        rawTweetText,
+        rawUserName,
+        isStatusPage,
+        isMainTweet,
+      );
       isSpam = result.isSpam;
       blockReason = result.blockReason;
       userName = result.userName;

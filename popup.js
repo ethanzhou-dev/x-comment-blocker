@@ -844,7 +844,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
 function refreshHistoryDisplay() {
   const prevScrollTop = historyList.scrollTop;
   const prevScrollHeight = historyList.scrollHeight;
-  const prevRenderedCount = historyList.querySelectorAll(".history-item").length;
+  const prevRenderedCount =
+    historyList.querySelectorAll(".history-item").length;
   const prevFilteredLength = filteredHistory.length;
 
   const oldReason = currentFilterReason;
@@ -858,7 +859,10 @@ function refreshHistoryDisplay() {
   applyHistoryFilter();
 
   const addedCount = Math.max(0, filteredHistory.length - prevFilteredLength);
-  const targetCount = Math.min(prevRenderedCount + addedCount, filteredHistory.length);
+  const targetCount = Math.min(
+    prevRenderedCount + addedCount,
+    filteredHistory.length,
+  );
   while (historyNextIndex < targetCount) {
     renderHistoryPage();
   }
