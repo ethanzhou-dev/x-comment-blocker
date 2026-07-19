@@ -96,19 +96,18 @@ async function doSync() {
   }
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
   chrome.alarms.create(ALARM_NAME, {
     delayInMinutes: 1,
     periodInMinutes: SYNC_INTERVAL_MINUTES,
   });
 
-  chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({
-      id: "addToBlocklist",
-      title: "添加「%s」到屏蔽词",
-      contexts: ["selection"],
-      documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
-    });
+  await chrome.contextMenus.removeAll();
+  chrome.contextMenus.create({
+    id: "addToBlocklist",
+    title: "添加「%s」到屏蔽词",
+    contexts: ["selection"],
+    documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
   });
 });
 
@@ -151,14 +150,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-function notifyContentScripts(message) {
-  chrome.tabs.query({ url: ["*://*.twitter.com/*", "*://*.x.com/*"] }, (tabs) => {
-    for (const tab of tabs) {
-      chrome.tabs
-        .sendMessage(tab.id, message)
-        .catch(() => {});
-    }
-  });
+async function notifyContentScripts(message) {
+  const tabs = await chrome.tabs.query({ url: ["*://*.twitter.com/*", "*://*.x.com/*"] });
+  for (const tab of tabs) {
+    chrome.tabs
+      .sendMessage(tab.id, message)
+      .catch(() => {});
+  }
 }
 
 function handleRemoveSpamRecord(id, time) {
