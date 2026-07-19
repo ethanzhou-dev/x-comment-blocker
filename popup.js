@@ -864,5 +864,9 @@ function refreshHistoryDisplay() {
   }
 
   const heightDiff = historyList.scrollHeight - prevScrollHeight;
-  historyList.scrollTop = Math.max(0, prevScrollTop + heightDiff);
+  if (prevScrollTop === 0) {
+    historyList.scrollTop = 0;
+  } else {
+    historyList.scrollTop = Math.max(0, prevScrollTop + heightDiff);
+  }
 }
