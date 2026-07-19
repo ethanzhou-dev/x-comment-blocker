@@ -8,7 +8,7 @@
     "48": "icon48.png",
     "128": "icon128.png"
   },
-  "permissions": ["storage", "alarms", "contextMenus", "cookies", "webRequest"],
+  "permissions": ["storage", "alarms", "contextMenus", "cookies"],
   "host_permissions": [
     "https://api.github.com/*",
     "*://*.twitter.com/*",
