@@ -10,10 +10,7 @@ let filterTimer = null;
 let filterVersion = 0;
 let observerFlushScheduled = false;
 const localSentIds = new Set();
-const emojiRegex = new RegExp(
-  "[\\p{Emoji_Presentation}\\p{Extended_Pictographic}]",
-  "u",
-);
+const emojiRegex = new RegExp("\\p{RGI_Emoji}", "v");
 const spamCharsRegex =
   /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u; // eslint-disable-line no-misleading-character-class
 
