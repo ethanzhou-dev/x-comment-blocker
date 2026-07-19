@@ -836,8 +836,33 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const newHistory = changes.blockedHistory.newValue || [];
     if (newHistory.length > currentHistory.length) {
       currentHistory = newHistory;
-      updateFilterOptions();
-      applyHistoryFilter();
+      refreshHistoryDisplay();
     }
   }
 });
+
+function refreshHistoryDisplay() {
+  const prevScrollTop = historyList.scrollTop;
+  const prevScrollHeight = historyList.scrollHeight;
+  const prevRenderedCount = historyList.querySelectorAll(".history-item").length;
+  const prevFilteredLength = filteredHistory.length;
+
+  const oldReason = currentFilterReason;
+  updateFilterOptions();
+  if (oldReason !== currentFilterReason) {
+    chrome.storage.local.set({ historyFilterReason: currentFilterReason });
+    applyHistoryFilter();
+    return;
+  }
+
+  applyHistoryFilter();
+
+  const addedCount = Math.max(0, filteredHistory.length - prevFilteredLength);
+  const targetCount = Math.min(prevRenderedCount + addedCount, filteredHistory.length);
+  while (historyNextIndex < targetCount) {
+    renderHistoryPage();
+  }
+
+  const heightDiff = historyList.scrollHeight - prevScrollHeight;
+  historyList.scrollTop = Math.max(0, prevScrollTop + heightDiff);
+}
