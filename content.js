@@ -13,7 +13,7 @@ const localSentIds = new Set();
 const tweetStateMap = new WeakMap();
 const emojiRegex = new RegExp("\\p{RGI_Emoji}", "v");
 const spamCharsRegex =
-  /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u; // eslint-disable-line no-misleading-character-class
+  /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
 
 function isExtensionAlive() {
   return !!chrome.runtime?.id;
@@ -56,7 +56,6 @@ async function mergeKeywords() {
       blockRegexes = [];
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error("[X-Blocker] mergeKeywords error:", e);
   }
 }
@@ -142,7 +141,6 @@ async function mergeKeywords() {
       subtree: true,
     });
   } catch (e) {
-    // eslint-disable-next-line no-console
     console.error("[X-Blocker] init error:", e);
   }
 })();

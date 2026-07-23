@@ -36,7 +36,6 @@ class AsyncQueue {
       try {
         await task();
       } catch (e) {
-        // eslint-disable-next-line no-console
         console.error("[X-Blocker] Queue task error:", e);
       }
     }
@@ -90,6 +89,7 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  void sender;
   if (message.action === "syncNow") {
     doSync().then(sendResponse);
     return true;
