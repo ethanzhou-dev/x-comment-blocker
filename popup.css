@@ -24,13 +24,7 @@ body {
   background-color: var(--bg);
   color: var(--text);
   font-family:
-    TwitterChirp,
-    -apple-system,
-    BlinkMacSystemFont,
-    "Segoe UI",
-    Roboto,
-    Helvetica,
-    Arial,
+    TwitterChirp, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial,
     sans-serif;
   margin: 0;
   position: relative;

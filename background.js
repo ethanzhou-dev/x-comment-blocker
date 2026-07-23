@@ -1,13 +1,13 @@
 /* global importScripts, syncCloudKeywords, SYNC_INTERVAL_MINUTES, parseKeywords, getStorageDefaults */
-importScripts("utils.js");
+importScripts('utils.js');
 
-const ALARM_NAME = "cloudKeywordSync";
+const ALARM_NAME = 'cloudKeywordSync';
 let isSyncing = false;
 
 async function getAuthHeaders() {
   return {
     authorization:
-      "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA",
+      'Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA',
   };
 }
 
@@ -36,7 +36,7 @@ class AsyncQueue {
       try {
         await task();
       } catch (e) {
-        console.error("[X-Blocker] Queue task error:", e);
+        console.error('[X-Blocker] Queue task error:', e);
       }
     }
     this.isProcessing = false;
@@ -47,9 +47,7 @@ const globalSpamCache = new Set();
 const storageQueue = new AsyncQueue();
 
 storageQueue.enqueue(async () => {
-  const items = await chrome.storage.local.get(
-    getStorageDefaults("blockedHistory"),
-  );
+  const items = await chrome.storage.local.get(getStorageDefaults('blockedHistory'));
   const history = items.blockedHistory || [];
   for (const item of history) {
     if (item.id) globalSpamCache.add(item.id);
@@ -57,7 +55,7 @@ storageQueue.enqueue(async () => {
 });
 
 async function doSync() {
-  if (isSyncing) return { success: false, reason: "busy" };
+  if (isSyncing) return { success: false, reason: 'busy' };
   isSyncing = true;
   try {
     const success = await syncCloudKeywords();
@@ -75,10 +73,10 @@ chrome.runtime.onInstalled.addListener(async () => {
 
   await chrome.contextMenus.removeAll();
   chrome.contextMenus.create({
-    id: "addToBlocklist",
-    title: "添加「%s」到屏蔽词",
-    contexts: ["selection"],
-    documentUrlPatterns: ["*://*.twitter.com/*", "*://*.x.com/*"],
+    id: 'addToBlocklist',
+    title: '添加「%s」到屏蔽词',
+    contexts: ['selection'],
+    documentUrlPatterns: ['*://*.twitter.com/*', '*://*.x.com/*'],
   });
 });
 
@@ -90,32 +88,32 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   void sender;
-  if (message.action === "syncNow") {
+  if (message.action === 'syncNow') {
     doSync().then(sendResponse);
     return true;
   }
-  if (message.action === "blockUserOnX") {
+  if (message.action === 'blockUserOnX') {
     handleBlockUser(message.screenName, true).then(sendResponse);
     return true;
   }
-  if (message.action === "unblockUserOnX") {
+  if (message.action === 'unblockUserOnX') {
     handleBlockUser(message.screenName, false).then(sendResponse);
     return true;
   }
-  if (message.action === "recordSpam") {
+  if (message.action === 'recordSpam') {
     handleRecordSpam(message.items);
     sendResponse({ success: true });
     return false;
   }
-  if (message.action === "clearSpamCache") {
+  if (message.action === 'clearSpamCache') {
     storageQueue.enqueue(async () => {
       globalSpamCache.clear();
     });
-    notifyContentScripts({ action: "clearLocalSentIds" });
+    notifyContentScripts({ action: 'clearLocalSentIds' });
     sendResponse({ success: true });
     return false;
   }
-  if (message.action === "removeSpamRecord") {
+  if (message.action === 'removeSpamRecord') {
     handleRemoveSpamRecord(message.id, message.time);
     sendResponse({ success: true });
     return false;
@@ -124,7 +122,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 async function notifyContentScripts(message) {
   const tabs = await chrome.tabs.query({
-    url: ["*://*.twitter.com/*", "*://*.x.com/*"],
+    url: ['*://*.twitter.com/*', '*://*.x.com/*'],
   });
   for (const tab of tabs) {
     chrome.tabs.sendMessage(tab.id, message).catch(() => {});
@@ -133,7 +131,7 @@ async function notifyContentScripts(message) {
 
 function handleRemoveSpamRecord(id, time) {
   if (id) {
-    notifyContentScripts({ action: "removeLocalSentId", id });
+    notifyContentScripts({ action: 'removeLocalSentId', id });
   }
 
   storageQueue.enqueue(async () => {
@@ -141,7 +139,7 @@ function handleRemoveSpamRecord(id, time) {
       globalSpamCache.delete(id);
     }
     const storageItems = await chrome.storage.local.get(
-      getStorageDefaults("blockedCount", "blockedHistory"),
+      getStorageDefaults('blockedCount', 'blockedHistory'),
     );
     let history = storageItems.blockedHistory || [];
     const originalLength = history.length;
@@ -149,10 +147,7 @@ function handleRemoveSpamRecord(id, time) {
 
     const removedCount = originalLength - history.length;
     if (removedCount > 0) {
-      const newCount = Math.max(
-        0,
-        (storageItems.blockedCount || 0) - removedCount,
-      );
+      const newCount = Math.max(0, (storageItems.blockedCount || 0) - removedCount);
       await chrome.storage.local.set({
         blockedCount: newCount,
         blockedHistory: history,
@@ -179,8 +174,7 @@ function handleRecordSpam(items) {
         });
         if (globalSpamCache.size > 5000) {
           const iter = globalSpamCache.values();
-          for (let i = 0; i < 1000; i++)
-            globalSpamCache.delete(iter.next().value);
+          for (let i = 0; i < 1000; i++) globalSpamCache.delete(iter.next().value);
         }
       }
     }
@@ -188,7 +182,7 @@ function handleRecordSpam(items) {
     if (newSpams.length === 0) return;
 
     const storageItems = await chrome.storage.local.get(
-      getStorageDefaults("blockedCount", "blockedHistory"),
+      getStorageDefaults('blockedCount', 'blockedHistory'),
     );
     const history = storageItems.blockedHistory || [];
     const historyIds = new Set(history.map((h) => h.id));
@@ -211,21 +205,21 @@ function handleRecordSpam(items) {
 async function handleBlockUser(screenName, isBlock) {
   try {
     const cookie = await chrome.cookies.get({
-      url: "https://x.com",
-      name: "ct0",
+      url: 'https://x.com',
+      name: 'ct0',
     });
     if (!cookie) {
-      return { success: false, reason: "无法获取身份凭证，请确保已登录 X" };
+      return { success: false, reason: '无法获取身份凭证，请确保已登录 X' };
     }
 
-    const endpoint = isBlock ? "create.json" : "destroy.json";
+    const endpoint = isBlock ? 'create.json' : 'destroy.json';
     const headers = await getAuthHeaders();
 
-    headers["x-csrf-token"] = cookie.value;
-    headers["content-type"] = "application/x-www-form-urlencoded";
+    headers['x-csrf-token'] = cookie.value;
+    headers['content-type'] = 'application/x-www-form-urlencoded';
 
     const response = await fetch(`https://x.com/i/api/1.1/blocks/${endpoint}`, {
-      method: "POST",
+      method: 'POST',
       headers,
       body: `screen_name=${encodeURIComponent(screenName)}`,
     });
@@ -241,13 +235,11 @@ async function handleBlockUser(screenName, isBlock) {
 }
 
 chrome.contextMenus.onClicked.addListener(async (info) => {
-  if (info.menuItemId === "addToBlocklist" && info.selectionText) {
+  if (info.menuItemId === 'addToBlocklist' && info.selectionText) {
     const inputKws = parseKeywords(info.selectionText);
     if (inputKws.length === 0) return;
 
-    const items = await chrome.storage.local.get(
-      getStorageDefaults("keywords"),
-    );
+    const items = await chrome.storage.local.get(getStorageDefaults('keywords'));
     const existing = parseKeywords(items.keywords);
     let added = false;
     for (const kw of inputKws) {
@@ -257,7 +249,7 @@ chrome.contextMenus.onClicked.addListener(async (info) => {
       }
     }
     if (added) {
-      await chrome.storage.local.set({ keywords: existing.join("\n") });
+      await chrome.storage.local.set({ keywords: existing.join('\n') });
     }
   }
 });
