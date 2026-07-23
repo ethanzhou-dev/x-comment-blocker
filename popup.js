@@ -455,9 +455,33 @@ let historyNextIndex = 0;
 const HISTORY_PAGE_SIZE = 50;
 let isHistoryLoading = false;
 let currentFilterReason = "all";
+let currentSearchQuery = "";
 
 const filterHistoryBtn = document.getElementById("filterHistoryBtn");
 const filterDropdown = document.getElementById("filterDropdown");
+const toggleSearchBtn = document.getElementById("toggleSearchBtn");
+const historySearchContainer = document.getElementById("historySearchContainer");
+const historySearchInput = document.getElementById("historySearchInput");
+
+if (toggleSearchBtn && historySearchContainer && historySearchInput) {
+  toggleSearchBtn.addEventListener("click", () => {
+    const isOpen = historySearchContainer.classList.toggle("open");
+    if (isOpen) {
+      historySearchInput.focus();
+    } else {
+      historySearchInput.value = "";
+      if (currentSearchQuery !== "") {
+        currentSearchQuery = "";
+        applyHistoryFilter();
+      }
+    }
+  });
+
+  historySearchInput.addEventListener("input", (e) => {
+    currentSearchQuery = e.target.value.toLowerCase();
+    applyHistoryFilter();
+  });
+}
 
 if (filterHistoryBtn && filterDropdown) {
   filterHistoryBtn.addEventListener("click", () => {
@@ -524,13 +548,31 @@ function updateFilterOptions() {
 }
 
 function applyHistoryFilter() {
-  if (currentFilterReason === "all") {
-    filteredHistory = currentHistory;
-  } else {
-    filteredHistory = currentHistory.filter(
-      (item) => item.reason === currentFilterReason,
-    );
+  let filtered = currentHistory;
+
+  if (currentFilterReason !== "all") {
+    filtered = filtered.filter((item) => item.reason === currentFilterReason);
   }
+
+  if (currentSearchQuery !== "") {
+    filtered = filtered.filter((item) => {
+      const text = (item.text || "").toLowerCase();
+      
+      let user = (item.user || "").toLowerCase();
+      if (user.startsWith("/")) {
+        user = "@" + user.substring(1);
+      }
+      
+      const displayName = (item.displayName || "").toLowerCase();
+      return (
+        text.includes(currentSearchQuery) ||
+        user.includes(currentSearchQuery) ||
+        displayName.includes(currentSearchQuery)
+      );
+    });
+  }
+
+  filteredHistory = filtered;
 
   historyNextIndex = 0;
   historyList.innerHTML = "";
@@ -825,6 +867,11 @@ viewHistoryBtn.addEventListener("click", async () => {
 
 closeHistoryBtn.addEventListener("click", () => {
   historyModal.classList.remove("open");
+  if (historySearchContainer && historySearchContainer.classList.contains("open")) {
+    historySearchContainer.classList.remove("open");
+    historySearchInput.value = "";
+    currentSearchQuery = "";
+  }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {

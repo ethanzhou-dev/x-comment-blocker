@@ -273,6 +273,21 @@
             position: relative;
           "
         >
+          <button class="icon-btn" id="toggleSearchBtn" title="搜索屏蔽历史">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              stroke="currentColor"
+              fill="none"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+          </button>
           <button class="icon-btn" id="filterHistoryBtn" title="过滤屏蔽原因">
             <svg
               viewBox="0 0 24 24"
@@ -314,6 +329,9 @@
             </svg>
           </button>
         </div>
+      </div>
+      <div class="history-search-container" id="historySearchContainer">
+        <input type="text" id="historySearchInput" placeholder="搜索内容、用户..." />
       </div>
       <div class="history-list" id="historyList"></div>
     </div>
