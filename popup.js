@@ -470,6 +470,7 @@ if (toggleSearchBtn && historySearchContainer && historySearchInput) {
     if (isOpen) {
       historySearchInput.focus();
     } else {
+      clearTimeout(searchDebounceTimer);
       historySearchInput.value = "";
       if (currentSearchQuery !== "") {
         currentSearchQuery = "";
@@ -481,7 +482,7 @@ if (toggleSearchBtn && historySearchContainer && historySearchInput) {
   historySearchInput.addEventListener("input", (e) => {
     currentSearchQuery = e.target.value.toLowerCase();
     clearTimeout(searchDebounceTimer);
-    searchDebounceTimer = setTimeout(() => applyHistoryFilter(), 150);
+    searchDebounceTimer = setTimeout(() => applyHistoryFilter(), 200);
   });
 }
 
@@ -900,6 +901,7 @@ viewHistoryBtn.addEventListener("click", async () => {
 
 closeHistoryBtn.addEventListener("click", () => {
   historyModal.classList.remove("open");
+  clearTimeout(searchDebounceTimer);
   if (historySearchContainer && historySearchContainer.classList.contains("open")) {
     historySearchContainer.classList.remove("open");
     historySearchInput.value = "";
