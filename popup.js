@@ -461,7 +461,9 @@ let searchDebounceTimer = null;
 const filterHistoryBtn = document.getElementById("filterHistoryBtn");
 const filterDropdown = document.getElementById("filterDropdown");
 const toggleSearchBtn = document.getElementById("toggleSearchBtn");
-const historySearchContainer = document.getElementById("historySearchContainer");
+const historySearchContainer = document.getElementById(
+  "historySearchContainer",
+);
 const historySearchInput = document.getElementById("historySearchInput");
 
 if (toggleSearchBtn && historySearchContainer && historySearchInput) {
@@ -586,12 +588,12 @@ function applyHistoryFilter() {
   if (currentSearchQuery !== "") {
     filtered = filtered.filter((item) => {
       const text = (item.text || "").toLowerCase();
-      
+
       let user = (item.user || "").toLowerCase();
       if (user.startsWith("/")) {
         user = "@" + user.substring(1);
       }
-      
+
       const displayName = (item.displayName || "").toLowerCase();
       return (
         text.includes(currentSearchQuery) ||
@@ -902,7 +904,10 @@ viewHistoryBtn.addEventListener("click", async () => {
 closeHistoryBtn.addEventListener("click", () => {
   historyModal.classList.remove("open");
   clearTimeout(searchDebounceTimer);
-  if (historySearchContainer && historySearchContainer.classList.contains("open")) {
+  if (
+    historySearchContainer &&
+    historySearchContainer.classList.contains("open")
+  ) {
     historySearchContainer.classList.remove("open");
     historySearchInput.value = "";
     currentSearchQuery = "";
