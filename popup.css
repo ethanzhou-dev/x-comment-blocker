@@ -718,6 +718,11 @@ body {
   overflow-wrap: anywhere;
 }
 
+.search-highlight {
+  background: rgb(14 165 233 / 25%);
+  color: var(--accent);
+}
+
 /* stylelint-disable-next-line no-descending-specificity */
 body.disabled .control-group,
 body.disabled .section-user,

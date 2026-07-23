@@ -456,6 +456,7 @@ const HISTORY_PAGE_SIZE = 50;
 let isHistoryLoading = false;
 let currentFilterReason = "all";
 let currentSearchQuery = "";
+let searchDebounceTimer = null;
 
 const filterHistoryBtn = document.getElementById("filterHistoryBtn");
 const filterDropdown = document.getElementById("filterDropdown");
@@ -479,7 +480,8 @@ if (toggleSearchBtn && historySearchContainer && historySearchInput) {
 
   historySearchInput.addEventListener("input", (e) => {
     currentSearchQuery = e.target.value.toLowerCase();
-    applyHistoryFilter();
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => applyHistoryFilter(), 150);
   });
 }
 
@@ -545,6 +547,32 @@ function updateFilterOptions() {
     opt.textContent = reason;
     filterDropdown.appendChild(opt);
   });
+}
+
+function highlightText(element, query) {
+  if (!query) return;
+  const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+  const matches = [];
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    const text = node.textContent;
+    const lower = text.toLowerCase();
+    let start = 0;
+    let idx;
+    while ((idx = lower.indexOf(query, start)) !== -1) {
+      matches.push({ node, index: idx, length: query.length });
+      start = idx + query.length;
+    }
+  }
+  for (let i = matches.length - 1; i >= 0; i--) {
+    const { node, index, length } = matches[i];
+    const after = node.splitText(index);
+    after.splitText(length);
+    const mark = document.createElement("mark");
+    mark.className = "search-highlight";
+    mark.textContent = after.textContent;
+    after.parentNode.replaceChild(mark, after);
+  }
 }
 
 function applyHistoryFilter() {
@@ -623,10 +651,12 @@ function renderHistoryPage() {
         nameSpan.className = "history-display-name";
         nameSpan.textContent = item.displayName;
         nameSpan.title = item.displayName;
+        highlightText(nameSpan, currentSearchQuery);
 
         const handleSpan = document.createElement("span");
         handleSpan.className = "history-handle";
         handleSpan.textContent = `@${handle}`;
+        highlightText(handleSpan, currentSearchQuery);
 
         userInfo.appendChild(nameSpan);
         userInfo.appendChild(handleSpan);
@@ -634,12 +664,14 @@ function renderHistoryPage() {
         const userSpan = document.createElement("span");
         userSpan.className = "history-handle";
         userSpan.textContent = `@${handle}`;
+        highlightText(userSpan, currentSearchQuery);
         userInfo.appendChild(userSpan);
       }
     } else {
       const userSpan = document.createElement("span");
       userSpan.className = "history-display-name";
       userSpan.textContent = item.user || "未知用户";
+      highlightText(userSpan, currentSearchQuery);
       userInfo.appendChild(userSpan);
     }
 
@@ -806,6 +838,7 @@ function renderHistoryPage() {
     const textDiv = document.createElement("div");
     textDiv.className = "history-item-text";
     textDiv.textContent = displayText;
+    highlightText(textDiv, currentSearchQuery);
 
     div.appendChild(header);
     div.appendChild(textDiv);
