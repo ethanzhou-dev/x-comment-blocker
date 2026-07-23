@@ -1,6 +1,6 @@
 /* global getStorageDefaults, parseKeywords, invisibleCharsRegex */
 let blockRegexes = [];
-let lastKeywordsKey = "";
+let lastKeywordsKey = '';
 let checkUsername = true;
 let onlyComments = true;
 let blockSpecialChars = false;
@@ -11,7 +11,7 @@ let filterVersion = 0;
 let observerFlushScheduled = false;
 const localSentIds = new Set();
 const tweetStateMap = new WeakMap();
-const emojiRegex = new RegExp("\\p{RGI_Emoji}", "v");
+const emojiRegex = /\p{RGI_Emoji}/v;
 const spamCharsRegex =
   /[\u02B0-\u02FF\u0F00-\u0FFF\u1D00-\u1D7F\u1D80-\u1DBF\u2070-\u209F\u2100-\u2BFF\uA980-\uA9DF\uAA00-\uAADF\u{13000}-\u{1342F}\u{1D400}-\u{1D7FF}]/u;
 
@@ -27,36 +27,32 @@ function matchesBlocklist(text) {
 async function mergeKeywords() {
   try {
     const items = await chrome.storage.local.get(
-      getStorageDefaults("keywords", "cloudEnabled", "cloudKeywords"),
+      getStorageDefaults('keywords', 'cloudEnabled', 'cloudKeywords'),
     );
 
     const userKws = parseKeywords(items.keywords);
-    const cloudKws = items.cloudEnabled
-      ? parseKeywords(items.cloudKeywords)
-      : [];
+    const cloudKws = items.cloudEnabled ? parseKeywords(items.cloudKeywords) : [];
 
     const blockKeywords = [...new Set([...cloudKws, ...userKws])];
 
-    const newKey = blockKeywords.join("\n");
+    const newKey = blockKeywords.join('\n');
     if (newKey === lastKeywordsKey) return;
     lastKeywordsKey = newKey;
 
     if (blockKeywords.length > 0) {
-      const escaped = blockKeywords.map((kw) =>
-        kw.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
-      );
+      const escaped = blockKeywords.map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
       escaped.sort((a, b) => b.length - a.length);
       const CHUNK_SIZE = 400;
       blockRegexes = [];
       for (let i = 0; i < escaped.length; i += CHUNK_SIZE) {
         const chunk = escaped.slice(i, i + CHUNK_SIZE);
-        blockRegexes.push(new RegExp(chunk.join("|"), "i"));
+        blockRegexes.push(new RegExp(chunk.join('|'), 'i'));
       }
     } else {
       blockRegexes = [];
     }
   } catch (e) {
-    console.error("[X-Blocker] mergeKeywords error:", e);
+    console.error('[X-Blocker] mergeKeywords error:', e);
   }
 }
 
@@ -64,11 +60,11 @@ async function mergeKeywords() {
   try {
     const items = await chrome.storage.local.get(
       getStorageDefaults(
-        "checkUsername",
-        "onlyComments",
-        "blockSpecialChars",
-        "blockEmoji",
-        "enabled",
+        'checkUsername',
+        'onlyComments',
+        'blockSpecialChars',
+        'blockEmoji',
+        'enabled',
       ),
     );
 
@@ -92,12 +88,10 @@ async function mergeKeywords() {
       for (const mutation of mutations) {
         for (const node of mutation.addedNodes) {
           if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.getAttribute("data-testid") === "cellInnerDiv") {
+            if (node.getAttribute('data-testid') === 'cellInnerDiv') {
               pendingTweets.add(node);
             } else if (node.querySelector) {
-              const innerTweets = node.querySelectorAll(
-                '[data-testid="cellInnerDiv"]',
-              );
+              const innerTweets = node.querySelectorAll('[data-testid="cellInnerDiv"]');
               innerTweets.forEach((t) => pendingTweets.add(t));
             }
           }
@@ -109,11 +103,7 @@ async function mergeKeywords() {
               ? mutation.target
               : mutation.target.parentElement;
           if (el && el.closest) {
-            if (
-              !el.closest(
-                '[data-testid="tweetText"], [data-testid="User-Name"]',
-              )
-            ) {
+            if (!el.closest('[data-testid="tweetText"], [data-testid="User-Name"]')) {
               continue;
             }
             const closestTweet = el.closest('[data-testid="cellInnerDiv"]');
@@ -141,24 +131,24 @@ async function mergeKeywords() {
       subtree: true,
     });
   } catch (e) {
-    console.error("[X-Blocker] init error:", e);
+    console.error('[X-Blocker] init error:', e);
   }
 })();
 
 chrome.runtime.onMessage.addListener((message) => {
   if (!isExtensionAlive()) return;
-  if (message.action === "removeLocalSentId" && message.id) {
+  if (message.action === 'removeLocalSentId' && message.id) {
     localSentIds.delete(message.id);
     return false;
   }
-  if (message.action === "clearLocalSentIds") {
+  if (message.action === 'clearLocalSentIds') {
     localSentIds.clear();
     return false;
   }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local" || !isExtensionAlive()) return;
+  if (area !== 'local' || !isExtensionAlive()) return;
 
   let needsFilter = false;
 
@@ -195,21 +185,21 @@ chrome.storage.onChanged.addListener((changes, area) => {
 });
 
 function getTweetTextForKeywords(node) {
-  if (!node) return "";
-  let text = "";
+  if (!node) return '';
+  let text = '';
   function traverse(n) {
     if (n.nodeType === Node.TEXT_NODE) {
       text += n.textContent;
     } else if (n.nodeType === Node.ELEMENT_NODE) {
-      if (n.tagName.toLowerCase() === "img" && n.alt) {
+      if (n.tagName.toLowerCase() === 'img' && n.alt) {
         let altText = n.alt;
         if (
           n.src &&
-          (n.src.includes("emoji") || n.src.includes("twemoji")) &&
-          !altText.endsWith("\uFE0F")
+          (n.src.includes('emoji') || n.src.includes('twemoji')) &&
+          !altText.endsWith('\uFE0F')
         ) {
           if (altText.length <= 2) {
-            altText += "\uFE0F";
+            altText += '\uFE0F';
           }
         }
         text += altText;
@@ -227,23 +217,23 @@ function getTweetTextForKeywords(node) {
 function hasEmoji(node) {
   if (!node) return false;
 
-  if (emojiRegex.test(node.textContent || "")) return true;
+  if (emojiRegex.test(node.textContent || '')) return true;
 
-  const imgs = node.querySelectorAll("img");
+  const imgs = node.querySelectorAll('img');
   for (const img of imgs) {
-    const src = img.src || "";
-    if (src.includes("emoji") || src.includes("twemoji")) return true;
+    const src = img.src || '';
+    if (src.includes('emoji') || src.includes('twemoji')) return true;
     if (img.alt && emojiRegex.test(img.alt)) return true;
   }
   return false;
 }
 
 function getTweetStatusInfo(tweet, pageStatusId) {
-  const timeNodes = tweet.querySelectorAll("time");
+  const timeNodes = tweet.querySelectorAll('time');
   for (const timeEl of timeNodes) {
-    const link = timeEl.closest("a");
+    const link = timeEl.closest('a');
     if (link) {
-      const href = link.getAttribute("href");
+      const href = link.getAttribute('href');
       const match = href ? href.match(/\/status\/(\d+)/i) : null;
       if (match) {
         return {
@@ -260,9 +250,7 @@ function getPageContext() {
   const urlMatch = window.location.pathname.match(/\/status\/(\d+)/i);
   return {
     pageStatusId: urlMatch ? urlMatch[1] : null,
-    isPhotoVideoOverlay: /\/status\/\d+\/(?:photo|video)\//i.test(
-      window.location.pathname,
-    ),
+    isPhotoVideoOverlay: /\/status\/\d+\/(?:photo|video)\//i.test(window.location.pathname),
   };
 }
 
@@ -276,26 +264,17 @@ function resolveStatusPage(tweet, pageContext) {
   return !!pageContext.pageStatusId;
 }
 
-function detectSpam(
-  textNode,
-  userNode,
-  rawTweetText,
-  rawUserName,
-  isStatusPage,
-  isMainTweet,
-) {
-  const tweetBody = rawTweetText.replace(invisibleCharsRegex, "");
+function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage, isMainTweet) {
+  const tweetBody = rawTweetText.replace(invisibleCharsRegex, '');
   const userName = rawUserName;
-  let stableHandle = "";
-  let displayName = "";
+  let stableHandle = '';
+  let displayName = '';
 
   if (userNode) {
     const handleLink = userNode.querySelector('a[href^="/"]');
     if (handleLink) {
-      stableHandle = (handleLink.getAttribute("href") || "").toLowerCase();
-      displayName = getTweetTextForKeywords(handleLink)
-        .replace(invisibleCharsRegex, "")
-        .trim();
+      stableHandle = (handleLink.getAttribute('href') || '').toLowerCase();
+      displayName = getTweetTextForKeywords(handleLink).replace(invisibleCharsRegex, '').trim();
     }
   }
 
@@ -303,20 +282,16 @@ function detectSpam(
     if (blockEmoji && textNode && hasEmoji(textNode)) {
       return {
         isSpam: true,
-        blockReason: "表情屏蔽",
+        blockReason: '表情屏蔽',
         userName,
         stableHandle,
         displayName,
       };
     }
-    if (
-      blockSpecialChars &&
-      textNode &&
-      spamCharsRegex.test(textNode.textContent)
-    ) {
+    if (blockSpecialChars && textNode && spamCharsRegex.test(textNode.textContent)) {
       return {
         isSpam: true,
-        blockReason: "特殊字符屏蔽",
+        blockReason: '特殊字符屏蔽',
         userName,
         stableHandle,
         displayName,
@@ -327,7 +302,7 @@ function detectSpam(
   if (matchesBlocklist(tweetBody)) {
     return {
       isSpam: true,
-      blockReason: "内容屏蔽",
+      blockReason: '内容屏蔽',
       userName,
       stableHandle,
       displayName,
@@ -335,13 +310,11 @@ function detectSpam(
   }
 
   if (checkUsername && userName) {
-    const cleanUserName = userName
-      .replace(/[\s_.-]+/g, "")
-      .replace(invisibleCharsRegex, "");
+    const cleanUserName = userName.replace(/[\s_.-]+/g, '').replace(invisibleCharsRegex, '');
     if (matchesBlocklist(cleanUserName)) {
       return {
         isSpam: true,
-        blockReason: "昵称屏蔽",
+        blockReason: '昵称屏蔽',
         userName,
         stableHandle,
         displayName,
@@ -351,7 +324,7 @@ function detectSpam(
 
   return {
     isSpam: false,
-    blockReason: "",
+    blockReason: '',
     userName,
     stableHandle,
     displayName,
@@ -361,8 +334,7 @@ function detectSpam(
 function filterTweets(specificTweets = null) {
   if (!isExtensionAlive()) return;
 
-  const tweets =
-    specificTweets || document.querySelectorAll('[data-testid="cellInnerDiv"]');
+  const tweets = specificTweets || document.querySelectorAll('[data-testid="cellInnerDiv"]');
   if (tweets.length === 0) return;
 
   const pendingSpam = [];
@@ -380,36 +352,33 @@ function filterTweets(specificTweets = null) {
     }
 
     let logicalPageStatusId = pageContext.pageStatusId;
-    if (
-      pageContext.isPhotoVideoOverlay &&
-      tweet.closest('[role="dialog"]') === null
-    ) {
+    if (pageContext.isPhotoVideoOverlay && tweet.closest('[role="dialog"]') === null) {
       logicalPageStatusId = state.pageStatusId || pageContext.pageStatusId;
     } else {
       state.pageStatusId = pageContext.pageStatusId;
     }
     state.isStatusPage = isStatusPage;
 
-    const rawTweetText = textNode ? getTweetTextForKeywords(textNode) : "";
-    const rawUserName = userNode ? getTweetTextForKeywords(userNode) : "";
+    const rawTweetText = textNode ? getTweetTextForKeywords(textNode) : '';
+    const rawUserName = userNode ? getTweetTextForKeywords(userNode) : '';
 
     const quickHash =
       rawTweetText +
-      "|" +
+      '|' +
       rawUserName +
-      "|" +
+      '|' +
       filterVersion +
-      "|" +
+      '|' +
       isStatusPage +
-      "|" +
-      (logicalPageStatusId || "");
+      '|' +
+      (logicalPageStatusId || '');
     if (state.quickHash === quickHash) {
       if (state.isSpam) {
-        if (!tweet.classList.contains("x-comment-blocker-hidden")) {
-          tweet.classList.add("x-comment-blocker-hidden");
+        if (!tweet.classList.contains('x-comment-blocker-hidden')) {
+          tweet.classList.add('x-comment-blocker-hidden');
         }
       } else {
-        tweet.classList.remove("x-comment-blocker-hidden");
+        tweet.classList.remove('x-comment-blocker-hidden');
       }
       return;
     }
@@ -417,9 +386,7 @@ function filterTweets(specificTweets = null) {
     if (tweet.closest('[aria-hidden="true"]')) return;
     state.quickHash = quickHash;
 
-    let shouldCheck =
-      filterEnabled &&
-      (blockRegexes.length > 0 || blockEmoji || blockSpecialChars);
+    let shouldCheck = filterEnabled && (blockRegexes.length > 0 || blockEmoji || blockSpecialChars);
     if (shouldCheck && onlyComments && !isStatusPage) shouldCheck = false;
 
     let isMainTweet = false;
@@ -430,8 +397,8 @@ function filterTweets(specificTweets = null) {
 
       if (isStatusPage && logicalPageStatusId) {
         isMainTweet = statusInfo.isMainTweet;
-        if (!tweet.querySelector("article")) {
-          state.quickHash = "";
+        if (!tweet.querySelector('article')) {
+          state.quickHash = '';
           return;
         }
       }
@@ -440,10 +407,10 @@ function filterTweets(specificTweets = null) {
     if (shouldCheck && onlyComments && isMainTweet) shouldCheck = false;
 
     let isSpam = false;
-    let blockReason = "";
-    let userName = "";
-    let stableHandle = "";
-    let displayName = "";
+    let blockReason = '';
+    let userName = '';
+    let stableHandle = '';
+    let displayName = '';
 
     if (shouldCheck) {
       const result = detectSpam(
@@ -463,15 +430,15 @@ function filterTweets(specificTweets = null) {
 
     state.isSpam = isSpam;
     if (isSpam) {
-      if (!tweet.classList.contains("x-comment-blocker-hidden")) {
-        tweet.classList.add("x-comment-blocker-hidden");
+      if (!tweet.classList.contains('x-comment-blocker-hidden')) {
+        tweet.classList.add('x-comment-blocker-hidden');
       }
       const normalizedBody = rawTweetText
-        .replace(invisibleCharsRegex, "")
-        .replace(/\s+/g, " ")
+        .replace(invisibleCharsRegex, '')
+        .replace(/\s+/g, ' ')
         .trim();
 
-      const uniqueId = tweetId ? tweetId : normalizedBody + "|" + stableHandle;
+      const uniqueId = tweetId ? tweetId : normalizedBody + '|' + stableHandle;
 
       if (!localSentIds.has(uniqueId)) {
         localSentIds.add(uniqueId);
@@ -484,21 +451,19 @@ function filterTweets(specificTweets = null) {
           id: uniqueId,
           text: normalizedBody,
           user: stableHandle || userName,
-          displayName: displayName || "",
+          displayName: displayName || '',
           reason: blockReason,
           time: Date.now(),
         });
       }
     } else {
-      tweet.classList.remove("x-comment-blocker-hidden");
+      tweet.classList.remove('x-comment-blocker-hidden');
     }
   });
 
   if (pendingSpam.length > 0) {
     try {
-      chrome.runtime
-        .sendMessage({ action: "recordSpam", items: pendingSpam })
-        .catch(() => {});
+      chrome.runtime.sendMessage({ action: 'recordSpam', items: pendingSpam }).catch(() => {});
     } catch {
       // Ignore error if background script is not ready
     }

@@ -9,37 +9,37 @@ const ICON_DEL =
 const ICON_CHECK =
   '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
 
-const keywordList = document.getElementById("keywordList");
-const keywordCount = document.getElementById("keywordCount");
-const newKeywordInput = document.getElementById("newKeyword");
-const addBtn = document.getElementById("addBtn");
-const importBtn = document.getElementById("importBtn");
-const exportBtn = document.getElementById("exportBtn");
-const importFile = document.getElementById("importFile");
-const checkUsernameEl = document.getElementById("checkUsername");
-const onlyCommentsEl = document.getElementById("onlyComments");
-const blockSpecialCharsEl = document.getElementById("blockSpecialChars");
-const blockEmojiEl = document.getElementById("blockEmoji");
-const enableToggleEl = document.getElementById("enableToggle");
-const cloudToggleEl = document.getElementById("cloudToggle");
-const cloudInfoEl = document.getElementById("cloudInfo");
-const syncBtn = document.getElementById("sync-btn");
-const statusEl = document.getElementById("status");
-const blockedCountEl = document.getElementById("blockedCount");
-const resetCountBtn = document.getElementById("resetCount");
+const keywordList = document.getElementById('keywordList');
+const keywordCount = document.getElementById('keywordCount');
+const newKeywordInput = document.getElementById('newKeyword');
+const addBtn = document.getElementById('addBtn');
+const importBtn = document.getElementById('importBtn');
+const exportBtn = document.getElementById('exportBtn');
+const importFile = document.getElementById('importFile');
+const checkUsernameEl = document.getElementById('checkUsername');
+const onlyCommentsEl = document.getElementById('onlyComments');
+const blockSpecialCharsEl = document.getElementById('blockSpecialChars');
+const blockEmojiEl = document.getElementById('blockEmoji');
+const enableToggleEl = document.getElementById('enableToggle');
+const cloudToggleEl = document.getElementById('cloudToggle');
+const cloudInfoEl = document.getElementById('cloudInfo');
+const syncBtn = document.getElementById('sync-btn');
+const statusEl = document.getElementById('status');
+const blockedCountEl = document.getElementById('blockedCount');
+const resetCountBtn = document.getElementById('resetCount');
 
-const viewHistoryBtn = document.getElementById("viewHistory");
-const historyModal = document.getElementById("historyModal");
-const closeHistoryBtn = document.getElementById("closeHistory");
-const historyList = document.getElementById("historyList");
+const viewHistoryBtn = document.getElementById('viewHistory');
+const historyModal = document.getElementById('historyModal');
+const closeHistoryBtn = document.getElementById('closeHistory');
+const historyList = document.getElementById('historyList');
 
 let statusTimer = 0;
 function showStatus(text) {
   statusEl.textContent = text;
-  statusEl.classList.add("visible");
+  statusEl.classList.add('visible');
   clearTimeout(statusTimer);
   statusTimer = setTimeout(() => {
-    statusEl.classList.remove("visible");
+    statusEl.classList.remove('visible');
   }, 1500);
 }
 
@@ -47,7 +47,7 @@ async function autoSave() {
   if (isLoading) return;
 
   await chrome.storage.local.set({
-    keywords: userKeywords.join("\n"),
+    keywords: userKeywords.join('\n'),
     checkUsername: checkUsernameEl.checked,
     onlyComments: onlyCommentsEl.checked,
     blockSpecialChars: blockSpecialCharsEl.checked,
@@ -55,11 +55,11 @@ async function autoSave() {
     enabled: enableToggleEl.checked,
     cloudEnabled: cloudToggleEl.checked,
   });
-  showStatus("已自动保存");
+  showStatus('已自动保存');
 }
 
 function updateEnabledState() {
-  document.body.classList.toggle("disabled", !enableToggleEl.checked);
+  document.body.classList.toggle('disabled', !enableToggleEl.checked);
 }
 
 function el(tag, props, children) {
@@ -67,41 +67,39 @@ function el(tag, props, children) {
   Object.assign(element, props);
   if (children) {
     children.forEach((c) =>
-      element.appendChild(
-        typeof c === "string" ? document.createTextNode(c) : c,
-      ),
+      element.appendChild(typeof c === 'string' ? document.createTextNode(c) : c),
     );
   }
   return element;
 }
 
 function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
-  keywordList.innerHTML = "";
+  keywordList.innerHTML = '';
 
   if (userKeywords.length === 0) {
     keywordList.appendChild(
-      el("div", { className: "empty-hint", textContent: "暂无自定义屏蔽词" }),
+      el('div', { className: 'empty-hint', textContent: '暂无自定义屏蔽词' }),
     );
-    keywordCount.textContent = "";
+    keywordCount.textContent = '';
     return;
   }
 
   const fragment = document.createDocumentFragment();
 
   userKeywords.forEach((kw, index) => {
-    const editBtn = el("button", {
-      className: "tag-btn tag-btn-edit",
+    const editBtn = el('button', {
+      className: 'tag-btn tag-btn-edit',
       innerHTML: ICON_EDIT,
-      title: "编辑",
+      title: '编辑',
     });
-    const delBtn = el("button", {
-      className: "tag-btn tag-btn-del",
+    const delBtn = el('button', {
+      className: 'tag-btn tag-btn-del',
       innerHTML: ICON_DEL,
-      title: "删除",
+      title: '删除',
       onclick: () => {
-        if (tag.classList.contains("fade-out-tag")) return;
-        tag.classList.remove("fade-in-tag");
-        tag.classList.add("fade-out-tag");
+        if (tag.classList.contains('fade-out-tag')) return;
+        tag.classList.remove('fade-in-tag');
+        tag.classList.add('fade-out-tag');
         const kwToRemove = kw;
         setTimeout(() => {
           const idx = userKeywords.indexOf(kwToRemove);
@@ -113,18 +111,14 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
     });
 
     const tag = el(
-      "span",
+      'span',
       {
         className:
-          "keyword-tag" +
-          (index === animateIndex ? " fade-in-tag" : "") +
-          (index === fadeIndex ? " fade-in" : ""),
+          'keyword-tag' +
+          (index === animateIndex ? ' fade-in-tag' : '') +
+          (index === fadeIndex ? ' fade-in' : ''),
       },
-      [
-        el("span", { className: "tag-text", textContent: kw, title: kw }),
-        editBtn,
-        delBtn,
-      ],
+      [el('span', { className: 'tag-text', textContent: kw, title: kw }), editBtn, delBtn],
     );
 
     editBtn.onclick = () => startEdit(tag, index);
@@ -136,31 +130,31 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
 }
 
 function startEdit(tagEl, index) {
-  tagEl.innerHTML = "";
-  tagEl.classList.add("is-editing");
+  tagEl.innerHTML = '';
+  tagEl.classList.add('is-editing');
 
-  const input = el("input", {
-    className: "tag-edit-input",
+  const input = el('input', {
+    className: 'tag-edit-input',
     value: userKeywords[index],
   });
-  input.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") {
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
       confirmEdit(input, index);
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       renderUserKeywords(-1, index);
     }
   });
 
-  const confirmBtn = el("button", {
-    className: "tag-btn tag-btn-save",
+  const confirmBtn = el('button', {
+    className: 'tag-btn tag-btn-save',
     innerHTML: ICON_CHECK,
-    title: "确认",
+    title: '确认',
     onclick: () => confirmEdit(input, index),
   });
-  const cancelBtn = el("button", {
-    className: "tag-btn tag-btn-del",
+  const cancelBtn = el('button', {
+    className: 'tag-btn tag-btn-del',
     innerHTML: ICON_DEL,
-    title: "取消",
+    title: '取消',
     onclick: () => renderUserKeywords(-1, index),
   });
 
@@ -184,7 +178,7 @@ function confirmEdit(inputEl, index) {
         changed = true;
       }
     } else {
-      showStatus("该屏蔽词已存在");
+      showStatus('该屏蔽词已存在');
     }
   }
   renderUserKeywords(-1, index);
@@ -197,11 +191,11 @@ function addKeyword() {
 
   const newKws = inputKws.filter((kw) => !userKeywords.includes(kw));
 
-  newKeywordInput.value = "";
+  newKeywordInput.value = '';
   newKeywordInput.focus();
 
   if (newKws.length === 0) {
-    showStatus("该屏蔽词已存在");
+    showStatus('该屏蔽词已存在');
     return;
   }
 
@@ -211,35 +205,35 @@ function addKeyword() {
   keywordList.scrollTop = keywordList.scrollHeight;
 }
 
-addBtn.addEventListener("click", addKeyword);
+addBtn.addEventListener('click', addKeyword);
 
-newKeywordInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter") {
+newKeywordInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') {
     addKeyword();
   }
 });
 
-exportBtn.addEventListener("click", () => {
+exportBtn.addEventListener('click', () => {
   if (userKeywords.length === 0) {
-    showStatus("词库为空");
+    showStatus('词库为空');
     return;
   }
-  const content = userKeywords.join("\n");
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+  const content = userKeywords.join('\n');
+  const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
   const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
+  const a = document.createElement('a');
   a.href = url;
   a.download = `x-comment-blocker-keywords-${new Date().toISOString().slice(0, 10)}.txt`;
   a.click();
   URL.revokeObjectURL(url);
-  showStatus("导出成功");
+  showStatus('导出成功');
 });
 
-importBtn.addEventListener("click", () => {
+importBtn.addEventListener('click', () => {
   importFile.click();
 });
 
-importFile.addEventListener("change", (e) => {
+importFile.addEventListener('change', (e) => {
   const file = e.target.files[0];
   if (!file) return;
 
@@ -251,7 +245,7 @@ importFile.addEventListener("change", (e) => {
     try {
       const parsed = JSON.parse(content);
       if (Array.isArray(parsed)) {
-        newKeywords = parseKeywords(parsed.map((k) => String(k)).join("\n"));
+        newKeywords = parseKeywords(parsed.map((k) => String(k)).join('\n'));
       }
     } catch {
       newKeywords = parseKeywords(content);
@@ -270,17 +264,17 @@ importFile.addEventListener("change", (e) => {
         autoSave();
         showStatus(`成功导入 ${addedCount} 个新词`);
       } else {
-        showStatus("未发现新词，词库已包含这些内容");
+        showStatus('未发现新词，词库已包含这些内容');
       }
     } else {
-      showStatus("文件内容无效");
+      showStatus('文件内容无效');
     }
   };
   reader.onerror = () => {
-    showStatus("文件读取失败");
+    showStatus('文件读取失败');
   };
   reader.readAsText(file);
-  importFile.value = "";
+  importFile.value = '';
 });
 
 function formatHistoryTime(timestamp) {
@@ -295,8 +289,8 @@ function formatHistoryTime(timestamp) {
   const isThisYear = date.getFullYear() === now.getFullYear();
 
   if (isToday) {
-    const hh = String(date.getHours()).padStart(2, "0");
-    const mm = String(date.getMinutes()).padStart(2, "0");
+    const hh = String(date.getHours()).padStart(2, '0');
+    const mm = String(date.getMinutes()).padStart(2, '0');
     return `${hh}:${mm}`;
   } else if (isThisYear) {
     return `${date.getMonth() + 1}月${date.getDate()}日`;
@@ -306,9 +300,9 @@ function formatHistoryTime(timestamp) {
 }
 
 function relativeTime(ts) {
-  if (!ts) return "";
+  if (!ts) return '';
   const diff = Math.floor((Date.now() - ts) / 1000);
-  if (diff < 60) return "刚刚同步";
+  if (diff < 60) return '刚刚同步';
   if (diff < 3600) return `${Math.floor(diff / 60)}分钟前同步`;
   if (diff < 86400) return `${Math.floor(diff / 3600)}小时前同步`;
   return `${Math.floor(diff / 86400)}天前同步`;
@@ -316,30 +310,19 @@ function relativeTime(ts) {
 
 function updateCloudInfo() {
   chrome.storage.local
-    .get(
-      getStorageDefaults(
-        "cloudKeywords",
-        "lastSyncTime",
-        "syncStatus",
-        "syncError",
-      ),
-    )
+    .get(getStorageDefaults('cloudKeywords', 'lastSyncTime', 'syncStatus', 'syncError'))
     .then((items) => {
       const cloudList = parseKeywords(items.cloudKeywords);
-      const countText = cloudList.length > 0 ? `${cloudList.length} 个词` : "";
+      const countText = cloudList.length > 0 ? `${cloudList.length} 个词` : '';
 
-      cloudInfoEl.classList.remove("error");
+      cloudInfoEl.classList.remove('error');
 
-      if (items.syncStatus === "error") {
-        cloudInfoEl.classList.add("error");
-        cloudInfoEl.textContent = countText
-          ? `${countText} · 同步失败`
-          : "同步失败";
+      if (items.syncStatus === 'error') {
+        cloudInfoEl.classList.add('error');
+        cloudInfoEl.textContent = countText ? `${countText} · 同步失败` : '同步失败';
       } else if (items.lastSyncTime) {
         const timeText = relativeTime(items.lastSyncTime);
-        cloudInfoEl.textContent = countText
-          ? `${countText} · ${timeText}`
-          : timeText;
+        cloudInfoEl.textContent = countText ? `${countText} · ${timeText}` : timeText;
       } else {
         cloudInfoEl.textContent = countText;
       }
@@ -348,19 +331,19 @@ function updateCloudInfo() {
 
 async function triggerCloudSync(manual = false) {
   try {
-    const result = await chrome.runtime.sendMessage({ action: "syncNow" });
+    const result = await chrome.runtime.sendMessage({ action: 'syncNow' });
     if (!result || !result.success) {
-      if (manual) showStatus("同步失败，请检查网络");
+      if (manual) showStatus('同步失败，请检查网络');
     } else if (manual) {
-      showStatus("云端词库已同步");
+      showStatus('云端词库已同步');
     }
   } catch {
-    if (manual) showStatus("同步失败，请检查网络");
+    if (manual) showStatus('同步失败，请检查网络');
   }
 
   updateCloudInfo();
 
-  if (syncBtn.classList.contains("syncing")) {
+  if (syncBtn.classList.contains('syncing')) {
     const startTime = parseInt(syncBtn.dataset.syncStartTime || Date.now());
     const elapsed = Date.now() - startTime;
     const animationDuration = 1000;
@@ -368,51 +351,51 @@ async function triggerCloudSync(manual = false) {
     const remaining = mod === 0 ? 0 : animationDuration - mod;
 
     setTimeout(() => {
-      syncBtn.classList.remove("syncing");
+      syncBtn.classList.remove('syncing');
     }, remaining);
   }
 }
 
-enableToggleEl.addEventListener("change", () => {
+enableToggleEl.addEventListener('change', () => {
   updateEnabledState();
   autoSave();
 });
 
-checkUsernameEl.addEventListener("change", () => autoSave());
-onlyCommentsEl.addEventListener("change", () => autoSave());
-blockSpecialCharsEl.addEventListener("change", () => autoSave());
-blockEmojiEl.addEventListener("change", () => autoSave());
-cloudToggleEl.addEventListener("change", () => autoSave());
+checkUsernameEl.addEventListener('change', () => autoSave());
+onlyCommentsEl.addEventListener('change', () => autoSave());
+blockSpecialCharsEl.addEventListener('change', () => autoSave());
+blockEmojiEl.addEventListener('change', () => autoSave());
+cloudToggleEl.addEventListener('change', () => autoSave());
 
-syncBtn.addEventListener("click", () => {
+syncBtn.addEventListener('click', () => {
   syncBtn.dataset.syncStartTime = Date.now();
-  syncBtn.classList.add("syncing");
+  syncBtn.classList.add('syncing');
   triggerCloudSync(true);
 });
 
-document.addEventListener("DOMContentLoaded", async () => {
-  const settingsHeader = document.getElementById("settingsHeader");
-  const settingsContent = document.getElementById("settingsContent");
-  const settingsArrow = document.getElementById("settingsArrow");
+document.addEventListener('DOMContentLoaded', async () => {
+  const settingsHeader = document.getElementById('settingsHeader');
+  const settingsContent = document.getElementById('settingsContent');
+  const settingsArrow = document.getElementById('settingsArrow');
 
   if (settingsHeader) {
-    settingsHeader.addEventListener("click", () => {
-      settingsContent.classList.toggle("open");
-      settingsArrow.classList.toggle("open");
+    settingsHeader.addEventListener('click', () => {
+      settingsContent.classList.toggle('open');
+      settingsArrow.classList.toggle('open');
     });
   }
 
   const items = await chrome.storage.local.get(
     getStorageDefaults(
-      "keywords",
-      "checkUsername",
-      "onlyComments",
-      "blockSpecialChars",
-      "blockEmoji",
-      "enabled",
-      "cloudEnabled",
-      "blockedCount",
-      "lastSyncTime",
+      'keywords',
+      'checkUsername',
+      'onlyComments',
+      'blockSpecialChars',
+      'blockEmoji',
+      'enabled',
+      'cloudEnabled',
+      'blockedCount',
+      'lastSyncTime',
     ),
   );
 
@@ -430,22 +413,17 @@ document.addEventListener("DOMContentLoaded", async () => {
   isLoading = false;
   updateCloudInfo();
 
-  if (
-    !items.lastSyncTime ||
-    Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS
-  ) {
+  if (!items.lastSyncTime || Date.now() - items.lastSyncTime > SYNC_INTERVAL_MS) {
     syncBtn.dataset.syncStartTime = Date.now();
-    syncBtn.classList.add("syncing");
+    syncBtn.classList.add('syncing');
     triggerCloudSync();
   }
 });
 
-resetCountBtn.addEventListener("click", async () => {
-  await chrome.runtime
-    .sendMessage({ action: "clearSpamCache" })
-    .catch(() => {});
+resetCountBtn.addEventListener('click', async () => {
+  await chrome.runtime.sendMessage({ action: 'clearSpamCache' }).catch(() => {});
   await chrome.storage.local.set({ blockedCount: 0, blockedHistory: [] });
-  blockedCountEl.textContent = "0";
+  blockedCountEl.textContent = '0';
 });
 
 let currentHistory = [];
@@ -454,34 +432,32 @@ let currentBlockedUsersOnX = [];
 let historyNextIndex = 0;
 const HISTORY_PAGE_SIZE = 50;
 let isHistoryLoading = false;
-let currentFilterReason = "all";
-let currentSearchQuery = "";
+let currentFilterReason = 'all';
+let currentSearchQuery = '';
 let searchDebounceTimer = null;
 
-const filterHistoryBtn = document.getElementById("filterHistoryBtn");
-const filterDropdown = document.getElementById("filterDropdown");
-const toggleSearchBtn = document.getElementById("toggleSearchBtn");
-const historySearchContainer = document.getElementById(
-  "historySearchContainer",
-);
-const historySearchInput = document.getElementById("historySearchInput");
+const filterHistoryBtn = document.getElementById('filterHistoryBtn');
+const filterDropdown = document.getElementById('filterDropdown');
+const toggleSearchBtn = document.getElementById('toggleSearchBtn');
+const historySearchContainer = document.getElementById('historySearchContainer');
+const historySearchInput = document.getElementById('historySearchInput');
 
 if (toggleSearchBtn && historySearchContainer && historySearchInput) {
-  toggleSearchBtn.addEventListener("click", () => {
-    const isOpen = historySearchContainer.classList.toggle("open");
+  toggleSearchBtn.addEventListener('click', () => {
+    const isOpen = historySearchContainer.classList.toggle('open');
     if (isOpen) {
       historySearchInput.focus();
     } else {
       clearTimeout(searchDebounceTimer);
-      historySearchInput.value = "";
-      if (currentSearchQuery !== "") {
-        currentSearchQuery = "";
+      historySearchInput.value = '';
+      if (currentSearchQuery !== '') {
+        currentSearchQuery = '';
         applyHistoryFilter();
       }
     }
   });
 
-  historySearchInput.addEventListener("input", (e) => {
+  historySearchInput.addEventListener('input', (e) => {
     currentSearchQuery = e.target.value.toLowerCase();
     clearTimeout(searchDebounceTimer);
     searchDebounceTimer = setTimeout(() => applyHistoryFilter(), 200);
@@ -489,28 +465,25 @@ if (toggleSearchBtn && historySearchContainer && historySearchInput) {
 }
 
 if (filterHistoryBtn && filterDropdown) {
-  filterHistoryBtn.addEventListener("click", () => {
-    filterDropdown.classList.toggle("open");
+  filterHistoryBtn.addEventListener('click', () => {
+    filterDropdown.classList.toggle('open');
   });
 
-  document.addEventListener("click", (e) => {
-    if (
-      !e.target.closest("#filterDropdown") &&
-      !e.target.closest("#filterHistoryBtn")
-    ) {
-      filterDropdown.classList.remove("open");
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('#filterDropdown') && !e.target.closest('#filterHistoryBtn')) {
+      filterDropdown.classList.remove('open');
     }
   });
 
-  filterDropdown.addEventListener("click", (e) => {
-    const option = e.target.closest(".filter-option");
+  filterDropdown.addEventListener('click', (e) => {
+    const option = e.target.closest('.filter-option');
     if (option) {
       const reason = option.dataset.reason;
       if (reason !== currentFilterReason) {
         filterDropdown
-          .querySelectorAll(".filter-option")
-          .forEach((opt) => opt.classList.remove("active"));
-        option.classList.add("active");
+          .querySelectorAll('.filter-option')
+          .forEach((opt) => opt.classList.remove('active'));
+        option.classList.add('active');
 
         currentFilterReason = reason;
         chrome.storage.local.set({ historyFilterReason: reason });
@@ -531,21 +504,21 @@ function updateFilterOptions() {
 
   const reasons = Array.from(reasonsSet);
 
-  if (currentFilterReason !== "all" && !reasons.includes(currentFilterReason)) {
-    currentFilterReason = "all";
+  if (currentFilterReason !== 'all' && !reasons.includes(currentFilterReason)) {
+    currentFilterReason = 'all';
   }
 
-  filterDropdown.innerHTML = "";
+  filterDropdown.innerHTML = '';
 
-  const allOption = document.createElement("div");
-  allOption.className = `filter-option ${currentFilterReason === "all" ? "active" : ""}`;
-  allOption.dataset.reason = "all";
-  allOption.textContent = "全部原因";
+  const allOption = document.createElement('div');
+  allOption.className = `filter-option ${currentFilterReason === 'all' ? 'active' : ''}`;
+  allOption.dataset.reason = 'all';
+  allOption.textContent = '全部原因';
   filterDropdown.appendChild(allOption);
 
   reasons.forEach((reason) => {
-    const opt = document.createElement("div");
-    opt.className = `filter-option ${currentFilterReason === reason ? "active" : ""}`;
+    const opt = document.createElement('div');
+    opt.className = `filter-option ${currentFilterReason === reason ? 'active' : ''}`;
     opt.dataset.reason = reason;
     opt.textContent = reason;
     filterDropdown.appendChild(opt);
@@ -571,8 +544,8 @@ function highlightText(element, query) {
     const { node, index, length } = matches[i];
     const after = node.splitText(index);
     after.splitText(length);
-    const mark = document.createElement("mark");
-    mark.className = "search-highlight";
+    const mark = document.createElement('mark');
+    mark.className = 'search-highlight';
     mark.textContent = after.textContent;
     after.parentNode.replaceChild(mark, after);
   }
@@ -581,20 +554,20 @@ function highlightText(element, query) {
 function applyHistoryFilter() {
   let filtered = currentHistory;
 
-  if (currentFilterReason !== "all") {
+  if (currentFilterReason !== 'all') {
     filtered = filtered.filter((item) => item.reason === currentFilterReason);
   }
 
-  if (currentSearchQuery !== "") {
+  if (currentSearchQuery !== '') {
     filtered = filtered.filter((item) => {
-      const text = (item.text || "").toLowerCase();
+      const text = (item.text || '').toLowerCase();
 
-      let user = (item.user || "").toLowerCase();
-      if (user.startsWith("/")) {
-        user = "@" + user.substring(1);
+      let user = (item.user || '').toLowerCase();
+      if (user.startsWith('/')) {
+        user = '@' + user.substring(1);
       }
 
-      const displayName = (item.displayName || "").toLowerCase();
+      const displayName = (item.displayName || '').toLowerCase();
       return (
         text.includes(currentSearchQuery) ||
         user.includes(currentSearchQuery) ||
@@ -606,7 +579,7 @@ function applyHistoryFilter() {
   filteredHistory = filtered;
 
   historyNextIndex = 0;
-  historyList.innerHTML = "";
+  historyList.innerHTML = '';
 
   if (filteredHistory.length === 0) {
     historyList.innerHTML = `
@@ -637,77 +610,73 @@ function renderHistoryPage() {
   const fragment = document.createDocumentFragment();
   for (let i = start; i < end; i++) {
     const item = filteredHistory[i];
-    const div = document.createElement("div");
-    div.className = "history-item";
+    const div = document.createElement('div');
+    div.className = 'history-item';
 
-    const header = document.createElement("div");
-    header.className = "history-item-header";
+    const header = document.createElement('div');
+    header.className = 'history-item-header';
 
-    const userInfo = document.createElement("div");
-    userInfo.className = "history-item-user-info";
+    const userInfo = document.createElement('div');
+    userInfo.className = 'history-item-user-info';
 
-    if (item.user && item.user.startsWith("/")) {
+    if (item.user && item.user.startsWith('/')) {
       const handle = item.user.substring(1);
 
       if (item.displayName) {
-        const nameSpan = document.createElement("span");
-        nameSpan.className = "history-display-name";
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'history-display-name';
         nameSpan.textContent = item.displayName;
         nameSpan.title = item.displayName;
         highlightText(nameSpan, currentSearchQuery);
 
-        const handleSpan = document.createElement("span");
-        handleSpan.className = "history-handle";
+        const handleSpan = document.createElement('span');
+        handleSpan.className = 'history-handle';
         handleSpan.textContent = `@${handle}`;
         highlightText(handleSpan, currentSearchQuery);
 
         userInfo.appendChild(nameSpan);
         userInfo.appendChild(handleSpan);
       } else {
-        const userSpan = document.createElement("span");
-        userSpan.className = "history-handle";
+        const userSpan = document.createElement('span');
+        userSpan.className = 'history-handle';
         userSpan.textContent = `@${handle}`;
         highlightText(userSpan, currentSearchQuery);
         userInfo.appendChild(userSpan);
       }
     } else {
-      const userSpan = document.createElement("span");
-      userSpan.className = "history-display-name";
-      userSpan.textContent = item.user || "未知用户";
+      const userSpan = document.createElement('span');
+      userSpan.className = 'history-display-name';
+      userSpan.textContent = item.user || '未知用户';
       highlightText(userSpan, currentSearchQuery);
       userInfo.appendChild(userSpan);
     }
 
-    const actionsDiv = document.createElement("div");
-    actionsDiv.className = "history-item-actions";
+    const actionsDiv = document.createElement('div');
+    actionsDiv.className = 'history-item-actions';
 
-    const timeSpan = document.createElement("span");
-    timeSpan.className = "history-time";
+    const timeSpan = document.createElement('span');
+    timeSpan.className = 'history-time';
     timeSpan.textContent = formatHistoryTime(item.time);
     actionsDiv.appendChild(timeSpan);
 
-    const removeBtn = document.createElement("button");
-    removeBtn.className = "btn-remove-x";
+    const removeBtn = document.createElement('button');
+    removeBtn.className = 'btn-remove-x';
     removeBtn.innerHTML = ICON_DEL;
-    removeBtn.title = "从记录中移除此项";
+    removeBtn.title = '从记录中移除此项';
     removeBtn.onclick = async () => {
       removeBtn.disabled = true;
-      div.style.opacity = "0.5";
+      div.style.opacity = '0.5';
       await chrome.runtime
         .sendMessage({
-          action: "removeSpamRecord",
+          action: 'removeSpamRecord',
           id: item.id,
           time: item.time,
         })
         .catch(() => {});
       div.remove();
 
-      currentHistory = currentHistory.filter(
-        (h) => !(h.id === item.id && h.time === item.time),
-      );
-      filteredHistory = filteredHistory.filter(
-        (h) => !(h.id === item.id && h.time === item.time),
-      );
+      currentHistory = currentHistory.filter((h) => !(h.id === item.id && h.time === item.time));
+      filteredHistory = filteredHistory.filter((h) => !(h.id === item.id && h.time === item.time));
 
       const oldReason = currentFilterReason;
       updateFilterOptions();
@@ -726,15 +695,15 @@ function renderHistoryPage() {
                 </div>
             </div>
         `;
-      } else if (historyList.querySelectorAll(".history-item").length === 0) {
+      } else if (historyList.querySelectorAll('.history-item').length === 0) {
         renderHistoryPage();
       }
     };
     actionsDiv.appendChild(removeBtn);
 
-    if (item.user && item.user.startsWith("/")) {
-      const blockBtn = document.createElement("button");
-      blockBtn.className = "btn-block-x";
+    if (item.user && item.user.startsWith('/')) {
+      const blockBtn = document.createElement('button');
+      blockBtn.className = 'btn-block-x';
 
       const screenName = item.user.substring(1);
       blockBtn.dataset.screenName = screenName;
@@ -742,13 +711,13 @@ function renderHistoryPage() {
       const updateBtnState = () => {
         const isBlocked = currentBlockedUsersOnX.includes(screenName);
         if (isBlocked) {
-          blockBtn.textContent = "已拉黑";
-          blockBtn.classList.add("success");
-          blockBtn.title = "点击解除拉黑";
+          blockBtn.textContent = '已拉黑';
+          blockBtn.classList.add('success');
+          blockBtn.title = '点击解除拉黑';
         } else {
-          blockBtn.textContent = "拉黑";
-          blockBtn.classList.remove("success");
-          blockBtn.title = "在 X 上拉黑该账号";
+          blockBtn.textContent = '拉黑';
+          blockBtn.classList.remove('success');
+          blockBtn.title = '在 X 上拉黑该账号';
         }
       };
       updateBtnState();
@@ -757,26 +726,23 @@ function renderHistoryPage() {
         const isCurrentlyBlocked = currentBlockedUsersOnX.includes(screenName);
 
         document
-          .querySelectorAll(
-            `button.btn-block-x[data-screen-name="${screenName}"]`,
-          )
+          .querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`)
           .forEach((btn) => {
             btn.disabled = true;
-            btn.textContent = "请求中...";
+            btn.textContent = '请求中...';
           });
 
         try {
-          const action = isCurrentlyBlocked ? "unblockUserOnX" : "blockUserOnX";
+          const action = isCurrentlyBlocked ? 'unblockUserOnX' : 'blockUserOnX';
           const res = await chrome.runtime.sendMessage({ action, screenName });
           if (res && res.success) {
             const currentItems = await chrome.storage.local.get(
-              getStorageDefaults("blockedUsersOnX"),
+              getStorageDefaults('blockedUsersOnX'),
             );
             let currentList = currentItems.blockedUsersOnX || [];
 
             if (!isCurrentlyBlocked) {
-              if (!currentList.includes(screenName))
-                currentList.push(screenName);
+              if (!currentList.includes(screenName)) currentList.push(screenName);
             } else {
               currentList = currentList.filter((u) => u !== screenName);
             }
@@ -785,46 +751,39 @@ function renderHistoryPage() {
             currentBlockedUsersOnX = currentList;
 
             document
-              .querySelectorAll(
-                `button.btn-block-x[data-screen-name="${screenName}"]`,
-              )
+              .querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`)
               .forEach((btn) => {
-                const isNowBlocked =
-                  currentBlockedUsersOnX.includes(screenName);
+                const isNowBlocked = currentBlockedUsersOnX.includes(screenName);
                 if (isNowBlocked) {
-                  btn.textContent = "已拉黑";
-                  btn.classList.add("success");
-                  btn.title = "点击解除拉黑";
+                  btn.textContent = '已拉黑';
+                  btn.classList.add('success');
+                  btn.title = '点击解除拉黑';
                 } else {
-                  btn.textContent = "拉黑";
-                  btn.classList.remove("success");
-                  btn.title = "在 X 上拉黑该账号";
+                  btn.textContent = '拉黑';
+                  btn.classList.remove('success');
+                  btn.title = '在 X 上拉黑该账号';
                 }
                 btn.disabled = false;
               });
           } else {
             document
-              .querySelectorAll(
-                `button.btn-block-x[data-screen-name="${screenName}"]`,
-              )
+              .querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`)
               .forEach((btn) => {
                 btn.disabled = false;
                 const isBlocked = currentBlockedUsersOnX.includes(screenName);
-                btn.textContent = isBlocked ? "已拉黑" : "拉黑";
+                btn.textContent = isBlocked ? '已拉黑' : '拉黑';
               });
-            showStatus(res?.reason || "操作失败");
+            showStatus(res?.reason || '操作失败');
           }
         } catch {
           document
-            .querySelectorAll(
-              `button.btn-block-x[data-screen-name="${screenName}"]`,
-            )
+            .querySelectorAll(`button.btn-block-x[data-screen-name="${screenName}"]`)
             .forEach((btn) => {
               btn.disabled = false;
               const isBlocked = currentBlockedUsersOnX.includes(screenName);
-              btn.textContent = isBlocked ? "已拉黑" : "拉黑";
+              btn.textContent = isBlocked ? '已拉黑' : '拉黑';
             });
-          showStatus("请求失败");
+          showStatus('请求失败');
         }
       };
       actionsDiv.appendChild(blockBtn);
@@ -833,13 +792,13 @@ function renderHistoryPage() {
     header.appendChild(userInfo);
     header.appendChild(actionsDiv);
 
-    let displayText = item.text || "[无内容或已隐藏]";
+    let displayText = item.text || '[无内容或已隐藏]';
     if (item.reason) {
       displayText = `[${item.reason}] ${displayText}`;
     }
 
-    const textDiv = document.createElement("div");
-    textDiv.className = "history-item-text";
+    const textDiv = document.createElement('div');
+    textDiv.className = 'history-item-text';
     textDiv.textContent = displayText;
     highlightText(textDiv, currentSearchQuery);
 
@@ -849,29 +808,22 @@ function renderHistoryPage() {
   }
   historyList.appendChild(fragment);
 
-  const nameSpans = Array.from(
-    historyList.querySelectorAll(".history-display-name"),
-  );
-  const overflowingSpans = nameSpans.filter(
-    (span) => span.scrollWidth > span.clientWidth,
-  );
-  overflowingSpans.forEach((span) => span.classList.add("is-overflowing"));
+  const nameSpans = Array.from(historyList.querySelectorAll('.history-display-name'));
+  const overflowingSpans = nameSpans.filter((span) => span.scrollWidth > span.clientWidth);
+  overflowingSpans.forEach((span) => span.classList.add('is-overflowing'));
 
   historyNextIndex = end;
   isHistoryLoading = false;
 }
 
-historyList.addEventListener("scroll", () => {
-  if (
-    historyList.scrollTop + historyList.clientHeight >=
-    historyList.scrollHeight - 50
-  ) {
+historyList.addEventListener('scroll', () => {
+  if (historyList.scrollTop + historyList.clientHeight >= historyList.scrollHeight - 50) {
     renderHistoryPage();
   }
 });
 
-viewHistoryBtn.addEventListener("click", async () => {
-  historyModal.classList.add("open");
+viewHistoryBtn.addEventListener('click', async () => {
+  historyModal.classList.add('open');
   historyList.innerHTML = `
         <div class="history-item">
             <div class="history-item-text" style="text-align: center; color: var(--text-muted); padding: 12px 0;">
@@ -881,16 +833,12 @@ viewHistoryBtn.addEventListener("click", async () => {
     `;
 
   const items = await chrome.storage.local.get(
-    getStorageDefaults(
-      "blockedHistory",
-      "blockedUsersOnX",
-      "historyFilterReason",
-    ),
+    getStorageDefaults('blockedHistory', 'blockedUsersOnX', 'historyFilterReason'),
   );
   currentHistory = items.blockedHistory || [];
   currentBlockedUsersOnX = items.blockedUsersOnX || [];
 
-  const oldReason = items.historyFilterReason || "all";
+  const oldReason = items.historyFilterReason || 'all';
   currentFilterReason = oldReason;
   updateFilterOptions();
 
@@ -901,25 +849,22 @@ viewHistoryBtn.addEventListener("click", async () => {
   applyHistoryFilter();
 });
 
-closeHistoryBtn.addEventListener("click", () => {
-  historyModal.classList.remove("open");
+closeHistoryBtn.addEventListener('click', () => {
+  historyModal.classList.remove('open');
   clearTimeout(searchDebounceTimer);
-  if (
-    historySearchContainer &&
-    historySearchContainer.classList.contains("open")
-  ) {
-    historySearchContainer.classList.remove("open");
-    historySearchInput.value = "";
-    currentSearchQuery = "";
+  if (historySearchContainer && historySearchContainer.classList.contains('open')) {
+    historySearchContainer.classList.remove('open');
+    historySearchInput.value = '';
+    currentSearchQuery = '';
   }
 });
 
 chrome.storage.onChanged.addListener((changes, area) => {
-  if (area !== "local") return;
+  if (area !== 'local') return;
   if (changes.blockedCount) {
     blockedCountEl.textContent = changes.blockedCount.newValue || 0;
   }
-  if (changes.blockedHistory && historyModal.classList.contains("open")) {
+  if (changes.blockedHistory && historyModal.classList.contains('open')) {
     const newHistory = changes.blockedHistory.newValue || [];
     if (newHistory.length > currentHistory.length) {
       currentHistory = newHistory;
@@ -931,8 +876,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
 function refreshHistoryDisplay() {
   const prevScrollTop = historyList.scrollTop;
   const prevScrollHeight = historyList.scrollHeight;
-  const prevRenderedCount =
-    historyList.querySelectorAll(".history-item").length;
+  const prevRenderedCount = historyList.querySelectorAll('.history-item').length;
   const prevFilteredLength = filteredHistory.length;
 
   const oldReason = currentFilterReason;
@@ -946,10 +890,7 @@ function refreshHistoryDisplay() {
   applyHistoryFilter();
 
   const addedCount = Math.max(0, filteredHistory.length - prevFilteredLength);
-  const targetCount = Math.min(
-    prevRenderedCount + addedCount,
-    filteredHistory.length,
-  );
+  const targetCount = Math.min(prevRenderedCount + addedCount, filteredHistory.length);
   while (historyNextIndex < targetCount) {
     renderHistoryPage();
   }
