@@ -111,7 +111,7 @@ class AutoBlockQueue {
         this.lastDate = today;
         this.countToday = 0;
       }
-      
+
       if (this.countToday >= this.dailyLimit) {
         this.queue = [];
         console.warn('[X-Blocker] Auto block daily limit reached.');
@@ -125,9 +125,9 @@ class AutoBlockQueue {
       } catch (e) {
         console.error('[X-Blocker] Auto block error:', e);
       }
-      
+
       if (this.queue.length > 0) {
-        await new Promise(r => setTimeout(r, this.delayMs));
+        await new Promise((r) => setTimeout(r, this.delayMs));
       }
     }
     this.isProcessing = false;

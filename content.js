@@ -78,7 +78,7 @@ async function mergeKeywords() {
     } else {
       blockRegexes = [];
     }
-    
+
     const autoBlockKws = items.autoBlockKeywords || [];
     if (autoBlockKws.length > 0) {
       const plainAutoBlock = [];
@@ -522,13 +522,15 @@ function filterTweets(specificTweets = null) {
           reason: blockReason,
           time: Date.now(),
         });
-        
+
         if (isAutoBlock) {
           try {
-            chrome.runtime.sendMessage({ 
-              action: 'autoBlockUser', 
-              screenName: stableHandle || userName 
-            }).catch(() => {});
+            chrome.runtime
+              .sendMessage({
+                action: 'autoBlockUser',
+                screenName: stableHandle || userName,
+              })
+              .catch(() => {});
           } catch {
             // Ignore error if background script is not ready
           }
