@@ -73,6 +73,10 @@ function el(tag, props, children) {
   return element;
 }
 
+function isKeywordRegex(kw) {
+  return kw.length >= 3 && kw.startsWith('/') && /\/[a-zA-Z]*$/.test(kw);
+}
+
 function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
   keywordList.innerHTML = '';
 
@@ -110,7 +114,7 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
       },
     });
 
-    const isRegex = kw.length >= 3 && kw.startsWith('/') && /\/[a-zA-Z]*$/.test(kw);
+    const isRegex = isKeywordRegex(kw);
     const tag = el(
       'span',
       {
@@ -180,7 +184,7 @@ function confirmEdit(inputEl, index) {
         changed = true;
       }
     } else {
-      showStatus('该屏蔽词已存在');
+      showStatus(isKeywordRegex(newVal) ? '该正则已存在' : '该屏蔽词已存在');
     }
   }
   renderUserKeywords(-1, index);
@@ -197,7 +201,7 @@ function addKeyword() {
   newKeywordInput.focus();
 
   if (newKws.length === 0) {
-    showStatus('该屏蔽词已存在');
+    showStatus(isKeywordRegex(inputKws[0]) ? '该正则已存在' : '该屏蔽词已存在');
     return;
   }
 
