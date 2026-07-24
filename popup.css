@@ -270,6 +270,19 @@ body {
   border-color: var(--accent);
 }
 
+.keyword-tag.is-autoblock {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: rgba(239, 68, 68, 0.1);
+}
+
+.keyword-tag .tag-checkbox {
+  margin: 3px;
+  cursor: pointer;
+  width: 14px;
+  height: 14px;
+  accent-color: var(--accent);
+}
+
 .keyword-tag .tag-text {
   flex: 1;
   min-width: 0;
@@ -423,11 +436,42 @@ body {
   opacity: 1;
 }
 
+.keyword-stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.auto-block-count,
 .keyword-count {
   font-size: 11px;
   color: var(--text-muted);
-  margin-top: 8px;
-  text-align: right;
+}
+
+.auto-block-count {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.icon-btn-small {
+  padding: 2px;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+
+.icon-btn-small:hover {
+  background: var(--btn-hover);
+  color: var(--text);
 }
 
 .settings-panel {

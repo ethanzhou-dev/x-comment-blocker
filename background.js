@@ -86,11 +86,66 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   }
 });
 
+class AutoBlockQueue {
+  constructor() {
+    this.queue = [];
+    this.isProcessing = false;
+    this.dailyLimit = 100;
+    this.delayMs = 3000;
+    this.countToday = 0;
+    this.lastDate = new Date().toDateString();
+  }
+
+  enqueue(screenName) {
+    if (this.queue.includes(screenName)) return;
+    this.queue.push(screenName);
+    this.process();
+  }
+
+  async process() {
+    if (this.isProcessing) return;
+    this.isProcessing = true;
+    while (this.queue.length > 0) {
+      const today = new Date().toDateString();
+      if (this.lastDate !== today) {
+        this.lastDate = today;
+        this.countToday = 0;
+      }
+      
+      if (this.countToday >= this.dailyLimit) {
+        this.queue = [];
+        console.warn('[X-Blocker] Auto block daily limit reached.');
+        break;
+      }
+
+      const screenName = this.queue.shift();
+      try {
+        await handleBlockUser(screenName, true);
+        this.countToday++;
+      } catch (e) {
+        console.error('[X-Blocker] Auto block error:', e);
+      }
+      
+      if (this.queue.length > 0) {
+        await new Promise(r => setTimeout(r, this.delayMs));
+      }
+    }
+    this.isProcessing = false;
+  }
+}
+
+const autoBlockQueue = new AutoBlockQueue();
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   void sender;
   if (message.action === 'syncNow') {
     doSync().then(sendResponse);
     return true;
+  }
+  if (message.action === 'autoBlockUser') {
+    autoBlockQueue.enqueue(message.screenName);
+    sendResponse({ success: true });
+    return false;
   }
   if (message.action === 'blockUserOnX') {
     handleBlockUser(message.screenName, true).then(sendResponse);

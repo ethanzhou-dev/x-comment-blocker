@@ -22,6 +22,7 @@ const STORAGE_DEFAULTS = {
   cloudETag: '',
   blockedUsersOnX: [],
   historyFilterReason: 'all',
+  autoBlockKeywords: [],
 };
 
 function getStorageDefaults(...keys) {

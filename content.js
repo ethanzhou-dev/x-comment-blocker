@@ -1,5 +1,6 @@
 /* global getStorageDefaults, parseKeywords, invisibleCharsRegex */
 let blockRegexes = [];
+let autoBlockRegexes = [];
 let lastKeywordsKey = '';
 let checkUsername = true;
 let onlyComments = true;
@@ -24,10 +25,15 @@ function matchesBlocklist(text) {
   return blockRegexes.some((regex) => regex.test(text));
 }
 
+function matchesAutoBlocklist(text) {
+  if (autoBlockRegexes.length === 0) return false;
+  return autoBlockRegexes.some((regex) => regex.test(text));
+}
+
 async function mergeKeywords() {
   try {
     const items = await chrome.storage.local.get(
-      getStorageDefaults('keywords', 'cloudEnabled', 'cloudKeywords'),
+      getStorageDefaults('keywords', 'cloudEnabled', 'cloudKeywords', 'autoBlockKeywords'),
     );
 
     const userKws = parseKeywords(items.keywords);
@@ -71,6 +77,39 @@ async function mergeKeywords() {
       }
     } else {
       blockRegexes = [];
+    }
+    
+    const autoBlockKws = items.autoBlockKeywords || [];
+    if (autoBlockKws.length > 0) {
+      const plainAutoBlock = [];
+      const customAutoBlockRegexes = [];
+
+      for (const kw of autoBlockKws) {
+        let match;
+        if (kw.startsWith('/') && (match = kw.match(/^\/(.+)\/([a-zA-Z]*)$/))) {
+          try {
+            customAutoBlockRegexes.push(new RegExp(match[1], match[2]));
+          } catch (e) {}
+        } else {
+          plainAutoBlock.push(kw);
+        }
+      }
+
+      autoBlockRegexes = [];
+      if (plainAutoBlock.length > 0) {
+        const escaped = plainAutoBlock.map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        escaped.sort((a, b) => b.length - a.length);
+        const CHUNK_SIZE = 400;
+        for (let i = 0; i < escaped.length; i += CHUNK_SIZE) {
+          const chunk = escaped.slice(i, i + CHUNK_SIZE);
+          autoBlockRegexes.push(new RegExp(chunk.join('|'), 'i'));
+        }
+      }
+      if (customAutoBlockRegexes.length > 0) {
+        autoBlockRegexes.push(...customAutoBlockRegexes);
+      }
+    } else {
+      autoBlockRegexes = [];
     }
   } catch (e) {
     console.error('[X-Blocker] mergeKeywords error:', e);
@@ -321,8 +360,10 @@ function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage,
   }
 
   if (matchesBlocklist(tweetBody)) {
+    const isAutoBlock = matchesAutoBlocklist(tweetBody);
     return {
       isSpam: true,
+      isAutoBlock,
       blockReason: '内容屏蔽',
       userName,
       stableHandle,
@@ -333,8 +374,10 @@ function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage,
   if (checkUsername && userName) {
     const cleanUserName = userName.replace(/[\s_.-]+/g, '').replace(invisibleCharsRegex, '');
     if (matchesBlocklist(cleanUserName)) {
+      const isAutoBlock = matchesAutoBlocklist(cleanUserName);
       return {
         isSpam: true,
+        isAutoBlock,
         blockReason: '昵称屏蔽',
         userName,
         stableHandle,
@@ -345,6 +388,7 @@ function detectSpam(textNode, userNode, rawTweetText, rawUserName, isStatusPage,
 
   return {
     isSpam: false,
+    isAutoBlock: false,
     blockReason: '',
     userName,
     stableHandle,
@@ -428,6 +472,7 @@ function filterTweets(specificTweets = null) {
     if (shouldCheck && onlyComments && isMainTweet) shouldCheck = false;
 
     let isSpam = false;
+    let isAutoBlock = false;
     let blockReason = '';
     let userName = '';
     let stableHandle = '';
@@ -443,6 +488,7 @@ function filterTweets(specificTweets = null) {
         isMainTweet,
       );
       isSpam = result.isSpam;
+      isAutoBlock = result.isAutoBlock;
       blockReason = result.blockReason;
       userName = result.userName;
       stableHandle = result.stableHandle;
@@ -476,6 +522,17 @@ function filterTweets(specificTweets = null) {
           reason: blockReason,
           time: Date.now(),
         });
+        
+        if (isAutoBlock) {
+          try {
+            chrome.runtime.sendMessage({ 
+              action: 'autoBlockUser', 
+              screenName: stableHandle || userName 
+            }).catch(() => {});
+          } catch {
+            // Ignore error if background script is not ready
+          }
+        }
       }
     } else {
       tweet.classList.remove('x-comment-blocker-hidden');

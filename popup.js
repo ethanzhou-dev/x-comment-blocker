@@ -1,6 +1,8 @@
 /* global parseKeywords, getStorageDefaults, SYNC_INTERVAL_MS */
 let userKeywords = [];
+let autoBlockKeywords = [];
 let isLoading = true;
+let isEditingAutoBlock = false;
 
 const ICON_EDIT =
   '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>';
@@ -11,6 +13,9 @@ const ICON_CHECK =
 
 const keywordList = document.getElementById('keywordList');
 const keywordCount = document.getElementById('keywordCount');
+const autoBlockCount = document.getElementById('autoBlockCount');
+const editAutoBlockBtn = document.getElementById('editAutoBlockBtn');
+const saveAutoBlockBtn = document.getElementById('saveAutoBlockBtn');
 const newKeywordInput = document.getElementById('newKeyword');
 const addBtn = document.getElementById('addBtn');
 const importBtn = document.getElementById('importBtn');
@@ -48,6 +53,7 @@ async function autoSave() {
 
   await chrome.storage.local.set({
     keywords: userKeywords.join('\n'),
+    autoBlockKeywords,
     checkUsername: checkUsernameEl.checked,
     onlyComments: onlyCommentsEl.checked,
     blockSpecialChars: blockSpecialCharsEl.checked,
@@ -57,6 +63,21 @@ async function autoSave() {
   });
   showStatus('已自动保存');
 }
+
+editAutoBlockBtn.addEventListener('click', () => {
+  isEditingAutoBlock = true;
+  editAutoBlockBtn.style.display = 'none';
+  saveAutoBlockBtn.style.display = 'inline-flex';
+  renderUserKeywords();
+});
+
+saveAutoBlockBtn.addEventListener('click', () => {
+  isEditingAutoBlock = false;
+  saveAutoBlockBtn.style.display = 'none';
+  editAutoBlockBtn.style.display = 'inline-flex';
+  autoSave();
+  renderUserKeywords();
+});
 
 function updateEnabledState() {
   document.body.classList.toggle('disabled', !enableToggleEl.checked);
@@ -77,6 +98,39 @@ function isKeywordRegex(kw) {
   return kw.length >= 3 && kw.startsWith('/') && /\/[a-zA-Z]*$/.test(kw);
 }
 
+addBtn.addEventListener('click', () => {
+  addBtn.disabled = true;
+  try {
+    const rawValue = newKeywordInput.value.trim();
+    if (!rawValue) {
+      newKeywordInput.focus();
+      return;
+    }
+    const kws = rawValue
+      .split('\n')
+      .map((k) => k.replace(invisibleCharsRegex, '').trim())
+      .filter((k) => k);
+
+    let addedCount = 0;
+    for (const rawKw of kws) {
+      const kw = isKeywordRegex(rawKw) ? rawKw : rawKw.toLowerCase();
+
+      if (!userKeywords.includes(kw)) {
+        userKeywords.push(kw);
+        // Do not add to autoblock by default
+        addedCount++;
+      }
+    }
+    if (addedCount > 0) {
+      newKeywordInput.value = '';
+      renderUserKeywords(userKeywords.length - 1);
+      autoSave();
+    }
+  } finally {
+    addBtn.disabled = false;
+  }
+});
+
 function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
   keywordList.innerHTML = '';
 
@@ -84,9 +138,11 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
     keywordList.appendChild(
       el('div', { className: 'empty-hint', textContent: '暂无自定义屏蔽词' }),
     );
-    keywordCount.textContent = '';
+    document.querySelector('.keyword-stats').style.display = 'none';
     return;
   }
+  
+  document.querySelector('.keyword-stats').style.display = 'flex';
 
   const fragment = document.createDocumentFragment();
 
@@ -115,24 +171,49 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
     });
 
     const isRegex = isKeywordRegex(kw);
+    const isAutoBlock = autoBlockKeywords.includes(kw);
+    
+    let tagChildren = [];
+    if (isEditingAutoBlock) {
+      const checkbox = el('input', {
+        type: 'checkbox',
+        className: 'tag-checkbox',
+        checked: isAutoBlock,
+        onchange: (e) => {
+          if (e.target.checked) {
+            if (!autoBlockKeywords.includes(kw)) autoBlockKeywords.push(kw);
+          } else {
+            autoBlockKeywords = autoBlockKeywords.filter((k) => k !== kw);
+          }
+        }
+      });
+      tagChildren = [el('span', { className: 'tag-text', textContent: kw, title: kw }), checkbox];
+    } else {
+      tagChildren = [el('span', { className: 'tag-text', textContent: kw, title: kw }), editBtn, delBtn];
+    }
+
     const tag = el(
       'span',
       {
         className:
           'keyword-tag' +
           (isRegex ? ' regex-tag' : '') +
+          (isAutoBlock && !isEditingAutoBlock ? ' is-autoblock' : '') +
           (index === animateIndex ? ' fade-in-tag' : '') +
           (index === fadeIndex ? ' fade-in' : ''),
       },
-      [el('span', { className: 'tag-text', textContent: kw, title: kw }), editBtn, delBtn],
+      tagChildren
     );
 
-    editBtn.onclick = () => startEdit(tag, index);
+    if (!isEditingAutoBlock) {
+      editBtn.onclick = () => startEdit(tag, index);
+    }
     fragment.appendChild(tag);
   });
 
   keywordList.appendChild(fragment);
   keywordCount.textContent = `共 ${userKeywords.length} 个自定义词`;
+  autoBlockCount.textContent = autoBlockKeywords.length;
 }
 
 function startEdit(tagEl, index) {
@@ -394,6 +475,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const items = await chrome.storage.local.get(
     getStorageDefaults(
       'keywords',
+      'autoBlockKeywords',
       'checkUsername',
       'onlyComments',
       'blockSpecialChars',
@@ -406,6 +488,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   );
 
   userKeywords = parseKeywords(items.keywords);
+  autoBlockKeywords = items.autoBlockKeywords || [];
+  
+  // Clean up autoBlockKeywords (remove words that are no longer in userKeywords)
+  autoBlockKeywords = autoBlockKeywords.filter(kw => userKeywords.includes(kw));
   checkUsernameEl.checked = items.checkUsername;
   onlyCommentsEl.checked = items.onlyComments;
   blockSpecialCharsEl.checked = items.blockSpecialChars;

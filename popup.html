@@ -123,7 +123,17 @@
         <div class="empty-hint">暂无自定义屏蔽词</div>
       </div>
     </div>
-    <div class="keyword-count" id="keywordCount"></div>
+    <div class="keyword-stats">
+      <span class="keyword-count" id="keywordCount"></span>
+      <span class="auto-block-count">共 <span id="autoBlockCount">0</span> 个自动拉黑词
+        <button class="icon-btn icon-btn-small" id="editAutoBlockBtn" title="编辑自动拉黑词">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>
+        </button>
+        <button class="icon-btn icon-btn-small" id="saveAutoBlockBtn" title="完成编辑" style="display: none;">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+        </button>
+      </span>
+    </div>
   </div>
 
   <div class="settings-panel">
