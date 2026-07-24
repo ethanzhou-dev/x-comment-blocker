@@ -40,13 +40,34 @@ async function mergeKeywords() {
     lastKeywordsKey = newKey;
 
     if (blockKeywords.length > 0) {
-      const escaped = blockKeywords.map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-      escaped.sort((a, b) => b.length - a.length);
-      const CHUNK_SIZE = 400;
+      const plainKeywords = [];
+      const customRegexes = [];
+
+      for (const kw of blockKeywords) {
+        let match;
+        if (kw.startsWith('/') && (match = kw.match(/^\/(.+)\/([a-zA-Z]*)$/))) {
+          try {
+            customRegexes.push(new RegExp(match[1], match[2]));
+          } catch (e) {
+            console.warn('[X-Blocker] Invalid regex ignored:', kw, e);
+          }
+        } else {
+          plainKeywords.push(kw);
+        }
+      }
+
       blockRegexes = [];
-      for (let i = 0; i < escaped.length; i += CHUNK_SIZE) {
-        const chunk = escaped.slice(i, i + CHUNK_SIZE);
-        blockRegexes.push(new RegExp(chunk.join('|'), 'i'));
+      if (plainKeywords.length > 0) {
+        const escaped = plainKeywords.map((kw) => kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        escaped.sort((a, b) => b.length - a.length);
+        const CHUNK_SIZE = 400;
+        for (let i = 0; i < escaped.length; i += CHUNK_SIZE) {
+          const chunk = escaped.slice(i, i + CHUNK_SIZE);
+          blockRegexes.push(new RegExp(chunk.join('|'), 'i'));
+        }
+      }
+      if (customRegexes.length > 0) {
+        blockRegexes.push(...customRegexes);
       }
     } else {
       blockRegexes = [];

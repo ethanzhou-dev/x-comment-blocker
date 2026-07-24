@@ -39,7 +39,14 @@ function parseKeywords(text) {
   if (!text) return [];
   return text
     .split('\n')
-    .map((k) => k.replace(invisibleCharsRegex, '').trim().toLowerCase())
+    .map((k) => {
+      const trimmed = k.replace(invisibleCharsRegex, '').trim();
+      if (!trimmed) return '';
+      if (trimmed.length >= 3 && trimmed.startsWith('/') && /\/[a-zA-Z]*$/.test(trimmed)) {
+        return trimmed;
+      }
+      return trimmed.toLowerCase();
+    })
     .filter(Boolean);
 }
 

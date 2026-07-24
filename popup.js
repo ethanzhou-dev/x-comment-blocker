@@ -110,11 +110,13 @@ function renderUserKeywords(animateIndex = -1, fadeIndex = -1) {
       },
     });
 
+    const isRegex = kw.length >= 3 && kw.startsWith('/') && /\/[a-zA-Z]*$/.test(kw);
     const tag = el(
       'span',
       {
         className:
           'keyword-tag' +
+          (isRegex ? ' regex-tag' : '') +
           (index === animateIndex ? ' fade-in-tag' : '') +
           (index === fadeIndex ? ' fade-in' : ''),
       },

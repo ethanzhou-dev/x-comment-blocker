@@ -218,6 +218,24 @@ body {
   height: 28px;
   box-sizing: border-box;
 }
+
+.keyword-tag.regex-tag {
+  background: rgb(168 85 247 / 15%);
+  border-color: rgb(168 85 247 / 30%);
+}
+
+.keyword-tag.regex-tag:hover {
+  border-color: #a855f7;
+}
+
+.keyword-tag.regex-tag .tag-text {
+  color: var(--text);
+}
+
+.keyword-tag.regex-tag .tag-btn-edit:hover {
+  color: #c084fc;
+  background: rgb(168 85 247 / 15%);
+}
 .keyword-tag.fade-out-tag {
   animation: fade-out 0.2s ease forwards;
 }
